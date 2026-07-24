@@ -65,6 +65,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 | Cards | Title and description pairs for planning and grouping ideas. |
 | Secret | PIN-protected text: the title stays visible, but the content is hidden and requires re-entering your vault PIN to view or edit. |
 | Drawing | Freehand vector sketch or diagram, drawn with pen, colours, and sizes. |
+| Table | Rows and columns of text with a header row. Copies as tab-separated values that paste straight into a spreadsheet. |
 
 All list-style types support adding, removing, drag-and-drop reordering, and keyboard reordering with `Arrow Up` / `Arrow Down`.
 

@@ -27,6 +27,7 @@ const defaultContent = {
   markdown: { text: '' },
   secret: { secret: true, cipher: '' },
   draw: { strokes: [] },
+  table: { columns: ['', ''], rows: [['', ''], ['', '']] },
 }
 
 export function useSpaceItems(spaceId) {

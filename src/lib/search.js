@@ -23,6 +23,10 @@ function itemSearchText(item) {
       parts.push(row.text, row.title, row.description)
     }
   }
+  if (item.type === 'table') {
+    if (Array.isArray(c.columns)) parts.push(...c.columns)
+    if (Array.isArray(c.rows)) for (const row of c.rows) if (Array.isArray(row)) parts.push(...row)
+  }
   return norm(parts.filter(Boolean).join(' '))
 }
 

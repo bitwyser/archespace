@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS space_items (
   id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   space_id    uuid        REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
   user_id     uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'secret', 'draw')),
+  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'secret', 'draw', 'table')),
   title       text        NOT NULL DEFAULT '',
   content     jsonb       NOT NULL DEFAULT '{}'::jsonb,
   position    integer     NOT NULL DEFAULT 0,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS space_items (
 -- only applies to fresh installs). Re-running this file updates the constraint.
 ALTER TABLE space_items DROP CONSTRAINT IF EXISTS space_items_type_check;
 ALTER TABLE space_items ADD CONSTRAINT space_items_type_check
-  CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'secret', 'draw'));
+  CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'secret', 'draw', 'table'));
 
 -- Audit log: auth events only, owner-only access (see section 4).
 CREATE TABLE IF NOT EXISTS audit_log (

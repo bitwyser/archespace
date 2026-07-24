@@ -74,6 +74,18 @@ function itemBodyHtml({ type, content }) {
         .join('')
       return `<svg viewBox="0 0 ${DRAW_VIEW_W} ${DRAW_VIEW_H}" width="100%" style="max-width:520px;border:1px solid #ddd;border-radius:6px;background:#fff">${paths}</svg>`
     }
+    case 'table': {
+      const columns = Array.isArray(c.columns) ? c.columns : []
+      const rows = Array.isArray(c.rows) ? c.rows : []
+      if (!columns.length && !rows.length) return '<p class="empty">Empty table</p>'
+      const head = columns.some(col => (col ?? '').trim() !== '')
+        ? `<thead><tr>${columns.map(col => `<th>${escapeHtml(col)}</th>`).join('')}</tr></thead>`
+        : ''
+      const body = `<tbody>${rows
+        .map(row => `<tr>${(Array.isArray(row) ? row : []).map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`)
+        .join('')}</tbody>`
+      return `<table class="tbl">${head}${body}</table>`
+    }
     default:
       return ''
   }
@@ -108,6 +120,9 @@ const PRINT_STYLES = `
   ul.checklist { list-style: none; padding-left: 2px; }
   ul.checklist .box { margin-right: 8px; }
   ul.checklist li.done { color: #777; text-decoration: line-through; }
+  table.tbl { border-collapse: collapse; width: 100%; margin: 0; font-size: 10.5pt; }
+  table.tbl th, table.tbl td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; vertical-align: top; }
+  table.tbl th { background: #f5f5f5; font-weight: 600; }
   .card { border: 1px solid #ddd; border-radius: 6px; padding: 8px 12px; margin: 0 0 8px; break-inside: avoid; }
   .card-title { margin: 0; font-weight: 600; }
   .card-desc { margin: 2px 0 0; color: #444; white-space: pre-wrap; }

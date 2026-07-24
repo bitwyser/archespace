@@ -24,6 +24,17 @@ function cardsToText(items) {
     .join('\n\n')
 }
 
+// Tab-separated so it pastes straight into a spreadsheet. The header row is
+// included only when at least one column has a label.
+function tableToText(content) {
+  const columns = Array.isArray(content?.columns) ? content.columns : []
+  const rows = Array.isArray(content?.rows) ? content.rows : []
+  const lines = []
+  if (columns.some(col => (col ?? '').trim() !== '')) lines.push(columns.join('\t'))
+  for (const row of rows) lines.push((Array.isArray(row) ? row : []).join('\t'))
+  return lines.join('\n')
+}
+
 /**
  * @param {{ type: string, content: object }} item
  * @returns {string}
@@ -41,6 +52,8 @@ export function itemToClipboardText({ type, content } = {}) {
       return listToText(c.items, true)
     case 'card_list':
       return cardsToText(c.items)
+    case 'table':
+      return tableToText(c)
     default:
       return ''
   }
