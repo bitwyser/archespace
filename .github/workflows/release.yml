@@ -67,13 +67,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Auto-generate the "What's Changed" list from commits since the
+          # previous tag. GitHub picks the previous tag automatically. If it
+          # fails (e.g. the very first tag), we just skip that section.
+          gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="$TAG" --jq .body > generated-notes.md || true
+
           {
+            if [ -s generated-notes.md ]; then
+              cat generated-notes.md
+              echo
+              echo "---"
+              echo
+            fi
             echo "Signed, reproducible release."
             echo
             echo "**Artifacts**"
-            echo "- \`checksums.txt\` -SHA-256 of every built file in \`dist/\`"
-            echo "- \`checksums.txt.sig\` / \`checksums.txt.pem\` -cosign signature and certificate"
-            echo "- \`archespace-${TAG}-dist.tar.gz\` -the built \`dist/\`"
+            echo "- \`checksums.txt\` - SHA-256 of every built file in \`dist/\`"
+            echo "- \`checksums.txt.sig\` / \`checksums.txt.pem\` - cosign signature and certificate"
+            echo "- \`archespace-${TAG}-dist.tar.gz\` - the built \`dist/\`"
             echo
             echo "See the **Verifying a release** section of the README to check the"
             echo "signature and reproduce the build byte-for-byte."
