@@ -1,4 +1,4 @@
-import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, FileCode, KeyRound } from 'lucide-react'
+import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, FileCode, KeyRound, Brush } from 'lucide-react'
 
 /** Human-readable labels for each item type */
 export const TYPE_LABELS = {
@@ -9,6 +9,7 @@ export const TYPE_LABELS = {
   card_list: 'Cards',
   markdown: 'Markdown',
   secret: 'Secret',
+  draw: 'Drawing',
 }
 
 /** Colour scheme per item type (text, background, border) */
@@ -20,6 +21,7 @@ export const TYPE_STYLES = {
   card_list: { text: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/20' },
   markdown: { text: 'text-teal-400', bg: 'bg-teal-400/10', border: 'border-teal-400/20' },
   secret: { text: 'text-indigo-400', bg: 'bg-indigo-400/10', border: 'border-indigo-400/20' },
+  draw: { text: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10', border: 'border-fuchsia-400/20' },
 }
 
 /** Item type definitions for the "Add item" modal */
@@ -31,4 +33,5 @@ export const ITEM_TYPE_OPTIONS = [
   { type: 'checkbox_list', label: 'Checklist', desc: 'Items with checkboxes', icon: CheckSquare, color: 'text-green-400', bg: 'bg-green-400/10' },
   { type: 'card_list', label: 'Cards', desc: 'Title + description pairs', icon: LayoutList, color: 'text-amber-400', bg: 'bg-amber-400/10' },
   { type: 'secret', label: 'Secret', desc: 'PIN-protected hidden text', icon: KeyRound, color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
+  { type: 'draw', label: 'Drawing', desc: 'Freehand sketch or diagram', icon: Brush, color: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10' },
 ]

@@ -26,6 +26,7 @@ const defaultContent = {
   card_list: { items: [] },
   markdown: { text: '' },
   secret: { secret: true, cipher: '' },
+  draw: { strokes: [] },
 }
 
 export function useSpaceItems(spaceId) {
