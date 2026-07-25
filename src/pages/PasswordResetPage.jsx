@@ -8,10 +8,12 @@ import { useAuth } from '../context/AuthContextCore'
 import { useTheme } from '../context/ThemeCore'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
+import { useRouteMeta } from '../hooks/useRouteMeta'
 import { Spinner } from '../components/ui/UI'
 
 export default function PasswordResetPage() {
   const navigate = useNavigate()
+  useRouteMeta({ title: 'Reset password' })
   const { user, loading, passwordRecovery, updatePasswordAndSignOut } = useAuth()
   const { theme, themes, toggle } = useTheme()
   const [password, setPassword] = useState('')

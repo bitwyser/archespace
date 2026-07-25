@@ -29,6 +29,7 @@ import { BULK_ICONS } from '../components/BulkSelectionIcons'
 import { Modal } from '../components/ui/UI'
 import { SortMenu } from '../components/ui/SortMenu'
 import { usePersistedSort } from '../hooks/usePersistedSort'
+import { useRouteMeta } from '../hooks/useRouteMeta'
 import { sortEntities } from '../lib/sortEntities'
 
 export default function SpacePage() {
@@ -59,6 +60,9 @@ export default function SpacePage() {
 
   /** The space object for this page */
   const space = spaces.find(c => c.id === id)
+
+  // Private route: noindex, with the space name as the tab title once loaded.
+  useRouteMeta({ title: space?.name || 'Space' })
 
   // ── Local UI state ──
   const [addModal, setAddModal]           = useState(false)

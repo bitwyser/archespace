@@ -518,7 +518,7 @@ export default function HomePage() {
 
           <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
             <p className="text-xs text-white/40">
-              © {year} Arche Space. Created and maintained by the Arche Project.
+              © {year} Arche Space. Created and maintained by the Arche Space Project.
             </p>
             <p className="text-xs text-white/40">
               v{APP_VERSION} · build{' '}

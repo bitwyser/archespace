@@ -52,6 +52,52 @@ function resolveVersion() {
   }
 }
 
+// Canonical site origin used for absolute SEO URLs (canonical tag, Open Graph,
+// sitemap, robots). Overridable per environment via VITE_SITE_URL; the trailing
+// slash is stripped so paths join cleanly.
+function resolveSiteUrl() {
+  return (process.env.VITE_SITE_URL || 'https://archespace.cc').replace(/\/+$/, '')
+}
+const siteUrl = resolveSiteUrl()
+
+const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /space
+Disallow: /settings
+Disallow: /archive
+Disallow: /recycle-bin
+Disallow: /login
+Disallow: /reset-password
+
+Sitemap: ${siteUrl}/sitemap.xml
+`
+
+const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${siteUrl}/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`
+
+// Substitutes {{SITE_URL}} in index.html and writes robots.txt / sitemap.xml
+// into the build so the canonical origin lives in exactly one place.
+function seoPlugin() {
+  return {
+    name: 'arche-seo',
+    transformIndexHtml(html) {
+      return html.replaceAll('{{SITE_URL}}', siteUrl)
+    },
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: robotsTxt })
+      this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemapXml })
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
@@ -93,5 +139,5 @@ export default defineConfig({
         },
       ],
     },
-  }), cloudflare()],
+  }), cloudflare(), seoPlugin()],
 })

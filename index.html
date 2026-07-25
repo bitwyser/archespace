@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;" />
     <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
@@ -11,17 +13,56 @@
     <!-- Apply the saved theme before first paint to avoid a light/dark flash. -->
     <script src="/theme-init.js"></script>
 
-    <!-- Primary Meta Tags -->
-    <title>Arche Space</title>
-    <meta name="title" content="Arche Space" />
-    <meta name="description" content="An open-source, private, encrypted space for everything you're working on." />
+    <!-- Primary meta -->
+    <title>Arche Space - private, end-to-end encrypted spaces</title>
+    <meta name="description" content="An open-source, private, encrypted space for everything you are working on. Everything is encrypted in your browser, so the server never sees your data." />
     <meta name="author" content="Arche Space" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="{{SITE_URL}}/" />
 
-    <!-- PWA Basics -->
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Arche Space" />
+    <meta property="og:title" content="Arche Space - private, end-to-end encrypted spaces" />
+    <meta property="og:description" content="An open-source, private, encrypted space for everything you are working on. Everything is encrypted in your browser, so the server never sees your data." />
+    <meta property="og:url" content="{{SITE_URL}}/" />
+    <meta property="og:image" content="{{SITE_URL}}/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Arche Space - private, encrypted spaces for everything you're working on." />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Arche Space - private, end-to-end encrypted spaces" />
+    <meta name="twitter:description" content="An open-source, private, encrypted space for everything you are working on. Everything is encrypted in your browser, so the server never sees your data." />
+    <meta name="twitter:image" content="{{SITE_URL}}/og-image.png" />
+
+    <!-- PWA basics -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Arche Space" />
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Arche Space",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Web",
+      "description": "An open-source, private, encrypted space for everything you are working on. Everything is encrypted in your browser, so the server never sees your data.",
+      "url": "{{SITE_URL}}/",
+      "image": "{{SITE_URL}}/og-image.png",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "author": {
+        "@type": "Organization",
+        "name": "Arche Space",
+        "url": "https://github.com/patkarmandar/archespace"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

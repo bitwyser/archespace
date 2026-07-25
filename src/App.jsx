@@ -16,6 +16,7 @@ import { CommandPaletteProvider } from './context/CommandPaletteContext'
 import { ShortcutsProvider } from './context/ShortcutsContext'
 import { PageActionsProvider } from './context/PageActionsContext'
 import { useSessionTimeout } from './hooks/useSessionTimeout'
+import { useRouteMeta } from './hooks/useRouteMeta'
 
 import ErrorBoundary from './components/ErrorBoundary'
 import ErrorScreen from './components/ErrorScreen'
@@ -74,9 +75,11 @@ function PageLoader() {
   )
 }
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, title }) {
   const { user, loading } = useAuth()
   useSessionTimeout()
+  // App routes are private: keep them out of search results.
+  useRouteMeta({ title, indexable: false })
 
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login" replace />
@@ -89,8 +92,9 @@ function ProtectedRoute({ children }) {
   )
 }
 
-function PublicRoute({ children }) {
+function PublicRoute({ children, title }) {
   const { user, loading } = useAuth()
+  useRouteMeta({ title, indexable: false })
 
   if (loading) return <PageLoader />
   if (user) return <Navigate to="/app" replace />
@@ -103,6 +107,8 @@ function PublicRoute({ children }) {
 
 function HomeRoute() {
   const { user, loading } = useAuth()
+  // The landing page is the only indexable route.
+  useRouteMeta({ title: null, indexable: true })
 
   if (loading) return <PageLoader />
   if (user) return <Navigate to="/app" replace />
@@ -149,14 +155,14 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     errorElement: <RouteErrorBoundary />,
     children: [
-      { path: '/login', element: <PublicRoute><LoginPage /></PublicRoute> },
+      { path: '/login', element: <PublicRoute title="Sign in"><LoginPage /></PublicRoute> },
       { path: '/reset-password', element: <Suspense fallback={<PageLoader />}><PasswordResetPage /></Suspense> },
       { path: '/', element: <HomeRoute /> },
-      { path: '/app', element: <ProtectedRoute><DashboardPage /></ProtectedRoute> },
+      { path: '/app', element: <ProtectedRoute title="Your spaces"><DashboardPage /></ProtectedRoute> },
       { path: '/space/:id', element: <ProtectedRoute><SpacePage /></ProtectedRoute> },
-      { path: '/recycle-bin', element: <ProtectedRoute><RecycleBinPage /></ProtectedRoute> },
-      { path: '/archive', element: <ProtectedRoute><ArchivePage /></ProtectedRoute> },
-      { path: '/settings', element: <ProtectedRoute><SettingsPage /></ProtectedRoute> },
+      { path: '/recycle-bin', element: <ProtectedRoute title="Recycle bin"><RecycleBinPage /></ProtectedRoute> },
+      { path: '/archive', element: <ProtectedRoute title="Archive"><ArchivePage /></ProtectedRoute> },
+      { path: '/settings', element: <ProtectedRoute title="Settings"><SettingsPage /></ProtectedRoute> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
