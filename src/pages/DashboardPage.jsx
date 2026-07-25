@@ -33,8 +33,11 @@ import { useSpaceStats } from '../hooks/useSpaceStats'
 import { useGlobalSearchData } from '../hooks/useGlobalSearch'
 import { filterGlobalSearch, searchOptionId, SEARCH_ITEM_DISPLAY_LIMIT } from '../lib/search'
 import { Modal } from '../components/ui/UI'
+import { SortMenu } from '../components/ui/SortMenu'
 import { SpaceModal } from '../components/space/SpaceModal'
 import { SpaceCard } from '../components/space/SpaceCard'
+import { usePersistedSort } from '../hooks/usePersistedSort'
+import { sortEntities } from '../lib/sortEntities'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -64,6 +67,7 @@ export default function DashboardPage() {
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [spaceSort, setSpaceSort] = usePersistedSort('arche-sort-spaces')
 
   const selectedCount = selectedIds.size
   const selectedSpaces = useMemo(
@@ -137,6 +141,13 @@ export default function DashboardPage() {
     return spaces.filter(c => matchedSpaceIds.has(c.id))
   }, [spaces, globalMatches, search])
 
+  const sortedSpaces = useMemo(
+    () => sortEntities(filtered, spaceSort, s => s.name),
+    [filtered, spaceSort]
+  )
+  // Manual drag order only applies to the default sort.
+  const reorderDisabled = !!search || selectMode || spaceSort !== 'default'
+
   const showSearchResults = search.trim().length > 0 && searchFocused
 
   const closeSearch = useCallback(() => {
@@ -192,10 +203,10 @@ export default function DashboardPage() {
     dragIndex, dragOverIndex,
     handleDragStart, handleDragOver, handleDrop, handleDragEnd,
   } = useDragReorder({
-    disabled: !!search || selectMode,
+    disabled: reorderDisabled,
     onDrop: (fromIndex, toIndex) => {
-      const fromId = filtered[fromIndex]?.id
-      const toId = filtered[toIndex]?.id
+      const fromId = sortedSpaces[fromIndex]?.id
+      const toId = sortedSpaces[toIndex]?.id
       if (!fromId || !toId) return
 
       const reordered = [...spaces]
@@ -469,6 +480,9 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {spaces.length > 1 && !selectMode && (
+              <SortMenu value={spaceSort} onChange={setSpaceSort} />
+            )}
             {filtered.length > 0 && (
               <button
                 type="button"
@@ -535,13 +549,14 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-24">
-            {filtered.map((col, index) => (
+            {sortedSpaces.map((col, index) => (
               <SpaceCard
                 key={col.id}
                 col={col}
                 index={index}
                 search={search}
                 stats={stats}
+                reorderDisabled={reorderDisabled}
                 selectMode={selectMode}
                 selected={selectedIds.has(col.id)}
                 onToggleSelect={() => toggleSelected(col.id)}

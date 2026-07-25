@@ -27,6 +27,9 @@ import { exportSpaceToPdf } from '../lib/pdfExport'
 import BulkSelectionBar from '../components/BulkSelectionBar'
 import { BULK_ICONS } from '../components/BulkSelectionIcons'
 import { Modal } from '../components/ui/UI'
+import { SortMenu } from '../components/ui/SortMenu'
+import { usePersistedSort } from '../hooks/usePersistedSort'
+import { sortEntities } from '../lib/sortEntities'
 
 export default function SpacePage() {
   const { id } = useParams()
@@ -67,6 +70,14 @@ export default function SpacePage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null)
   const [moveRequest, setMoveRequest] = useState(null)
   const [flashItemId, setFlashItemId] = useState(null)
+  const [itemSort, setItemSort] = usePersistedSort('arche-sort-items')
+
+  const sortedItems = useMemo(
+    () => sortEntities(items, itemSort, i => i.title),
+    [items, itemSort]
+  )
+  // Manual drag order only applies to the default sort.
+  const reorderDisabled = selectMode || itemSort !== 'default'
 
   const selectedCount = selectedIds.size
   const selectedItems = useMemo(
@@ -206,7 +217,7 @@ export default function SpacePage() {
     dragIndex, dragOverIndex,
     handleDragStart: onDragStart, handleDragOver, handleDrop, handleDragEnd,
   } = useDragReorder({
-    disabled: selectMode,
+    disabled: reorderDisabled,
     onDrop: (fromIndex, toIndex) => {
       const reordered = [...items]
       const [moved] = reordered.splice(fromIndex, 1)
@@ -295,6 +306,9 @@ export default function SpacePage() {
 
           {/* Header actions */}
           <div className="flex items-center gap-2 shrink-0 relative">
+            {items.length > 1 && !selectMode && (
+              <SortMenu value={itemSort} onChange={setItemSort} />
+            )}
             {items.length > 0 && !selectMode && (
               <button
                 type="button"
@@ -367,17 +381,17 @@ export default function SpacePage() {
         ) : (
           /* Items list with drag-and-drop */
           <div className="space-y-3 pb-24">
-            {items.map((item, index) => (
+            {sortedItems.map((item, index) => (
               <div
                 key={item.id}
                 data-item-id={item.id}
-                onDragOver={selectMode ? undefined : (e) => handleDragOver(e, index)}
-                onDrop={selectMode ? undefined : () => handleDrop(index)}
+                onDragOver={reorderDisabled ? undefined : (e) => handleDragOver(e, index)}
+                onDrop={reorderDisabled ? undefined : () => handleDrop(index)}
                 className={`transition-all duration-300 animate-fade-in-up ${
-                  !selectMode && dragOverIndex === index && dragIndex !== index
+                  !reorderDisabled && dragOverIndex === index && dragIndex !== index
                     ? 'border-t-2 border-accent pt-1'
                     : ''
-                } ${!selectMode && dragIndex === index ? 'opacity-40 scale-95' : ''} ${
+                } ${!reorderDisabled && dragIndex === index ? 'opacity-40 scale-95' : ''} ${
                   flashItemId === item.id ? 'rounded-2xl ring-2 ring-accent' : ''
                 }`}
                 style={{ animationDelay: `${index * 40}ms` }}
@@ -399,7 +413,7 @@ export default function SpacePage() {
                   onDirtyChange={handleDirtyChange}
                   onDragStart={handleItemDragStart}
                   onDragEnd={handleDragEnd}
-                  dragDisabled={selectMode}
+                  dragDisabled={reorderDisabled}
                 />
               </div>
             ))}

@@ -13,6 +13,7 @@ export function SpaceCard({
   selectMode = false,
   selected = false,
   onToggleSelect,
+  reorderDisabled = false,
 }) {
   const colorPreset = getColorPreset(col.color)
   const itemStats = stats?.[col.id]
@@ -34,7 +35,7 @@ export function SpaceCard({
 
   return (
     <div
-      draggable={!search && !selectMode}
+      draggable={!search && !selectMode && !reorderDisabled}
       onDragStart={() => !selectMode && handleDragStart(index)}
       onDragOver={(e) => !selectMode && handleDragOver(e, index)}
       onDrop={() => !selectMode && handleDrop(index)}
