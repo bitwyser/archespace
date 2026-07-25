@@ -21,6 +21,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - [Project structure](#project-structure)
 - [Deployment notes](#deployment-notes)
 - [Release verification](#release-verification)
+- [Roadmap](#roadmap)
 - [Help and support](#help-and-support)
 - [Contributing and development](#contributing-and-development)
 - [Credits](#credits)
@@ -32,6 +33,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Multiple item types for different kinds of content, including PIN-protected secrets (see [Item types](#item-types)).
 - Pinning for important spaces and items.
 - Drag-and-drop reordering for spaces and page items, plus keyboard reordering inside lists.
+- Sort spaces and page items by default order, name, or newest, with the choice remembered per view.
 - Unified dashboard search across spaces, tags, and item content, with keyboard navigation and jump-to-item.
 - Command palette with `Ctrl+K` / `Cmd+K`.
 - Keyboard shortcuts for common actions, with an in-app shortcuts dialog (see [Keyboard shortcuts](#keyboard-shortcuts)).
@@ -49,8 +51,8 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Accessibility throughout: full keyboard operation (cards, menus, command palette, and search), a visible focus indicator, screen-reader live regions.
 - Offline queue for pending changes while the browser is offline.
 - Single-user self-hosting mode by default, with an optional multi-user mode.
-- Verifiable build hash shown in Settings, linking to the exact source commit on GitHub.
 - PWA support for installing as an app.
+- Verifiable build hash shown in Settings, linking to the exact source commit on GitHub.
 - Owner-only audit log of authentication and security events (see [Audit logging](#audit-logging)).
 
 ## Item types
@@ -63,9 +65,9 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 | Numbered List | Ordered list with automatic numbering that updates as rows are added, removed, or reordered. |
 | Checklist | Items with checkboxes and progress tracking. |
 | Cards | Title and description pairs for planning and grouping ideas. |
-| Secret | PIN-protected text: the title stays visible, but the content is hidden and requires re-entering your vault PIN to view or edit. |
-| Drawing | Freehand vector sketch or diagram, drawn with pen, colours, and sizes. |
 | Table | Rows and columns of text with a header row. Copies as tab-separated values that paste straight into a spreadsheet. |
+| Drawing | Freehand vector sketch or diagram, drawn with pen, colours, and sizes. |
+| Secret | PIN-protected text: the title stays visible, but the content is hidden and requires re-entering your vault PIN to view or edit. |
 
 All list-style types support adding, removing, drag-and-drop reordering, and keyboard reordering with `Arrow Up` / `Arrow Down`.
 
@@ -240,7 +242,9 @@ The account-deletion email is separate; its HTML lives inside `notify_account_de
 | Auth email delivery | Resend SMTP (via Supabase Auth) |
 | Encryption | Web Crypto API (AES-GCM), Argon2id key derivation via `@noble/hashes` |
 | Icons | Lucide React |
+| Drawing | `perfect-freehand` for vector ink strokes |
 | File handling | JSZip |
+| Asset generation | `sharp` (dev-only script that renders the app icons and social image) |
 | Hosting / deploy | Cloudflare (Git-connected builds), or any static host |
 | CI / tooling | GitHub Actions (lint, test, build, audit), Vitest, Dependabot, ESLint 10 |
 
@@ -252,6 +256,7 @@ archespace/
     workflows/
   docs/
   email-templates/
+  scripts/
   public/
     _headers
   src/
@@ -291,6 +296,7 @@ Key areas:
 - `.github/` contains the CI workflow and Dependabot configuration; `docs/` contains audit and planning notes.
 - `schema.sql` contains tables, indexes, RLS policies, triggers, RPC functions, realtime setup, vault recovery and PIN lockout functions, the account-deletion email trigger, and the auth audit log.
 - `email-templates/` contains ready-to-paste Supabase auth email templates.
+- `scripts/` contains dev utilities, including `generate-icons.mjs`, which renders the PWA icons and social share image from the brand mark.
 - `public/_headers` contains deployment headers for hosts such as Netlify and Cloudflare Pages.
 - `vite.config.js` contains React, PWA, and manual chunk splitting configuration.
 
@@ -344,6 +350,16 @@ git push origin v1.2.3
 ```
 
 That triggers the workflow; the tag also becomes the version shown in Settings and the footer. You can also run the **Release** workflow manually from the Actions tab.
+
+## Roadmap
+
+A living list of directions the project is exploring. These are intentions, not commitments or dates, and they may change. Ideas and contributions are welcome, so open an issue or start a discussion (see [Contributing and development](#contributing-and-development)).
+
+- **First-party backend (exploring).** Today Arche Space runs on Supabase as a backend-as-a-service, covering the database, authentication, realtime sync, and server-side secret storage in one managed platform. A planned direction is a dedicated, self-contained backend that the project owns and ships itself, rather than depending on a single external provider. The goals are fewer moving parts for anyone self-hosting (one service to run instead of wiring up a managed platform), a data layer that stays portable across databases and hosts, and full control over the auth and sync surface. This is a large change and would land incrementally, likely behind configuration so existing Supabase deployments keep working during the transition.
+
+  The zero-knowledge design does not change: content is still encrypted in the browser and the backend still only ever stores ciphertext. What changes is where that ciphertext lives and how authentication and sync are served, not who can read your data.
+
+- **Other improvements** are tracked as issues on the repository. If there is something you want to see, propose it there.
 
 ## Help and support
 
