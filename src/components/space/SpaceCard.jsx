@@ -18,7 +18,7 @@ export function SpaceCard({
   const colorPreset = getColorPreset(col.color)
   const itemStats = stats?.[col.id]
   const itemLabel = itemStats
-    ? `${itemStats.total} ${itemStats.total === 1 ? 'item' : 'items'}${itemStats.pinned ? ` · ${itemStats.pinned} pinned` : ''}`
+    ? `${itemStats.total} ${itemStats.total === 1 ? 'item' : 'items'}`
     : '0 items'
 
   const activate = () => (selectMode ? onToggleSelect?.() : navigate(`/space/${col.id}`))
