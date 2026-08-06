@@ -2,7 +2,7 @@
  * VaultUnlockGate.jsx - Post-login vault PIN unlock or setup.
  */
 import { useState } from 'react'
-import { Shield, Lock } from 'lucide-react'
+import { Shield, Lock, Fingerprint } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import PinInput from './PinInput'
@@ -22,6 +22,10 @@ export default function VaultUnlockGate({ children }) {
     vaultStatus,
     sessionRestoring,
     clearUnlockError,
+    passkeySupported,
+    passkeys,
+    unlockWithPasskey,
+    enrollPasskey,
   } = useEncryption()
 
   const [pin, setPin] = useState('')
@@ -31,6 +35,10 @@ export default function VaultUnlockGate({ children }) {
   const [recoverySetupWarning, setRecoverySetupWarning] = useState('')
   const [forgotPin, setForgotPin] = useState(false)
   const [formError, setFormError] = useState('')
+  // When set (to the just-used PIN), show the "enable biometric unlock?" prompt
+  // before letting the unlocked app through.
+  const [pendingEnrollPin, setPendingEnrollPin] = useState('')
+  const [enrollError, setEnrollError] = useState('')
 
   if (!user) return children
   if (authLoading || vaultStatus.loading || sessionRestoring) {
@@ -40,7 +48,11 @@ export default function VaultUnlockGate({ children }) {
       </div>
     )
   }
-  if (isUnlocked && !oneTimeRecoveryCode && !recoverySetupWarning) return children
+  if (isUnlocked && !oneTimeRecoveryCode && !recoverySetupWarning && !pendingEnrollPin) return children
+
+  // Offer biometric enrollment only when the device supports it and the user
+  // has none enrolled yet (matches the mobile "enable biometric unlock?" prompt).
+  const canOfferBiometric = passkeySupported && passkeys.length === 0
 
   const needsSetup = !vaultStatus.hasVault
 
@@ -64,7 +76,20 @@ export default function VaultUnlockGate({ children }) {
       return
     }
     try {
-      await unlock(pin)
+      const enteredPin = pin
+      await unlock(enteredPin)
+      if (canOfferBiometric) setPendingEnrollPin(enteredPin)
+      resetFields()
+    } catch {
+      // unlockError set in context
+    }
+  }
+
+  const handlePasskeyUnlock = async () => {
+    clearUnlockError()
+    setFormError('')
+    try {
+      await unlockWithPasskey()
       resetFields()
     } catch {
       // unlockError set in context
@@ -85,7 +110,10 @@ export default function VaultUnlockGate({ children }) {
       return
     }
     try {
-      const { recoveryCode, recoveryUnavailable } = await setup(pin)
+      const enteredPin = pin
+      const { recoveryCode, recoveryUnavailable } = await setup(enteredPin)
+      // Shown after the recovery-code screen (render priority handles ordering).
+      if (canOfferBiometric) setPendingEnrollPin(enteredPin)
       if (recoveryCode) {
         showRecoveryCode(recoveryCode)
       } else if (recoveryUnavailable) {
@@ -126,8 +154,26 @@ export default function VaultUnlockGate({ children }) {
     }
   }
 
+  const handleEnableBiometric = async () => {
+    setEnrollError('')
+    try {
+      await enrollPasskey(pendingEnrollPin)
+      setPendingEnrollPin('')
+      resetFields()
+    } catch (err) {
+      setEnrollError(err?.message || 'Could not add a passkey. You can set it up later in Settings.')
+    }
+  }
+
+  const handleSkipBiometric = () => {
+    setPendingEnrollPin('')
+    setEnrollError('')
+    resetFields()
+  }
+
   const isNewPinMode = needsSetup || forgotPin
   const weakPinWarning = isNewPinMode && !validateVaultPin(pin) ? getWeakPinWarning(pin) : null
+  const showPasskeyUnlock = !needsSetup && !forgotPin && passkeySupported && passkeys.length > 0
 
   if (oneTimeRecoveryCode) {
     return (
@@ -183,6 +229,50 @@ export default function VaultUnlockGate({ children }) {
     )
   }
 
+  if (pendingEnrollPin) {
+    return (
+      <div className="min-h-[100svh] bg-bg-base flex items-start sm:items-center justify-center px-4 pt-16 pb-6 sm:p-4 overflow-y-auto">
+        <div className="w-full max-w-sm">
+          <div className="bg-bg-surface border border-bg-border rounded-2xl p-6 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto">
+              <Fingerprint size={24} className="text-accent" />
+            </div>
+            <div className="text-center">
+              <h1 className="text-xl font-semibold text-text-primary">Enable biometric unlock?</h1>
+              <p className="text-text-muted text-sm mt-1.5 leading-relaxed">
+                Use Face ID, Touch ID, or Windows Hello to unlock your vault next time, instead of typing your PIN. Your PIN still works as a backup.
+              </p>
+            </div>
+
+            {enrollError && (
+              <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">
+                {enrollError}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleEnableBiometric}
+              disabled={unlocking}
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+            >
+              <Fingerprint size={14} />
+              {unlocking ? 'Waiting for device…' : 'Enable biometric unlock'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSkipBiometric}
+              disabled={unlocking}
+              className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-[100svh] bg-bg-base flex items-start sm:items-center justify-center px-4 pt-16 pb-6 sm:p-4 overflow-y-auto">
       <div className="w-full max-w-sm">
@@ -206,6 +296,25 @@ export default function VaultUnlockGate({ children }) {
           onSubmit={needsSetup ? handleSetup : forgotPin ? handleRecover : handleUnlock}
           className="bg-bg-surface border border-bg-border rounded-2xl p-6 space-y-3"
         >
+          {showPasskeyUnlock && (
+            <>
+              <button
+                type="button"
+                onClick={handlePasskeyUnlock}
+                disabled={unlocking}
+                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+              >
+                <Fingerprint size={16} />
+                {unlocking ? 'Waiting…' : 'Unlock with passkey'}
+              </button>
+              <div className="flex items-center gap-3 py-1">
+                <div className="h-px flex-1 bg-bg-border" />
+                <span className="text-text-muted text-[10px] uppercase tracking-wide">or use PIN</span>
+                <div className="h-px flex-1 bg-bg-border" />
+              </div>
+            </>
+          )}
+
           {forgotPin && (
             <div>
               <label htmlFor="vault-recovery-code" className="block text-xs font-medium text-text-secondary mb-1.5">

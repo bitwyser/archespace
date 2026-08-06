@@ -23,6 +23,13 @@ import {
   clearVaultSession,
   VAULT_UNLOCKED_AT_KEY,
 } from '../lib/crypto/vaultSession'
+import { isPasskeySupported } from '../lib/crypto/passkey'
+import {
+  listPasskeys,
+  enrollPasskey as enrollPasskeyVault,
+  unlockVaultWithPasskey,
+  removePasskey as removePasskeyVault,
+} from '../lib/crypto/passkeyVault'
 import { VAULT_AUTO_LOCK_MS, VAULT_PIN_LOCKOUT_MS, VAULT_PIN_MAX_ATTEMPTS } from '../lib/constants'
 import {
   getClientRateLimitStatus,
@@ -53,6 +60,8 @@ export function EncryptionProvider({ children }) {
     loading: true,
     hasVault: false,
   })
+  const [passkeySupported, setPasskeySupported] = useState(false)
+  const [passkeys, setPasskeys] = useState([])
 
   const refreshVaultStatus = useCallback(async () => {
     if (!userId) {
@@ -77,6 +86,33 @@ export function EncryptionProvider({ children }) {
     const timer = setTimeout(refreshVaultStatus, 0)
     return () => clearTimeout(timer)
   }, [refreshVaultStatus])
+
+  // Detect platform-authenticator (biometric) support once on mount.
+  useEffect(() => {
+    let active = true
+    isPasskeySupported().then(supported => {
+      if (active) setPasskeySupported(supported)
+    })
+    return () => { active = false }
+  }, [])
+
+  const refreshPasskeys = useCallback(async () => {
+    if (!userId) {
+      setPasskeys([])
+      return
+    }
+    try {
+      setPasskeys(await listPasskeys(userId))
+    } catch (error) {
+      console.warn('Failed to load passkeys:', error)
+      setPasskeys([])
+    }
+  }, [userId])
+
+  useEffect(() => {
+    const timer = setTimeout(refreshPasskeys, 0)
+    return () => clearTimeout(timer)
+  }, [refreshPasskeys])
 
   const lock = useCallback((reason) => {
     clearVaultSession()
@@ -146,6 +182,53 @@ export function EncryptionProvider({ children }) {
       throw err
     }
   }, [userId])
+
+  // Unlock the vault with an enrolled passkey (biometric prompt). Falls back to
+  // PIN on any failure; the PIN path and recovery code remain the source of truth.
+  const unlockWithPasskey = useCallback(async () => {
+    if (!userId) throw new Error('Not signed in')
+    setUnlocking(true)
+    setUnlockError('')
+    try {
+      const key = await unlockVaultWithPasskey(userId)
+      await applyUnlockedKey(key)
+      logAudit({ action: 'vault_unlock', details: { method: 'passkey' } })
+      return key
+    } catch (err) {
+      const msg = err?.message || 'Failed to unlock with passkey'
+      setUnlockError(msg)
+      throw err
+    } finally {
+      setUnlocking(false)
+    }
+  }, [userId, applyUnlockedKey])
+
+  // Enroll a passkey. Re-verifies the current PIN to obtain an exportable master
+  // key (mirrors recovery-code setup), then wraps it with the passkey's PRF secret.
+  const enrollPasskey = useCallback(async (pin, label) => {
+    if (!userId) throw new Error('Not signed in')
+    setUnlocking(true)
+    setUnlockError('')
+    try {
+      const key = await enrollPasskeyVault(userId, pin, user?.email || 'Arche vault', label)
+      await applyUnlockedKey(key)
+      await refreshPasskeys()
+      logAudit({ action: 'vault_passkey_enroll' })
+    } catch (err) {
+      const msg = err?.message || 'Failed to add passkey'
+      setUnlockError(msg)
+      throw err
+    } finally {
+      setUnlocking(false)
+    }
+  }, [userId, user, applyUnlockedKey, refreshPasskeys])
+
+  const removePasskey = useCallback(async (id) => {
+    if (!userId) throw new Error('Not signed in')
+    await removePasskeyVault(userId, id)
+    await refreshPasskeys()
+    logAudit({ action: 'vault_passkey_remove' })
+  }, [userId, refreshPasskeys])
 
   const setup = useCallback(async (pin) => {
     if (!userId) throw new Error('Not signed in')
@@ -327,6 +410,12 @@ export function EncryptionProvider({ children }) {
         recoverPinWithCode,
         lock,
         refreshVaultStatus,
+        passkeySupported,
+        passkeys,
+        unlockWithPasskey,
+        enrollPasskey,
+        removePasskey,
+        refreshPasskeys,
         clearUnlockError: () => setUnlockError(''),
       }}
     >

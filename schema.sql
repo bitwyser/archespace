@@ -80,6 +80,22 @@ CREATE TABLE IF NOT EXISTS user_encryption (
   created_at           timestamptz NOT NULL DEFAULT now()
 );
 
+-- Passkeys (WebAuthn PRF) that wrap the vault master key for biometric unlock.
+-- The PRF secret never leaves the device; only the wrapped master key, the
+-- credential id, and the PRF salt are stored here (useless without the device).
+CREATE TABLE IF NOT EXISTS user_passkeys (
+  id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  credential_id text        NOT NULL,
+  prf_salt      text        NOT NULL,
+  wrapped_key   text        NOT NULL,
+  label         text        DEFAULT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  last_used_at  timestamptz DEFAULT NULL,
+  UNIQUE (user_id, credential_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_passkeys_user ON user_passkeys(user_id);
+
 -- User Settings: per-user application preferences.
 CREATE TABLE IF NOT EXISTS user_settings (
   user_id      uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -177,9 +193,11 @@ ALTER TABLE space_items     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_encryption ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_passkeys    ENABLE ROW LEVEL SECURITY;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_encryption TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_settings   TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_passkeys   TO authenticated;
 
 -- Spaces: full CRUD for the owning user only.
 DO $$ BEGIN
@@ -211,6 +229,14 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_settings' AND policyname = 'Users manage own settings') THEN
     CREATE POLICY "Users manage own settings"
       ON user_settings FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
+
+-- User passkeys: full CRUD for the owning user only.
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_passkeys' AND policyname = 'Users manage own passkeys') THEN
+    CREATE POLICY "Users manage own passkeys"
+      ON user_passkeys FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
   END IF;
 END $$;
 

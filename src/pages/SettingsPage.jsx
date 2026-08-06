@@ -12,6 +12,7 @@ import { useToast } from '../context/ToastCore'
 import { useSpaces } from '../hooks/useSpaces'
 import { exportSpaces, importSpaces } from '../lib/exportImport'
 import PinInput from '../components/PinInput'
+import PasskeyManager from '../components/PasskeyManager'
 import { validateVaultPin, getWeakPinWarning } from '../lib/crypto/vaultPin'
 import WeakPinWarning from '../components/WeakPinWarning'
 import { VAULT_PIN_MIN_LENGTH } from '../lib/constants'
@@ -667,6 +668,10 @@ export default function SettingsPage() {
                 {pinLoading || unlocking ? 'Updating...' : 'Change vault PIN'}
               </button>
             </form>
+
+            <Divider />
+
+            <PasskeyManager />
 
             <Divider />
 

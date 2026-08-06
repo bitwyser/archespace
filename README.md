@@ -48,6 +48,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Appearance settings with `System`, `Dark`, and `Light` theme modes.
 - Accent color settings with multiple color options.
 - Private, encrypted vault to keep your content secure (see [Security model](#security-model)).
+- Passkey / biometric vault unlock using WebAuthn - unlock with Face ID, Touch ID, or Windows Hello alongside your PIN (see [Security model](#security-model)).
 - Accessibility throughout: full keyboard operation (cards, menus, command palette, and search), a visible focus indicator, screen-reader live regions.
 - Offline queue for pending changes while the browser is offline.
 - Single-user self-hosting mode by default, with an optional multi-user mode.
@@ -102,6 +103,14 @@ Arche Space uses a browser-side vault model. You sign in with Supabase Auth usin
 - Failed login attempts and failed vault PIN attempts are rate limited, and repeated PIN failures lock the vault server-side.
 - Supabase Row Level Security restricts each user to their own rows.
 
+**Passkey / biometric unlock**
+
+- You can enroll platform passkeys (Face ID, Touch ID, Windows Hello) from Settings to unlock the vault with biometrics instead of typing your PIN. The PIN and recovery code always remain as fallbacks.
+- This uses the WebAuthn PRF extension: the passkey emits a stable, high-entropy secret (released only after biometric/user verification) that is HKDF-derived into a wrapping key and used to store an additional wrapped copy of the vault master key. The PRF secret and master key never leave the device.
+- The server only stores ciphertext, the credential ID, and a non-secret salt in the `user_passkeys` table (owner-scoped by Row Level Security) - none of which can decrypt anything without the enrolled device.
+- Multiple passkeys per account are supported (for example, one per device), and each can be removed independently from Settings. Changing your PIN re-wraps the same master key, so enrolled passkeys keep working without re-enrollment.
+- After setting up a PIN or unlocking with one, the app offers to enable biometric unlock when the device supports it and no passkey is enrolled yet. Availability is feature-detected, so the option is hidden where WebAuthn platform authenticators or PRF are unavailable.
+
 **Recovery**
 
 - A one-time recovery code is generated during initial vault setup and shown once in the app - it is not emailed, so it must be saved when shown.
@@ -129,7 +138,7 @@ Arche Space keeps an owner-only `audit_log` table for authentication and securit
 - **Owner-only access.** Row Level Security has no policies and table grants are revoked, so end users cannot read or write it directly. Writes come only from `SECURITY DEFINER` triggers and a whitelisted RPC. The app owner reads it from the Supabase dashboard or with the service role.
 - **Survives deletion.** The `user_id` foreign key is `ON DELETE SET NULL`, so history is retained after an account is removed.
 
-Recorded actions include: `account_created`, `account_deleted`, `email_change`, `password_reset_requested` (server-side, via triggers on `auth.users`), and `login`, `logout`, `password_change`, `password_reset`, `vault_setup`, `vault_unlock`, `vault_lock`, `vault_pin_change`, `vault_pin_reset`, `recovery_code_created`, `export`, `import` (client-side, via the `log_client_event` RPC).
+Recorded actions include: `account_created`, `account_deleted`, `email_change`, `password_reset_requested` (server-side, via triggers on `auth.users`), and `login`, `logout`, `password_change`, `password_reset`, `vault_setup`, `vault_unlock`, `vault_lock`, `vault_pin_change`, `vault_pin_reset`, `recovery_code_created`, `vault_passkey_enroll`, `vault_passkey_remove`, `export`, `import` (client-side, via the `log_client_event` RPC).
 
 ## Setup
 
@@ -291,10 +300,10 @@ Key areas:
 - `src/components/editors/` contains note, markdown, checklist, list, numbered list, and card editors, including drag-handle item reordering.
 - `src/context/` contains auth, encryption, appearance/theme, toast, shortcuts, command palette, and page action providers.
 - `src/hooks/` contains data hooks for spaces, items, archive, recycle bin, global search, offline sync, drag reordering, and session timeout.
-- `src/lib/crypto/` contains AES-GCM encryption, Argon2id and PBKDF2 key derivation, vault setup, vault unlock, non-extractable session key storage, PIN recovery code, and encoding helpers.
+- `src/lib/crypto/` contains AES-GCM encryption, Argon2id and PBKDF2 key derivation, vault setup, vault unlock, non-extractable session key storage, PIN recovery code, WebAuthn PRF passkey wrapping and unlock, and encoding helpers.
 - `src/lib/` contains Supabase client setup, data protection helpers, item type definitions, clipboard serialization, import/export, offline queue, rate limiting, audit logging, password policy, build info, and shared utilities.
 - `.github/` contains the CI workflow and Dependabot configuration; `docs/` contains audit and planning notes.
-- `schema.sql` contains tables, indexes, RLS policies, triggers, RPC functions, realtime setup, vault recovery and PIN lockout functions, the account-deletion email trigger, and the auth audit log.
+- `schema.sql` contains tables, indexes, RLS policies, triggers, RPC functions, realtime setup, vault recovery and PIN lockout functions, the `user_passkeys` table for passkey/biometric unlock, the account-deletion email trigger, and the auth audit log.
 - `email-templates/` contains ready-to-paste Supabase auth email templates.
 - `scripts/` contains dev utilities, including `generate-icons.mjs`, which renders the PWA icons and social share image from the brand mark.
 - `public/_headers` contains deployment headers for hosts such as Netlify and Cloudflare Pages.
