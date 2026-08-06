@@ -26,4 +26,21 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Pin the auth storage key instead of letting supabase-js derive it at runtime.
+// The default is `sb-<project-ref>-auth-token`, computed from the URL. If a
+// future supabase-js upgrade (shipped on a normal deploy) changes that
+// derivation, every user's saved session would be orphaned under the old key
+// and they'd all be logged out on the next build. Pinning to the CURRENT
+// default keeps existing sessions valid now and stable across upgrades.
+const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Must match supabase-js's current default exactly, or existing sessions
+    // are lost once (do not change this value casually).
+    storageKey: `sb-${projectRef}-auth-token`,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+})
