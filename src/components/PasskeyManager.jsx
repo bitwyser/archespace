@@ -71,10 +71,7 @@ export default function PasskeyManager() {
 
   return (
     <div>
-      <div className="flex items-center gap-2">
-        <Fingerprint size={16} className="text-accent" />
-        <h3 className="text-sm font-semibold text-text-primary">Passkey / biometric unlock</h3>
-      </div>
+      <h3 className="text-sm font-semibold text-text-primary">Passkey / biometric unlock</h3>
       <p className="text-text-muted text-xs mt-0.5">
         Unlock your vault with Face ID, Touch ID, or Windows Hello instead of typing your PIN.
         Your PIN and recovery code still work as backups.

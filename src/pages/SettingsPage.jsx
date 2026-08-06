@@ -4,7 +4,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Download, Upload, Eye, EyeOff, ChevronDown, Check, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Eye, EyeOff, ChevronDown, ChevronRight, Check, AlertTriangle, User, Palette, ShieldCheck, Archive, Trash2, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { useTheme } from '../context/ThemeCore'
@@ -23,7 +23,7 @@ import ReauthCode from '../components/ReauthCode'
 import { Modal } from '../components/ui/UI'
 import { queryKeys } from '../lib/queryKeys'
 
-function SettingsSection({ id, title, description, openSection, setOpenSection, children }) {
+function SettingsSection({ id, title, description, icon: Icon, openSection, setOpenSection, children }) {
   const open = openSection === id
 
   return (
@@ -31,15 +31,20 @@ function SettingsSection({ id, title, description, openSection, setOpenSection, 
       <button
         type="button"
         onClick={() => setOpenSection(current => (current === id ? '' : id))}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-bg-elevated/40 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-bg-elevated/40 transition-colors"
       >
-        <div>
+        {Icon && (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+            <Icon size={17} />
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
           <p className="text-text-muted text-xs mt-0.5">{description}</p>
         </div>
         <ChevronDown
           size={16}
-          className={`text-text-muted transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && (
@@ -58,7 +63,7 @@ function Divider() {
 export default function SettingsPage() {
   const navigate = useNavigate()
   const { user, signIn, signOut, requestPasswordReset, reauthenticate, updateEmail, deleteAccount, updatePasswordAndSignOut } = useAuth()
-  const { cryptoKey, unlock, updatePin, setupRecoveryCode, updatePinWithRecoveryCode, unlocking } = useEncryption()
+  const { cryptoKey, unlock, updatePin, setupRecoveryCode, updatePinWithRecoveryCode, unlocking, lock } = useEncryption()
   const {
     themeMode,
     themeModes,
@@ -355,6 +360,11 @@ export default function SettingsPage() {
     e.target.value = ''
   }
 
+  const handleLockVault = () => {
+    lock()
+    navigate('/app')
+  }
+
   const handleThemeModeChange = (nextThemeMode) => {
     setThemeMode(nextThemeMode.id)
     toast.success(`${nextThemeMode.name} theme applied.`)
@@ -387,9 +397,22 @@ export default function SettingsPage() {
             id="account"
             title="Account"
             description="Email address and account identity."
+            icon={User}
             openSection={openSection}
             setOpenSection={setOpenSection}
           >
+            <div className="flex items-center gap-3 rounded-xl border border-bg-border bg-bg-elevated px-4 py-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+                <User size={17} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-text-muted">Signed in as</p>
+                <p className="text-sm font-medium text-text-primary truncate">{user?.email}</p>
+              </div>
+            </div>
+
+            <Divider />
+
             <div>
               <h3 className="text-sm font-semibold text-text-primary">Change email</h3>
               <p className="text-text-muted text-xs mt-0.5">
@@ -483,6 +506,7 @@ export default function SettingsPage() {
             id="appearance"
             title="Appearance"
             description="Theme mode and accent color synced to your account."
+            icon={Palette}
             openSection={openSection}
             setOpenSection={setOpenSection}
           >
@@ -548,9 +572,85 @@ export default function SettingsPage() {
           </SettingsSection>
 
           <SettingsSection
+            id="backup"
+            title="Backup"
+            description="Export or import all spaces as JSON."
+            icon={Download}
+            openSection={openSection}
+            setOpenSection={setOpenSection}
+          >
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={handleExport}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-text-secondary hover:text-text-primary text-sm font-medium transition-colors"
+              >
+                <Download size={16} />
+                Export backup
+              </button>
+              <button
+                type="button"
+                onClick={() => importRef.current?.click()}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-text-secondary hover:text-text-primary text-sm font-medium transition-colors"
+              >
+                <Upload size={16} />
+                Import backup
+              </button>
+              <input
+                ref={importRef}
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+              />
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            id="storage"
+            title="Storage"
+            description="Archived items and the recycle bin."
+            icon={Archive}
+            openSection={openSection}
+            setOpenSection={setOpenSection}
+          >
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => navigate('/archive')}
+                className="w-full flex items-center gap-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base px-4 py-3 text-left transition-colors"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-bg-border bg-bg-surface text-text-secondary">
+                  <Archive size={17} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-text-primary">Archive</span>
+                  <span className="block text-xs text-text-muted mt-0.5">Items hidden without deleting</span>
+                </span>
+                <ChevronRight size={16} className="shrink-0 text-text-muted" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/recycle-bin')}
+                className="w-full flex items-center gap-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base px-4 py-3 text-left transition-colors"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-bg-border bg-bg-surface text-text-secondary">
+                  <Trash2 size={17} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-text-primary">Recycle bin</span>
+                  <span className="block text-xs text-text-muted mt-0.5">Restore or permanently delete</span>
+                </span>
+                <ChevronRight size={16} className="shrink-0 text-text-muted" />
+              </button>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
             id="security"
             title="Security"
-            description="Login password, vault PIN, and recovery code."
+            description="Login password, vault PIN, recovery code, and passkeys."
+            icon={ShieldCheck}
             openSection={openSection}
             setOpenSection={setOpenSection}
           >
@@ -749,41 +849,23 @@ export default function SettingsPage() {
                 <p className="text-text-muted text-xs">Save this code now. It replaces the previous recovery code.</p>
               </div>
             )}
+
+            <Divider />
+
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">Lock vault</h3>
+              <p className="text-text-muted text-xs mt-0.5">Require your PIN or passkey again to view your encrypted data.</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLockVault}
+              className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors py-3"
+            >
+              <Lock size={16} />
+              Lock vault now
+            </button>
           </SettingsSection>
 
-          <SettingsSection
-            id="backup"
-            title="Backup"
-            description="Export or import all spaces as JSON."
-            openSection={openSection}
-            setOpenSection={setOpenSection}
-          >
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                type="button"
-                onClick={handleExport}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-text-secondary hover:text-text-primary text-sm font-medium transition-colors"
-              >
-                <Download size={16} />
-                Export backup
-              </button>
-              <button
-                type="button"
-                onClick={() => importRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-text-secondary hover:text-text-primary text-sm font-medium transition-colors"
-              >
-                <Upload size={16} />
-                Import backup
-              </button>
-              <input
-                ref={importRef}
-                type="file"
-                accept=".json"
-                onChange={handleImport}
-                className="hidden"
-              />
-            </div>
-          </SettingsSection>
         </div>
 
         <section className="mt-6">
