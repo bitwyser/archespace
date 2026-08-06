@@ -20,7 +20,7 @@ import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
 import { APP_VERSION, BUILD_HASH, COMMIT_URL } from '../lib/buildInfo'
 import ReauthCode from '../components/ReauthCode'
-import { Modal } from '../components/ui/UI'
+import { Modal, ConfirmDialog } from '../components/ui/UI'
 import { queryKeys } from '../lib/queryKeys'
 
 function SettingsSection({ id, title, description, icon: Icon, openSection, setOpenSection, children }) {
@@ -107,6 +107,7 @@ export default function SettingsPage() {
   const [recoverySetupLoading, setRecoverySetupLoading] = useState(false)
   const [pinRecoveryLoading, setPinRecoveryLoading] = useState(false)
   const [openSection, setOpenSection] = useState('')
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
   const [emailStep, setEmailStep] = useState('form')     // 'form' | 'code'
   const deleteConfirmationPhrase = `DELETE ${user?.email || ''}`
 
@@ -871,10 +872,7 @@ export default function SettingsPage() {
         <section className="mt-6">
           <button
             type="button"
-            onClick={() => {
-              signOut()
-              toast.info('Signed out')
-            }}
+            onClick={() => setConfirmSignOut(true)}
             className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 text-sm font-semibold text-text-secondary hover:text-danger transition-colors"
           >
             Sign out
@@ -1007,6 +1005,21 @@ export default function SettingsPage() {
             />
           </div>
         </Modal>
+      )}
+
+      {confirmSignOut && (
+        <ConfirmDialog
+          title="Sign out?"
+          message="You'll need your login password and vault PIN to sign back in."
+          confirmLabel="Sign out"
+          destructive
+          onConfirm={() => {
+            setConfirmSignOut(false)
+            signOut()
+            toast.info('Signed out')
+          }}
+          onClose={() => setConfirmSignOut(false)}
+        />
       )}
     </div>
   )

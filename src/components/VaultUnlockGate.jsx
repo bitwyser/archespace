@@ -9,6 +9,7 @@ import PinInput from './PinInput'
 import { VAULT_PIN_MIN_LENGTH } from '../lib/constants'
 import { validateVaultPin, getWeakPinWarning } from '../lib/crypto/vaultPin'
 import WeakPinWarning from './WeakPinWarning'
+import { ConfirmDialog } from './ui/UI'
 
 export default function VaultUnlockGate({ children }) {
   const { user, signOut, loading: authLoading } = useAuth()
@@ -35,6 +36,7 @@ export default function VaultUnlockGate({ children }) {
   const [recoverySetupWarning, setRecoverySetupWarning] = useState('')
   const [forgotPin, setForgotPin] = useState(false)
   const [formError, setFormError] = useState('')
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
   // When set (to the just-used PIN), show the "enable biometric unlock?" prompt
   // before letting the unlocked app through.
   const [pendingEnrollPin, setPendingEnrollPin] = useState('')
@@ -403,7 +405,7 @@ export default function VaultUnlockGate({ children }) {
 
           <button
             type="button"
-            onClick={() => signOut()}
+            onClick={() => setConfirmSignOut(true)}
             className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 text-sm font-semibold text-text-secondary hover:text-danger transition-colors"
           >
             Sign out
@@ -414,6 +416,17 @@ export default function VaultUnlockGate({ children }) {
           Vault PIN is separate from your login password.
         </p>
       </div>
+
+      {confirmSignOut && (
+        <ConfirmDialog
+          title="Sign out?"
+          message="You'll need your login password and vault PIN to sign back in."
+          confirmLabel="Sign out"
+          destructive
+          onConfirm={() => { setConfirmSignOut(false); signOut() }}
+          onClose={() => setConfirmSignOut(false)}
+        />
+      )}
     </div>
   )
 }

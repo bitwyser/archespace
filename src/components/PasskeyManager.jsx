@@ -7,6 +7,7 @@ import { Fingerprint, Trash2 } from 'lucide-react'
 import { useEncryption } from '../context/EncryptionCore'
 import { useToast } from '../context/ToastCore'
 import PinInput from './PinInput'
+import { ConfirmDialog } from './ui/UI'
 import { VAULT_PIN_MIN_LENGTH } from '../lib/constants'
 
 function formatDate(value) {
@@ -37,6 +38,7 @@ export default function PasskeyManager() {
   const [label, setLabel] = useState('')
   const [adding, setAdding] = useState(false)
   const [removingId, setRemovingId] = useState('')
+  const [confirmRemove, setConfirmRemove] = useState(null)
 
   const handleAdd = async (e) => {
     e.preventDefault()
@@ -57,10 +59,13 @@ export default function PasskeyManager() {
     }
   }
 
-  const handleRemove = async (id) => {
+  const handleRemove = async () => {
+    if (!confirmRemove) return
+    const id = confirmRemove.id
     setRemovingId(id)
     try {
       await removePasskey(id)
+      setConfirmRemove(null)
       toast.success('Passkey removed.')
     } catch (err) {
       toast.error(err?.message || 'Failed to remove passkey.')
@@ -108,7 +113,7 @@ export default function PasskeyManager() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleRemove(pk.id)}
+                      onClick={() => setConfirmRemove(pk)}
                       disabled={removingId === pk.id}
                       className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-bg-border text-text-secondary hover:text-danger hover:border-danger/30 hover:bg-danger/10 text-xs font-medium transition-colors disabled:opacity-50"
                       aria-label={`Remove ${pk.label || 'passkey'}`}
@@ -156,6 +161,18 @@ export default function PasskeyManager() {
             </button>
           </form>
         </>
+      )}
+
+      {confirmRemove && (
+        <ConfirmDialog
+          title="Remove this passkey?"
+          message={`"${confirmRemove.label || 'Passkey'}" will no longer unlock your vault. You can still unlock with your PIN, and re-add a passkey later.`}
+          confirmLabel="Remove"
+          destructive
+          busy={removingId === confirmRemove.id}
+          onConfirm={handleRemove}
+          onClose={() => setConfirmRemove(null)}
+        />
       )}
     </div>
   )

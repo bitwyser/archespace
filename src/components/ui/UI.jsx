@@ -6,6 +6,8 @@
  *   - Modal   - Full-screen overlay with header, scrollable body,
  *               and optional pinned footer. Closes on backdrop
  *               click or Escape key.
+ *   - ConfirmDialog - Small yes/no confirmation built on Modal, for
+ *               guarding sensitive actions (sign out, delete, remove).
  */
 
 import { useEffect, useId, useRef } from 'react'
@@ -146,5 +148,64 @@ export function Modal({ title, onClose, children, footer, onSubmit }) {
         )}
       </Panel>
     </div>
+  )
+}
+
+/**
+ * Confirmation dialog for guarding a sensitive action. Renders a titled
+ * Modal with a message and Cancel / Confirm buttons.
+ *
+ * @param {{
+ *   title: string,
+ *   message: React.ReactNode,
+ *   confirmLabel?: string,
+ *   cancelLabel?: string,
+ *   destructive?: boolean,
+ *   busy?: boolean,
+ *   onConfirm: Function,
+ *   onClose: Function,
+ * }} props
+ */
+export function ConfirmDialog({
+  title,
+  message,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  destructive = false,
+  busy = false,
+  onConfirm,
+  onClose,
+}) {
+  return (
+    <Modal
+      title={title}
+      onClose={onClose}
+      footer={
+        <div className="flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors disabled:opacity-50"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 ${
+              destructive
+                ? 'bg-danger hover:bg-danger-hover text-white'
+                : 'bg-accent hover:bg-accent-hover text-white'
+            }`}
+          >
+            {busy ? 'Working…' : confirmLabel}
+          </button>
+        </div>
+      }
+    >
+      <p className="text-sm leading-6 text-text-secondary">{message}</p>
+    </Modal>
   )
 }
