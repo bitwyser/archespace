@@ -22,19 +22,19 @@ export const ACCENT_COLORS = [
   {
     id: 'mint',
     name: 'Mint Green',
-    description: 'Fresh green accent inspired by the Arche Space home page.',
+    description: "Arche Space's signature accent, a refined mint green.",
     swatch: '#32d3aa',
   },
   {
     id: 'lavender',
     name: 'Lavender Indigo',
-    description: 'The original Arche Space accent, refined.',
+    description: 'A cool indigo-violet with a fresh, modern feel.',
     swatch: '#7c6af7',
   },
   {
     id: 'amber',
     name: 'Amber Gold',
-    description: 'Warm gold accent with a focused feel.',
+    description: 'A warm gold accent with a calm, focused feel.',
     swatch: '#f6b84b',
   },
 ]
