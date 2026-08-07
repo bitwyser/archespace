@@ -148,7 +148,7 @@ export function EncryptionProvider({ children }) {
       logAudit({ action: 'vault_unlock' })
       return key
     } catch (err) {
-      const msg = err?.message || 'Failed to unlock vault'
+      const msg = err?.message || "Couldn't unlock vault."
       if (msg.includes('Incorrect PIN') || msg.includes('cannot unlock')) {
         recordClientRateLimitFailure(rateKey, VAULT_PIN_MAX_ATTEMPTS, VAULT_PIN_LOCKOUT_MS)
       }
@@ -195,7 +195,7 @@ export function EncryptionProvider({ children }) {
       logAudit({ action: 'vault_unlock', details: { method: 'passkey' } })
       return key
     } catch (err) {
-      const msg = err?.message || 'Failed to unlock with passkey'
+      const msg = err?.message || "Couldn't unlock with passkey."
       setUnlockError(msg)
       throw err
     } finally {
@@ -215,7 +215,7 @@ export function EncryptionProvider({ children }) {
       await refreshPasskeys()
       logAudit({ action: 'vault_passkey_enroll' })
     } catch (err) {
-      const msg = err?.message || 'Failed to add passkey'
+      const msg = err?.message || "Couldn't add passkey."
       setUnlockError(msg)
       throw err
     } finally {
@@ -241,7 +241,7 @@ export function EncryptionProvider({ children }) {
       logAudit({ action: 'vault_setup' })
       return { recoveryCode, recoveryUnavailable }
     } catch (err) {
-      const msg = err?.message || 'Failed to set up vault'
+      const msg = err?.message || "Couldn't set up vault."
       setUnlockError(msg)
       throw err
     } finally {
@@ -258,7 +258,7 @@ export function EncryptionProvider({ children }) {
       await applyUnlockedKey(key)
       logAudit({ action: 'vault_pin_change' })
     } catch (err) {
-      const msg = err?.message || 'Failed to change PIN'
+      const msg = err?.message || "Couldn't change PIN."
       setUnlockError(msg)
       throw err
     } finally {
@@ -276,7 +276,7 @@ export function EncryptionProvider({ children }) {
       logAudit({ action: 'recovery_code_created' })
       return { recoveryCode }
     } catch (err) {
-      const msg = err?.message || 'Failed to set up recovery code'
+      const msg = err?.message || "Couldn't set up recovery code."
       setUnlockError(msg)
       throw err
     } finally {
@@ -295,7 +295,7 @@ export function EncryptionProvider({ children }) {
       logAudit({ action: 'vault_pin_reset' })
       return { recoveryCode: nextRecoveryCode }
     } catch (err) {
-      const msg = err?.message || 'Failed to change PIN'
+      const msg = err?.message || "Couldn't change PIN."
       setUnlockError(msg)
       throw err
     } finally {
@@ -314,7 +314,7 @@ export function EncryptionProvider({ children }) {
       logAudit({ action: 'vault_pin_reset' })
       return { recoveryCode: nextRecoveryCode }
     } catch (err) {
-      const msg = err?.message || 'Failed to recover vault PIN'
+      const msg = err?.message || "Couldn't recover vault PIN."
       setUnlockError(msg)
       throw err
     } finally {

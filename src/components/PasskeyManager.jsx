@@ -53,7 +53,7 @@ export default function PasskeyManager() {
       setLabel('')
       toast.success('Passkey added. You can now unlock with biometrics.')
     } catch (err) {
-      toast.error(err?.message || 'Failed to add passkey.')
+      toast.error(err?.message || "Couldn't add passkey.")
     } finally {
       setAdding(false)
     }
@@ -68,7 +68,7 @@ export default function PasskeyManager() {
       setConfirmRemove(null)
       toast.success('Passkey removed.')
     } catch (err) {
-      toast.error(err?.message || 'Failed to remove passkey.')
+      toast.error(err?.message || "Couldn't remove passkey.")
     } finally {
       setRemovingId('')
     }

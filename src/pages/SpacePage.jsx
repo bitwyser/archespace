@@ -162,11 +162,11 @@ export default function SpacePage() {
   )
   const handleDuplicateItem = useCallback((it) => duplicateMutate(it, {
     onSuccess: () => toastRef.current.success('Item duplicated'),
-    onError: () => toastRef.current.error('Failed to duplicate'),
+    onError: () => toastRef.current.error("Couldn't duplicate the item."),
   }), [duplicateMutate])
   const handleArchiveItem = useCallback((itemId) => archiveMutate(itemId, {
     onSuccess: () => toastRef.current.success('Item archived'),
-    onError: () => toastRef.current.error('Failed to archive'),
+    onError: () => toastRef.current.error("Couldn't archive the item."),
   }), [archiveMutate])
   const openMoveItems = useCallback((ids) => {
     if (!ids?.length) return
@@ -213,7 +213,7 @@ export default function SpacePage() {
       await create.mutateAsync({ type, title: '' })
       toast.success(`${ITEM_TYPE_OPTIONS.find(t => t.type === type)?.label || 'Item'} added`)
     } catch {
-      toast.error('Failed to add item')
+      toast.error("Couldn't add item.")
     }
   }
 
@@ -227,7 +227,7 @@ export default function SpacePage() {
       const [moved] = reordered.splice(fromIndex, 1)
       reordered.splice(toIndex, 0, moved)
       reorder.mutate(reordered, {
-        onError: () => toast.error('Failed to reorder items'),
+        onError: () => toast.error("Couldn't reorder items."),
       })
     },
   })
@@ -248,7 +248,7 @@ export default function SpacePage() {
       await fn()
       exitSelectMode()
     } catch {
-      toast.error('Bulk action failed')
+      toast.error("Couldn't complete that action.")
     }
   }
 
@@ -262,7 +262,7 @@ export default function SpacePage() {
       setMoveRequest(null)
       exitSelectMode()
     } catch {
-      toast.error('Failed to move items')
+      toast.error("Couldn't move items.")
     }
   }
 
@@ -606,7 +606,7 @@ export default function SpacePage() {
                       setBulkDeleteConfirm(null)
                       exitSelectMode()
                     },
-                    onError: () => toast.error('Failed to delete items'),
+                    onError: () => toast.error("Couldn't delete items."),
                   })
                 }}
                 className="px-4 py-2.5 text-sm font-semibold bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
@@ -678,7 +678,7 @@ export default function SpacePage() {
                 onClick={() => {
                   remove.mutate(deleteConfirm, {
                     onSuccess: () => toast.success('Item moved to recycle bin'),
-                    onError: () => toast.error('Failed to delete item'),
+                    onError: () => toast.error("Couldn't delete item."),
                   })
                   setDeleteConfirm(null)
                 }}

@@ -41,7 +41,7 @@ export default function ArchivePage() {
       toast.success(`Restored ${count} ${count === 1 ? 'item' : 'items'} from archive`)
       exitSelectMode()
     } catch {
-      toast.error('Failed to restore selection')
+      toast.error("Couldn't restore selection.")
     }
   }, [selectedSpaceIds, selectedItemIds, bulkUnarchiveSpaces, bulkUnarchiveItems, exitSelectMode, toast])
 
@@ -120,7 +120,7 @@ export default function ArchivePage() {
                           type="button"
                           onClick={() => unarchiveSpace.mutate(col.id, {
                             onSuccess: () => toast.success('Space restored from archive'),
-                            onError: () => toast.error('Failed to restore'),
+                            onError: () => toast.error("Couldn't restore it."),
                           })}
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-success/10 hover:text-success text-text-secondary text-xs font-medium"
                         >
@@ -153,7 +153,7 @@ export default function ArchivePage() {
                           type="button"
                           onClick={() => unarchiveItem.mutate(item.id, {
                             onSuccess: () => toast.success('Item restored'),
-                            onError: () => toast.error('Failed to restore'),
+                            onError: () => toast.error("Couldn't restore it."),
                           })}
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-success/10 hover:text-success text-text-secondary text-xs font-medium"
                         >

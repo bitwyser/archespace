@@ -216,7 +216,7 @@ export default function DashboardPage() {
       reordered.splice(toIdx, 0, moved)
 
       reorder.mutate(reordered, {
-        onError: () => toast.error('Failed to reorder spaces'),
+        onError: () => toast.error("Couldn't reorder spaces."),
       })
     },
   })
@@ -572,11 +572,11 @@ export default function DashboardPage() {
                 setDeleteConfirm={setDeleteConfirm}
                 onDuplicate={(id) => duplicate.mutate(id, {
                   onSuccess: () => toast.success('Space duplicated'),
-                  onError: () => toast.error('Failed to duplicate'),
+                  onError: () => toast.error("Couldn't duplicate the space."),
                 })}
                 onArchive={(id) => archive.mutate(id, {
                   onSuccess: () => toast.success('Space archived'),
-                  onError: () => toast.error('Failed to archive'),
+                  onError: () => toast.error("Couldn't archive the space."),
                 })}
               />
             ))}
@@ -595,7 +595,7 @@ export default function DashboardPage() {
                       await bulkSetPinned.mutateAsync({ ids: [...selectedIds], pinned: true })
                       toast.success(`Pinned ${selectedCount} spaces`)
                       exitSelectMode()
-                    } catch { toast.error('Failed to pin') }
+                    } catch { toast.error("Couldn't pin the space.") }
                   },
                 },
                 {
@@ -607,7 +607,7 @@ export default function DashboardPage() {
                       await bulkSetPinned.mutateAsync({ ids: [...selectedIds], pinned: false })
                       toast.success('Unpinned spaces')
                       exitSelectMode()
-                    } catch { toast.error('Failed to unpin') }
+                    } catch { toast.error("Couldn't unpin the space.") }
                   },
                 },
                 {
@@ -619,7 +619,7 @@ export default function DashboardPage() {
                       await bulkDuplicate.mutateAsync(selectedSpaces)
                       toast.success(`Duplicated ${selectedCount} spaces`)
                       exitSelectMode()
-                    } catch { toast.error('Failed to duplicate') }
+                    } catch { toast.error("Couldn't duplicate the space.") }
                   },
                 },
                 {
@@ -631,7 +631,7 @@ export default function DashboardPage() {
                       await bulkArchive.mutateAsync([...selectedIds])
                       toast.success(`Archived ${selectedCount} spaces`)
                       exitSelectMode()
-                    } catch { toast.error('Failed to archive') }
+                    } catch { toast.error("Couldn't archive the space.") }
                   },
                 },
                 {
@@ -653,7 +653,7 @@ export default function DashboardPage() {
           onSave={({ name, description, color, tags }) => {
             create.mutate({ name, description, color, tags }, {
               onSuccess: () => toast.success('Space created'),
-              onError: () => toast.error('Failed to create space')
+              onError: () => toast.error("Couldn't create space.")
             })
           }}
           onClose={() => setModal(null)}
@@ -665,7 +665,7 @@ export default function DashboardPage() {
           onSave={({ name, description, color, tags }) => {
             update.mutate({ id: modal.col.id, name, description, color, tags }, {
               onSuccess: () => toast.success('Space updated'),
-              onError: () => toast.error('Failed to update space')
+              onError: () => toast.error("Couldn't update space.")
             })
           }}
           onClose={() => setModal(null)}
@@ -673,7 +673,7 @@ export default function DashboardPage() {
       )}
       {bulkDeleteConfirm && (
         <Modal
-          title={`Move ${bulkDeleteConfirm.length} spaces to bin?`}
+          title={`Move ${bulkDeleteConfirm.length} spaces to recycle bin?`}
           onClose={() => setBulkDeleteConfirm(null)}
           footer={
             <div className="flex gap-2 justify-end">
@@ -689,16 +689,16 @@ export default function DashboardPage() {
                 onClick={() => {
                   bulkRemove.mutate(bulkDeleteConfirm, {
                     onSuccess: () => {
-                      toast.success(`Moved ${bulkDeleteConfirm.length} spaces to bin`)
+                      toast.success(`Moved ${bulkDeleteConfirm.length} spaces to recycle bin`)
                       setBulkDeleteConfirm(null)
                       exitSelectMode()
                     },
-                    onError: () => toast.error('Failed to delete'),
+                    onError: () => toast.error("Couldn't delete the space."),
                   })
                 }}
                 className="px-4 py-2.5 text-sm font-semibold bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
-                Move to bin
+                Move to recycle bin
               </button>
             </div>
           }
@@ -709,7 +709,7 @@ export default function DashboardPage() {
 
       {deleteConfirm && (
         <Modal
-          title="Move space to bin?"
+          title="Move space to recycle bin?"
           onClose={() => setDeleteConfirm(null)}
           footer={
             <div className="flex gap-2 justify-end">
@@ -722,14 +722,14 @@ export default function DashboardPage() {
               <button
                 onClick={() => {
                   remove.mutate(deleteConfirm, {
-                    onSuccess: () => toast.success('Space moved to bin'),
-                    onError: () => toast.error('Failed to delete space')
+                    onSuccess: () => toast.success('Space moved to recycle bin'),
+                    onError: () => toast.error("Couldn't delete space.")
                   })
                   setDeleteConfirm(null)
                 }}
                 className="px-4 py-2.5 text-sm font-semibold bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
-                Move to bin
+                Move to recycle bin
               </button>
             </div>
           }

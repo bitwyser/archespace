@@ -48,7 +48,7 @@ export default function RecycleBinPage() {
       toast.success(`Restored ${count} ${count === 1 ? 'item' : 'items'}`)
       exitSelectMode()
     } catch {
-      toast.error('Failed to restore selection')
+      toast.error("Couldn't restore selection.")
     }
   }, [selectedSpaceIds, selectedItemIds, bulkRestoreSpaces, bulkRestoreItems, exitSelectMode, toast])
 
@@ -63,7 +63,7 @@ export default function RecycleBinPage() {
       setConfirmBulkPurge(false)
       exitSelectMode()
     } catch {
-      toast.error('Failed to delete selection')
+      toast.error("Couldn't delete selection.")
     }
   }, [selectedSpaceIds, selectedItemIds, bulkPurgeSpaces, bulkPurgeItems, exitSelectMode, toast])
 
@@ -90,7 +90,7 @@ export default function RecycleBinPage() {
       setConfirmEmpty(false)
       exitSelectMode()
     } catch {
-      toast.error('Failed to empty recycle bin')
+      toast.error("Couldn't empty recycle bin.")
     }
   }
 
@@ -105,7 +105,7 @@ export default function RecycleBinPage() {
       toast.success('Permanently deleted')
       setConfirmPurge(null)
     } catch {
-      toast.error('Failed to delete permanently')
+      toast.error("Couldn't delete permanently.")
     }
   }
 
@@ -191,7 +191,7 @@ export default function RecycleBinPage() {
                             type="button"
                             onClick={() => restoreSpace.mutate(col.id, {
                               onSuccess: () => toast.success('Space restored'),
-                              onError: () => toast.error('Failed to restore space'),
+                              onError: () => toast.error("Couldn't restore space."),
                             })}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-success/10 hover:border-success/30 hover:text-success text-text-secondary transition-all text-xs font-medium"
                           >
@@ -238,7 +238,7 @@ export default function RecycleBinPage() {
                             type="button"
                             onClick={() => restoreItem.mutate(item.id, {
                               onSuccess: () => toast.success('Item restored'),
-                              onError: () => toast.error('Failed to restore item'),
+                              onError: () => toast.error("Couldn't restore item."),
                             })}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-success/10 hover:border-success/30 hover:text-success text-text-secondary transition-all text-xs font-medium"
                           >

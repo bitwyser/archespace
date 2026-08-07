@@ -123,7 +123,7 @@ export default function SettingsPage() {
   const sendEmailCode = async () => {
     const { error } = await reauthenticate()
     if (error) {
-      toast.error(`Could not send code: ${error.message}`)
+      toast.error(`Couldn't send the code: ${error.message}`)
       return false
     }
     setEmailStep('code')
@@ -208,7 +208,7 @@ export default function SettingsPage() {
     const { error } = await deleteAccount()
     setDeleteLoading(false)
     if (error) {
-      toast.error(error.message || 'Failed to delete account.')
+      toast.error(error.message || "Couldn't delete account.")
       return
     }
 
@@ -293,7 +293,7 @@ export default function SettingsPage() {
       setConfirmPin('')
       toast.success('Vault PIN updated.')
     } catch (err) {
-      toast.error(err?.message || 'Failed to change vault PIN.')
+      toast.error(err?.message || "Couldn't change vault PIN.")
     }
     setPinLoading(false)
   }
@@ -307,7 +307,7 @@ export default function SettingsPage() {
       setOneTimeRecoveryCode(recoveryCode)
       toast.success('Recovery code created. Save it now.')
     } catch (err) {
-      toast.error(err?.message || 'Failed to create recovery code.')
+      toast.error(err?.message || "Couldn't create recovery code.")
     }
     setRecoverySetupLoading(false)
   }
@@ -332,7 +332,7 @@ export default function SettingsPage() {
       setOneTimeRecoveryCode(recoveryCode)
       toast.success('Vault PIN updated. Save your new recovery code.')
     } catch (err) {
-      toast.error(err?.message || 'Failed to reset vault PIN.')
+      toast.error(err?.message || "Couldn't reset vault PIN.")
     }
     setPinRecoveryLoading(false)
   }
@@ -340,9 +340,9 @@ export default function SettingsPage() {
   const handleExport = async () => {
     try {
       await exportSpaces(spaces, cryptoKey)
-      toast.success('Backup exported successfully')
+      toast.success("Backup exported")
     } catch {
-      toast.error('Failed to export backup')
+      toast.error("Couldn't export backup.")
     }
   }
 
@@ -353,9 +353,9 @@ export default function SettingsPage() {
       await importSpaces(file, user.id, cryptoKey)
       await queryClient.invalidateQueries({ queryKey: queryKeys.spaces() })
       await queryClient.invalidateQueries({ queryKey: queryKeys.bin() })
-      toast.success('Backup imported successfully')
+      toast.success("Backup imported")
     } catch (err) {
-      toast.error('Failed to import backup - invalid format')
+      toast.error("That backup file isn't valid.")
       console.error(err)
     }
     e.target.value = ''
