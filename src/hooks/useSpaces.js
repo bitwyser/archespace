@@ -2,7 +2,7 @@
  * useSpaces.js - Hook for managing spaces.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useId } from 'react'
 import { supabase } from '../lib/supabase'
 import { parseTags } from '../lib/spaceColors'
 import { useEncryption } from '../context/EncryptionCore'
@@ -21,6 +21,9 @@ import {
 export function useSpaces() {
   const qc = useQueryClient()
   const { cryptoKey } = useEncryption()
+  // Unique per hook instance so multiple mounts (e.g. the app shell + the
+  // dashboard) don't collide on one realtime channel name.
+  const instanceId = useId()
 
   const query = useQuery({
     queryKey: queryKeys.spaces(),
@@ -45,7 +48,7 @@ export function useSpaces() {
     // realtime echo of our own optimistic writes) into a single invalidation.
     let timer
     const channel = supabase
-      .channel('spaces-realtime')
+      .channel(`spaces-realtime-${instanceId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'spaces' },
@@ -59,7 +62,7 @@ export function useSpaces() {
       clearTimeout(timer)
       supabase.removeChannel(channel)
     }
-  }, [qc])
+  }, [qc, instanceId])
 
   const create = useMutation({
     mutationFn: async ({ name, description, color, tags }) => {
