@@ -211,12 +211,13 @@ export default function LoginPage() {
               <label htmlFor="login-email" className="block text-xs font-medium text-text-secondary mb-1.5">Email</label>
               <input
                 id="login-email"
+                name="email"
                 type="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                autoComplete="email"
+                autoComplete="username"
                 disabled={!isForgot && isCoolingDown}
                 className="w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm disabled:opacity-50"
               />
@@ -227,6 +228,7 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   id="login-password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
@@ -254,6 +256,7 @@ export default function LoginPage() {
                 <label htmlFor="login-confirm" className="block text-xs font-medium text-text-secondary mb-1.5">Confirm password</label>
                 <input
                   id="login-confirm"
+                  name="confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={confirmPassword}
