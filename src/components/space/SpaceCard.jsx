@@ -5,7 +5,7 @@
  * compact full-width row (colour bar, name, description, tags, item count).
  * Both share the same navigate / select / drag / action-menu behaviour.
  */
-import { ChevronRight, Pin, PinOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square } from 'lucide-react'
+import { ChevronRight, Check, Pin, PinOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square } from 'lucide-react'
 import { getColorPreset } from '../../lib/spaceColors'
 import { ActionMenu } from '../ui/ActionMenu'
 
@@ -76,7 +76,7 @@ export function SpaceCard({
         aria-pressed={selectMode ? selected : undefined}
         aria-label={ariaLabel}
         className={`group relative flex items-center gap-3 sm:gap-4 border rounded-xl pl-4 pr-3 py-3 cursor-pointer transition-colors animate-fade-in-up ${
-          selected ? 'ring-2 ring-accent border-accent bg-accent/5' :
+          selected ? 'ring-1 ring-accent border-accent bg-accent/5' :
           col.pinned ? 'bg-accent/5 border-accent hover:border-accent/80' : 'bg-bg-surface border-bg-border hover:border-accent/40'
         } ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
         style={{
@@ -136,7 +136,7 @@ export function SpaceCard({
       aria-pressed={selectMode ? selected : undefined}
       aria-label={ariaLabel}
       className={`group relative border rounded-2xl p-4 cursor-pointer hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up ${
-        selected ? 'ring-2 ring-accent border-accent bg-accent/5' :
+        selected ? 'ring-1 ring-accent border-accent bg-accent/5' :
         col.pinned ? 'bg-accent/5 border-accent hover:border-accent/80' : 'bg-bg-surface border-bg-border hover:border-accent/40'
       } ${
         !selectMode && dragOverIndex === index && dragIndex !== index ? 'border-l-4 border-l-accent pl-3' : ''
@@ -147,11 +147,6 @@ export function SpaceCard({
         borderTopColor: colorPreset?.value,
       }}
     >
-      {selectMode && (
-        <div className="mb-2 text-accent">
-          {selected ? <CheckSquare size={16} /> : <Square size={16} className="text-text-muted" />}
-        </div>
-      )}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -162,7 +157,15 @@ export function SpaceCard({
             <p className="text-text-secondary text-sm mt-1 line-clamp-2 leading-relaxed">{col.description}</p>
           )}
         </div>
-        {!selectMode && (
+        {selectMode ? (
+          <span
+            className={`shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
+              selected ? 'bg-accent border-accent text-white' : 'border-bg-border text-transparent'
+            }`}
+          >
+            <Check size={14} />
+          </span>
+        ) : (
           <ChevronRight size={16} className="text-text-muted shrink-0 mt-0.5 group-hover:text-accent transition-colors" />
         )}
       </div>
