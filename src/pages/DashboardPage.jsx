@@ -330,7 +330,7 @@ export default function DashboardPage() {
       </header>
 
       {/* ── Main content ──────────────────────────────── */}
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <main className="px-4 sm:px-6 py-6">
         {/* Search - desktop */}
         <div className="hidden sm:block max-w-xl mb-6">
           <div className="relative">
