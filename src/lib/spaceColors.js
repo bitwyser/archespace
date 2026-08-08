@@ -2,12 +2,12 @@
  * spaceColors.js - Preset accent colors for spaces.
  */
 export const SPACE_COLORS = [
-  { id: 'violet', label: 'Violet', value: '#7c6af7', ring: 'ring-accent', dot: 'bg-accent' },
-  { id: 'blue', label: 'Blue', value: '#60a5fa', ring: 'ring-blue-400', dot: 'bg-blue-400' },
-  { id: 'green', label: 'Green', value: '#34d399', ring: 'ring-emerald-400', dot: 'bg-emerald-400' },
-  { id: 'amber', label: 'Amber', value: '#fbbf24', ring: 'ring-amber-400', dot: 'bg-amber-400' },
-  { id: 'rose', label: 'Rose', value: '#fb7185', ring: 'ring-rose-400', dot: 'bg-rose-400' },
-  { id: 'slate', label: 'Slate', value: '#94a3b8', ring: 'ring-slate-400', dot: 'bg-slate-400' },
+  { id: 'violet', label: 'Violet', value: '#7c6af7' },
+  { id: 'blue', label: 'Blue', value: '#60a5fa' },
+  { id: 'green', label: 'Green', value: '#34d399' },
+  { id: 'amber', label: 'Amber', value: '#fbbf24' },
+  { id: 'rose', label: 'Rose', value: '#fb7185' },
+  { id: 'slate', label: 'Slate', value: '#94a3b8' },
 ]
 
 export function getColorPreset(id) {

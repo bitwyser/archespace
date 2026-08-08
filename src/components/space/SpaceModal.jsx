@@ -2,6 +2,7 @@
  * SpaceModal.jsx - Modal for creating or editing a space.
  */
 import { useState } from 'react'
+import { Ban } from 'lucide-react'
 import { Modal, Spinner } from '../ui/UI'
 import { SPACE_COLORS, parseTags } from '../../lib/spaceColors'
 
@@ -59,19 +60,22 @@ export function SpaceModal({ initial, onSave, onClose }) {
             <button
               type="button"
               onClick={() => setColor(null)}
-              className={`w-8 h-8 rounded-lg border-2 transition-all ${
+              className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all bg-bg-elevated ${
                 !color ? 'border-accent ring-2 ring-accent/30' : 'border-bg-border'
-              } bg-bg-elevated`}
-              title="Default"
-              aria-label="Default color"
+              }`}
+              title="No color"
+              aria-label="No color"
               aria-pressed={!color}
-            />
+            >
+              <Ban size={14} className="text-text-muted" />
+            </button>
             {SPACE_COLORS.map(c => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => setColor(c.id)}
-                className={`w-8 h-8 rounded-lg border-2 transition-all ${c.dot} ${
+                style={{ backgroundColor: c.value }}
+                className={`w-8 h-8 rounded-lg border-2 transition-all ${
                   color === c.id ? 'border-white ring-2 ring-accent/40 scale-110' : 'border-transparent'
                 }`}
                 title={c.label}
