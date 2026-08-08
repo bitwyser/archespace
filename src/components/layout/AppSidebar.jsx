@@ -1,9 +1,10 @@
 /**
- * DashboardSidebar.jsx - Desktop left navigation for the dashboard.
+ * AppSidebar.jsx - Persistent desktop left navigation (app-wide).
  *
  * Collapsible (icon-only ↔ icon+label). In icon-only mode the logo shows "AS"
  * and the account shows just the avatar letter. Shown on sm+ screens only; the
- * mobile top bar remains the navigation on phones.
+ * mobile top bars remain the navigation on phones. `active` marks the current
+ * section ('spaces' | 'archive' | 'bin' | 'settings').
  */
 import {
   LayoutGrid, Archive, Trash2, Keyboard, Command, Lock, Settings,
@@ -53,8 +54,8 @@ function NavItem({ icon: Icon, label, active, count, badge, badgeColor = 'bg-acc
   )
 }
 
-export default function DashboardSidebar({
-  collapsed, onToggleCollapsed,
+export default function AppSidebar({
+  collapsed, onToggleCollapsed, active,
   user, isUnlocked, spacesCount, archiveTotal, binTotal,
   onLock, onCommands, onShortcuts, navigate,
 }) {
@@ -73,17 +74,22 @@ export default function DashboardSidebar({
       }`}
     >
       {/* Logo */}
-      <div className={`flex items-center gap-2.5 h-16 shrink-0 ${collapsed ? 'justify-center px-0' : 'px-4'}`}>
+      <button
+        type="button"
+        onClick={() => navigate('/app')}
+        aria-label="Arche Space"
+        className={`flex items-center gap-2.5 h-16 shrink-0 ${collapsed ? 'justify-center px-0' : 'px-4'}`}
+      >
         <div className="h-9 w-9 shrink-0 rounded-lg bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white font-bold text-xs tracking-wide">
           AS
         </div>
         {!collapsed && (
-          <div className="leading-tight">
+          <div className="leading-tight text-left">
             <div className="text-sm font-bold tracking-wide text-text-primary">ARCHE</div>
             <div className="text-[11px] font-medium tracking-wide text-text-muted">SPACE</div>
           </div>
         )}
-      </div>
+      </button>
 
       {/* Account */}
       <button
@@ -109,9 +115,9 @@ export default function DashboardSidebar({
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2">
         <SectionLabel collapsed={collapsed}>Library</SectionLabel>
-        <NavItem icon={LayoutGrid} label="Spaces" active count={spacesCount} collapsed={collapsed} onClick={() => navigate('/app')} />
-        <NavItem icon={Archive} label="Archive" badge={archiveTotal} collapsed={collapsed} onClick={() => navigate('/archive')} />
-        <NavItem icon={Trash2} label="Bin" badge={binTotal} badgeColor="bg-danger" collapsed={collapsed} onClick={() => navigate('/recycle-bin')} />
+        <NavItem icon={LayoutGrid} label="Spaces" active={active === 'spaces'} count={spacesCount} collapsed={collapsed} onClick={() => navigate('/app')} />
+        <NavItem icon={Archive} label="Archive" active={active === 'archive'} badge={archiveTotal} collapsed={collapsed} onClick={() => navigate('/archive')} />
+        <NavItem icon={Trash2} label="Bin" active={active === 'bin'} badge={binTotal} badgeColor="bg-danger" collapsed={collapsed} onClick={() => navigate('/recycle-bin')} />
 
         <SectionLabel collapsed={collapsed}>Tools</SectionLabel>
         <NavItem icon={Keyboard} label="Shortcuts" collapsed={collapsed} onClick={onShortcuts} />
@@ -123,7 +129,7 @@ export default function DashboardSidebar({
         {isUnlocked && (
           <NavItem icon={Lock} label="Lock vault" collapsed={collapsed} onClick={onLock} />
         )}
-        <NavItem icon={Settings} label="Settings" collapsed={collapsed} onClick={() => navigate('/settings')} />
+        <NavItem icon={Settings} label="Settings" active={active === 'settings'} collapsed={collapsed} onClick={() => navigate('/settings')} />
         <button
           type="button"
           onClick={onToggleCollapsed}

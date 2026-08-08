@@ -37,7 +37,6 @@ import { Modal } from '../components/ui/UI'
 import { SortMenu } from '../components/ui/SortMenu'
 import { SpaceModal } from '../components/space/SpaceModal'
 import { SpaceCard } from '../components/space/SpaceCard'
-import DashboardSidebar from '../components/layout/DashboardSidebar'
 import { usePersistedSort } from '../hooks/usePersistedSort'
 import { sortEntities } from '../lib/sortEntities'
 
@@ -78,16 +77,6 @@ export default function DashboardPage() {
     try { localStorage.setItem('arche:spaces-view', mode) } catch { /* storage unavailable */ }
   }, [])
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    try { return localStorage.getItem('arche:sidebar-collapsed') === '1' } catch { return false }
-  })
-  const toggleSidebar = useCallback(() => {
-    setSidebarCollapsed(prev => {
-      const next = !prev
-      try { localStorage.setItem('arche:sidebar-collapsed', next ? '1' : '0') } catch { /* storage unavailable */ }
-      return next
-    })
-  }, [])
   const [spaceSort, setSpaceSort] = usePersistedSort('arche-sort-spaces')
 
   const selectedCount = selectedIds.size
@@ -243,22 +232,7 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="min-h-screen bg-bg-base sm:flex">
-      <DashboardSidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapsed={toggleSidebar}
-        user={user}
-        isUnlocked={isUnlocked}
-        spacesCount={spaces.length}
-        archiveTotal={archiveTotal}
-        binTotal={binTotal}
-        onLock={() => { lock(); toast.info('Vault locked') }}
-        onCommands={() => openPalette()}
-        onShortcuts={() => window.dispatchEvent(new CustomEvent('arche:open-shortcuts'))}
-        navigate={navigate}
-      />
-
-      <div className="flex-1 min-w-0">
+    <div className="min-h-screen bg-bg-base">
       {/* ── Header (mobile only) ──────────────────────── */}
       <header ref={headerRef} className="sm:hidden sticky top-0 z-20 glass">
         <div className="w-full px-4 h-14 flex items-center justify-between gap-3">
@@ -732,7 +706,6 @@ export default function DashboardPage() {
           </p>
         </Modal>
       )}
-      </div>
     </div>
   )
 }

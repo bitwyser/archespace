@@ -21,6 +21,7 @@ import { useRouteMeta } from './hooks/useRouteMeta'
 import ErrorBoundary from './components/ErrorBoundary'
 import ErrorScreen from './components/ErrorScreen'
 import AppChrome from './components/layout/AppChrome'
+import AppShell from './components/layout/AppShell'
 import { Spinner } from './components/ui/UI'
 
 /**
@@ -158,11 +159,16 @@ const router = createBrowserRouter([
       { path: '/login', element: <PublicRoute title="Sign in"><LoginPage /></PublicRoute> },
       { path: '/reset-password', element: <Suspense fallback={<PageLoader />}><PasswordResetPage /></Suspense> },
       { path: '/', element: <HomeRoute /> },
-      { path: '/app', element: <ProtectedRoute title="Your spaces"><DashboardPage /></ProtectedRoute> },
-      { path: '/space/:id', element: <ProtectedRoute><SpacePage /></ProtectedRoute> },
-      { path: '/recycle-bin', element: <ProtectedRoute title="Recycle bin"><RecycleBinPage /></ProtectedRoute> },
-      { path: '/archive', element: <ProtectedRoute title="Archive"><ArchivePage /></ProtectedRoute> },
-      { path: '/settings', element: <ProtectedRoute title="Settings"><SettingsPage /></ProtectedRoute> },
+      {
+        element: <AppShell />,
+        children: [
+          { path: '/app', element: <ProtectedRoute title="Your spaces"><DashboardPage /></ProtectedRoute> },
+          { path: '/space/:id', element: <ProtectedRoute><SpacePage /></ProtectedRoute> },
+          { path: '/recycle-bin', element: <ProtectedRoute title="Recycle bin"><RecycleBinPage /></ProtectedRoute> },
+          { path: '/archive', element: <ProtectedRoute title="Archive"><ArchivePage /></ProtectedRoute> },
+          { path: '/settings', element: <ProtectedRoute title="Settings"><SettingsPage /></ProtectedRoute> },
+        ],
+      },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
