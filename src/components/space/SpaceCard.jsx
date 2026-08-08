@@ -152,18 +152,6 @@ export function SpaceCard({
           {selected ? <CheckSquare size={16} /> : <Square size={16} className="text-text-muted" />}
         </div>
       )}
-      {Array.isArray(col.tags) && col.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {col.tags.slice(0, 4).map(tag => (
-            <span
-              key={tag}
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-bg-elevated text-text-muted border border-bg-border"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -178,6 +166,18 @@ export function SpaceCard({
           <ChevronRight size={16} className="text-text-muted shrink-0 mt-0.5 group-hover:text-accent transition-colors" />
         )}
       </div>
+      {Array.isArray(col.tags) && col.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-3">
+          {col.tags.slice(0, 4).map(tag => (
+            <span
+              key={tag}
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-bg-elevated text-text-muted border border-bg-border"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-bg-border gap-2">
         <p className="text-text-muted text-xs truncate">{itemLabel}</p>
         {!selectMode && <ActionMenu label="Space actions" actions={menuActions} />}
