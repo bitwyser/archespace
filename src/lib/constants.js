@@ -33,8 +33,21 @@ export const VAULT_PIN_MIN_LENGTH = 4
 // Raised to accommodate passphrases (letters, numbers, symbols), not just PINs.
 export const VAULT_PIN_MAX_LENGTH = 64
 
-/** Auto-lock vault after this duration while signed in (ms) - 24 hours */
+/** Default vault auto-lock duration (ms) - 24 hours of inactivity */
 export const VAULT_AUTO_LOCK_MS = 24 * 60 * 60 * 1000
+
+/** User-selectable vault auto-lock durations. `ms: null` means "Never". */
+export const VAULT_AUTO_LOCK_OPTIONS = [
+  { id: '5m', label: '5 minutes', ms: 5 * 60 * 1000 },
+  { id: '15m', label: '15 minutes', ms: 15 * 60 * 1000 },
+  { id: '1h', label: '1 hour', ms: 60 * 60 * 1000 },
+  { id: '8h', label: '8 hours', ms: 8 * 60 * 60 * 1000 },
+  { id: '24h', label: '24 hours', ms: 24 * 60 * 60 * 1000 },
+  { id: 'never', label: 'Never', ms: null },
+]
+
+/** Default auto-lock option id (preserves the previous fixed behaviour). */
+export const VAULT_AUTO_LOCK_DEFAULT_ID = '24h'
 
 // ── Import / Export ────────────────────────────────────────
 /** Maximum import file size in bytes (10 MB) */

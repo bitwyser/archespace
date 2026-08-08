@@ -15,7 +15,7 @@ import PinInput from '../components/PinInput'
 import PasskeyManager from '../components/PasskeyManager'
 import { validateVaultPin, getWeakPinWarning } from '../lib/crypto/vaultPin'
 import WeakPinWarning from '../components/WeakPinWarning'
-import { VAULT_PIN_MIN_LENGTH } from '../lib/constants'
+import { VAULT_PIN_MIN_LENGTH, VAULT_AUTO_LOCK_OPTIONS } from '../lib/constants'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
 import { APP_VERSION, BUILD_HASH, COMMIT_URL } from '../lib/buildInfo'
@@ -63,7 +63,7 @@ function Divider() {
 export default function SettingsPage() {
   const navigate = useNavigate()
   const { user, signIn, signOut, requestPasswordReset, reauthenticate, updateEmail, deleteAccount, updatePasswordAndSignOut } = useAuth()
-  const { cryptoKey, unlock, updatePin, setupRecoveryCode, updatePinWithRecoveryCode, unlocking, lock } = useEncryption()
+  const { cryptoKey, unlock, updatePin, setupRecoveryCode, updatePinWithRecoveryCode, unlocking, lock, autoLockId, setAutoLock } = useEncryption()
   const {
     themeMode,
     themeModes,
@@ -850,6 +850,22 @@ export default function SettingsPage() {
                 <p className="text-text-muted text-xs">Save this code now. It replaces the previous recovery code.</p>
               </div>
             )}
+
+            <Divider />
+
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">Auto-lock</h3>
+              <p className="text-text-muted text-xs mt-0.5">Lock the vault automatically after a period of inactivity. This setting applies to this device only.</p>
+            </div>
+            <select
+              value={autoLockId}
+              onChange={(e) => { setAutoLock(e.target.value); toast.success('Auto-lock updated.') }}
+              className="mt-3 w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent"
+            >
+              {VAULT_AUTO_LOCK_OPTIONS.map(o => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </select>
 
             <Divider />
 

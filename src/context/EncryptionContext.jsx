@@ -30,7 +30,8 @@ import {
   unlockVaultWithPasskey,
   removePasskey as removePasskeyVault,
 } from '../lib/crypto/passkeyVault'
-import { VAULT_AUTO_LOCK_MS, VAULT_PIN_LOCKOUT_MS, VAULT_PIN_MAX_ATTEMPTS } from '../lib/constants'
+import { VAULT_PIN_LOCKOUT_MS, VAULT_PIN_MAX_ATTEMPTS } from '../lib/constants'
+import { getAutoLockId, setAutoLockId, autoLockMs } from '../lib/crypto/vaultAutoLock'
 import {
   getClientRateLimitStatus,
   recordClientRateLimitFailure,
@@ -62,6 +63,12 @@ export function EncryptionProvider({ children }) {
   })
   const [passkeySupported, setPasskeySupported] = useState(false)
   const [passkeys, setPasskeys] = useState([])
+  const [autoLockId, setAutoLockIdState] = useState(getAutoLockId())
+
+  const setAutoLock = useCallback((id) => {
+    setAutoLockId(id)
+    setAutoLockIdState(id)
+  }, [])
 
   const refreshVaultStatus = useCallback(async () => {
     if (!userId) {
@@ -368,27 +375,52 @@ export function EncryptionProvider({ children }) {
     lockRef.current = lock
   }, [lock])
 
+  // Inactivity-based auto-lock. The timer resets on user interaction and fires
+  // after the chosen idle duration. VAULT_UNLOCKED_AT_KEY holds the last
+  // activity time so a page reload picks up where the idle clock left off.
   useEffect(() => {
     if (!cryptoKey) return
 
-    const stored = sessionStorage.getItem(VAULT_UNLOCKED_AT_KEY)
-    const unlockedAt = stored ? Number(stored) : Date.now()
-    if (!stored) sessionStorage.setItem(VAULT_UNLOCKED_AT_KEY, String(unlockedAt))
+    const lockMs = autoLockMs(autoLockId)
+    if (lockMs == null) return // "Never"
 
-    const remaining = VAULT_AUTO_LOCK_MS - (Date.now() - unlockedAt)
-    if (remaining <= 0) {
+    const doLock = () => {
       lockRef.current('auto')
       window.dispatchEvent(new CustomEvent('arche:vault-auto-locked'))
+    }
+
+    const stored = sessionStorage.getItem(VAULT_UNLOCKED_AT_KEY)
+    const lastActive = stored ? Number(stored) : Date.now()
+    if (!stored) sessionStorage.setItem(VAULT_UNLOCKED_AT_KEY, String(lastActive))
+
+    const remaining = lockMs - (Date.now() - lastActive)
+    if (remaining <= 0) {
+      doLock()
       return
     }
 
-    const timer = setTimeout(() => {
-      lockRef.current('auto')
-      window.dispatchEvent(new CustomEvent('arche:vault-auto-locked'))
-    }, remaining)
+    let timer = setTimeout(doLock, remaining)
 
-    return () => clearTimeout(timer)
-  }, [cryptoKey])
+    // Reset on activity, throttled so continuous input (e.g. mousemove) doesn't
+    // rewrite storage / reschedule on every event.
+    let lastMark = lastActive
+    const onActivity = () => {
+      const now = Date.now()
+      if (now - lastMark < 10000) return
+      lastMark = now
+      sessionStorage.setItem(VAULT_UNLOCKED_AT_KEY, String(now))
+      clearTimeout(timer)
+      timer = setTimeout(doLock, lockMs)
+    }
+
+    const events = ['pointerdown', 'keydown', 'pointermove', 'wheel', 'touchstart']
+    events.forEach(e => window.addEventListener(e, onActivity, { passive: true }))
+
+    return () => {
+      clearTimeout(timer)
+      events.forEach(e => window.removeEventListener(e, onActivity))
+    }
+  }, [cryptoKey, autoLockId])
 
   const isUnlocked = !!cryptoKey && !!user
 
@@ -410,6 +442,8 @@ export function EncryptionProvider({ children }) {
         recoverPinWithCode,
         lock,
         refreshVaultStatus,
+        autoLockId,
+        setAutoLock,
         passkeySupported,
         passkeys,
         unlockWithPasskey,

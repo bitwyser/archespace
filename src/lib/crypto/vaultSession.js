@@ -9,7 +9,7 @@
  *
  * Cleared on manual lock, sign-out, or 24-hour vault auto-lock.
  */
-import { VAULT_AUTO_LOCK_MS } from '../constants'
+import { autoLockMs } from './vaultAutoLock'
 
 export const VAULT_UNLOCKED_AT_KEY = 'arche:vault-unlocked-at'
 const VAULT_SESSION_USER = 'arche:vault-session-user'
@@ -109,8 +109,12 @@ export async function saveVaultSession(userId, cryptoKey) {
 export async function loadVaultSession(userId) {
   if (sessionStorage.getItem(VAULT_SESSION_USER) !== userId) return null
 
+  // Auto-lock is inactivity-based, so VAULT_UNLOCKED_AT_KEY holds the last
+  // activity time. Expire the restored session if it's older than the chosen
+  // duration ("Never" -> lockMs is null -> never expires on restore).
+  const lockMs = autoLockMs()
   const unlockedAt = Number(sessionStorage.getItem(VAULT_UNLOCKED_AT_KEY))
-  if (!unlockedAt || Date.now() - unlockedAt > VAULT_AUTO_LOCK_MS) {
+  if (!unlockedAt || (lockMs != null && Date.now() - unlockedAt > lockMs)) {
     clearVaultSession()
     return null
   }
