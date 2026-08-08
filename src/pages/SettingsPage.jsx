@@ -397,7 +397,7 @@ export default function SettingsPage() {
           <SettingsSection
             id="account"
             title="Account"
-            description="Email address and account identity."
+            description="Email, login password, and account."
             icon={User}
             openSection={openSection}
             setOpenSection={setOpenSection}
@@ -480,6 +480,83 @@ export default function SettingsPage() {
                 onResend={sendEmailCode}
               />
             )}
+
+            <Divider />
+
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">Change login password</h3>
+              <p className="text-text-muted text-xs mt-0.5">Used to sign in. Separate from your vault PIN.</p>
+            </div>
+            <form onSubmit={handleChangePassword} className="mt-3 space-y-3">
+              <div>
+                <label htmlFor="current-password" className="block text-xs font-medium text-text-secondary mb-1.5">
+                  Current password
+                </label>
+                <div className="relative">
+                  <input
+                    id="current-password"
+                    type={showPasswords ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:border-accent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="new-password" className="block text-xs font-medium text-text-secondary mb-1.5">
+                  New password
+                </label>
+                <input
+                  id="new-password"
+                  type={showPasswords ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  required
+                  minLength={PASSWORD_RULES.minLength}
+                  autoComplete="new-password"
+                  className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirm-password" className="block text-xs font-medium text-text-secondary mb-1.5">
+                  Confirm new password
+                </label>
+                <input
+                  id="confirm-password"
+                  type={showPasswords ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+              >
+                {passwordLoading ? 'Updating…' : 'Change login password'}
+              </button>
+              <button
+                type="button"
+                onClick={handleSendPasswordReset}
+                disabled={resetLoading}
+                className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+              >
+                {resetLoading ? 'Sending reset link...' : 'Forgot current password? Send reset link'}
+              </button>
+            </form>
 
             <Divider />
 
@@ -650,88 +727,11 @@ export default function SettingsPage() {
           <SettingsSection
             id="security"
             title="Security"
-            description="Login password, vault PIN, recovery code, and passkeys."
+            description="Vault PIN, recovery code, passkeys, and auto-lock."
             icon={ShieldCheck}
             openSection={openSection}
             setOpenSection={setOpenSection}
           >
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Change login password</h3>
-              <p className="text-text-muted text-xs mt-0.5">Used to sign in. Separate from your vault PIN.</p>
-            </div>
-            <form onSubmit={handleChangePassword} className="mt-3 space-y-3">
-              <div>
-                <label htmlFor="current-password" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Current password
-                </label>
-                <div className="relative">
-                  <input
-                    id="current-password"
-                    type={showPasswords ? 'text' : 'password'}
-                    value={currentPassword}
-                    onChange={e => setCurrentPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                    className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:border-accent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="new-password" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  New password
-                </label>
-                <input
-                  id="new-password"
-                  type={showPasswords ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  required
-                  minLength={PASSWORD_RULES.minLength}
-                  autoComplete="new-password"
-                  className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
-                />
-              </div>
-              <div>
-                <label htmlFor="confirm-password" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Confirm new password
-                </label>
-                <input
-                  id="confirm-password"
-                  type={showPasswords ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={passwordLoading}
-                className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-              >
-                {passwordLoading ? 'Updating…' : 'Change login password'}
-              </button>
-              <button
-                type="button"
-                onClick={handleSendPasswordReset}
-                disabled={resetLoading}
-                className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
-              >
-                {resetLoading ? 'Sending reset link...' : 'Forgot current password? Send reset link'}
-              </button>
-            </form>
-
-            <Divider />
-
             <div>
               <h3 className="text-sm font-semibold text-text-primary">Change vault PIN</h3>
               <p className="text-text-muted text-xs mt-0.5">
