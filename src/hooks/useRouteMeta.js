@@ -9,7 +9,7 @@
 import { useEffect } from 'react'
 
 const SITE_NAME = 'Arche Space'
-const DEFAULT_TITLE = 'Arche Space - private, end-to-end encrypted spaces'
+const DEFAULT_TITLE = 'Arche Space — Your private, end-to-end encrypted space'
 
 function setDocumentTitle(title) {
   document.title = title ? `${title} · ${SITE_NAME}` : DEFAULT_TITLE
