@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, Folder,
   Trash2, Archive, Command, CheckSquare, Settings, Lock, Menu, Keyboard,
+  LayoutGrid, List,
 } from 'lucide-react'
 import GlobalSearchResults from '../components/GlobalSearchResults'
 import { useDragReorder } from '../hooks/useDragReorder'
@@ -67,6 +68,14 @@ export default function DashboardPage() {
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [viewMode, setViewMode] = useState(() => {
+    try { return localStorage.getItem('arche:spaces-view') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
+  })
+
+  const changeViewMode = useCallback((mode) => {
+    setViewMode(mode)
+    try { localStorage.setItem('arche:spaces-view', mode) } catch { /* storage unavailable */ }
+  }, [])
   const [spaceSort, setSpaceSort] = usePersistedSort('arche-sort-spaces')
 
   const selectedCount = selectedIds.size
@@ -497,6 +506,38 @@ export default function DashboardPage() {
                 {selectMode ? 'Done' : 'Select'}
               </button>
             )}
+            {filtered.length > 0 && !selectMode && (
+              <div className="flex items-center gap-1 p-1 rounded-xl border border-bg-border bg-bg-surface">
+                <button
+                  type="button"
+                  onClick={() => changeViewMode('grid')}
+                  aria-label="Grid view"
+                  aria-pressed={viewMode === 'grid'}
+                  title="Grid view"
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    viewMode === 'grid'
+                      ? 'bg-accent-muted text-accent'
+                      : 'text-text-muted hover:text-text-primary'
+                  }`}
+                >
+                  <LayoutGrid size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeViewMode('list')}
+                  aria-label="List view"
+                  aria-pressed={viewMode === 'list'}
+                  title="List view"
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-accent-muted text-accent'
+                      : 'text-text-muted hover:text-text-primary'
+                  }`}
+                >
+                  <List size={16} />
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setModal({ type: 'create' })}
@@ -548,7 +589,9 @@ export default function DashboardPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-24">
+          <div className={`grid pb-24 ${
+            viewMode === 'list' ? 'grid-cols-1 gap-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'
+          }`}>
             {sortedSpaces.map((col, index) => (
               <SpaceCard
                 key={col.id}
@@ -556,6 +599,7 @@ export default function DashboardPage() {
                 index={index}
                 search={search}
                 stats={stats}
+                layout={viewMode}
                 reorderDisabled={reorderDisabled}
                 selectMode={selectMode}
                 selected={selectedIds.has(col.id)}
