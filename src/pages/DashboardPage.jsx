@@ -37,6 +37,7 @@ import { Modal } from '../components/ui/UI'
 import { SortMenu } from '../components/ui/SortMenu'
 import { SpaceModal } from '../components/space/SpaceModal'
 import { SpaceCard } from '../components/space/SpaceCard'
+import DashboardSidebar from '../components/layout/DashboardSidebar'
 import { usePersistedSort } from '../hooks/usePersistedSort'
 import { sortEntities } from '../lib/sortEntities'
 
@@ -75,6 +76,17 @@ export default function DashboardPage() {
   const changeViewMode = useCallback((mode) => {
     setViewMode(mode)
     try { localStorage.setItem('arche:spaces-view', mode) } catch { /* storage unavailable */ }
+  }, [])
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem('arche:sidebar-collapsed') === '1' } catch { return false }
+  })
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => {
+      const next = !prev
+      try { localStorage.setItem('arche:sidebar-collapsed', next ? '1' : '0') } catch { /* storage unavailable */ }
+      return next
+    })
   }, [])
   const [spaceSort, setSpaceSort] = usePersistedSort('arche-sort-spaces')
 
@@ -231,131 +243,31 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="min-h-screen bg-bg-base">
-      {/* ── Header ────────────────────────────────────── */}
-      <header ref={headerRef} className="sticky top-0 z-20 glass">
-        <div className="w-full px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+    <div className="min-h-screen bg-bg-base sm:flex">
+      <DashboardSidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={toggleSidebar}
+        user={user}
+        isUnlocked={isUnlocked}
+        spacesCount={spaces.length}
+        archiveTotal={archiveTotal}
+        binTotal={binTotal}
+        onLock={() => { lock(); toast.info('Vault locked') }}
+        onCommands={() => openPalette()}
+        onShortcuts={() => window.dispatchEvent(new CustomEvent('arche:open-shortcuts'))}
+        navigate={navigate}
+      />
+
+      <div className="flex-1 min-w-0">
+      {/* ── Header (mobile only) ──────────────────────── */}
+      <header ref={headerRef} className="sm:hidden sticky top-0 z-20 glass">
+        <div className="w-full px-4 h-14 flex items-center justify-between gap-3">
           {/* Logo */}
           <div className="shrink-0">
             <span className="text-lg font-semibold tracking-widest text-text-primary">ARCHE SPACE</span>
             {MULTI_USER_ENABLED && user?.email && (
-              <p className="text-[10px] text-text-muted truncate max-w-[140px] sm:max-w-[200px]">{user.email}</p>
+              <p className="text-[10px] text-text-muted truncate max-w-[140px]">{user.email}</p>
             )}
-          </div>
-
-          {/* Search - desktop */}
-          <div className="flex-1 max-w-sm hidden sm:block">
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-              <input
-                ref={searchInputRef}
-                placeholder="Search…"
-                value={search}
-                onChange={e => { setSearch(e.target.value); setSearchActive(-1) }}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                onKeyDown={handleSearchKeyDown}
-                role="combobox"
-                aria-expanded={showSearchResults}
-                aria-controls="global-search-listbox"
-                aria-activedescendant={activeOptionId}
-                aria-autocomplete="list"
-                className="w-full bg-bg-elevated border border-bg-border rounded-xl pl-9 pr-12 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
-              />
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted font-mono hidden sm:inline">/</kbd>
-              {showSearchResults && (
-                <GlobalSearchResults
-                  search={search}
-                  globalMatches={globalMatches}
-                  itemMeta={globalSearchData?.itemMeta}
-                  truncated={globalSearchData?.truncated}
-                  onSelectSpace={goSpaceFromSearch}
-                  onSelectItem={goItemFromSearch}
-                  activeOptionId={activeOptionId}
-                  listboxId="global-search-listbox"
-                  className="absolute top-full mt-2 left-0 right-0 z-40 max-h-[60vh] overflow-y-auto rounded-2xl border border-bg-border bg-bg-surface shadow-2xl p-3 space-y-3"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Actions - desktop: lock, command, archive, bin, settings */}
-          <div className="hidden sm:flex items-center gap-2">
-            {isUnlocked && (
-              <button
-                type="button"
-                onClick={() => {
-                  lock()
-                  toast.info('Vault locked')
-                }}
-                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-                title="Lock vault"
-                aria-label="Lock vault"
-              >
-                <Lock size={14} />
-                <span className="hidden nav:inline">Lock vault</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => openPalette()}
-              className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-              title="Commands (⌘K)"
-              aria-label="Commands"
-            >
-              <Command size={14} />
-              <span className="hidden nav:inline">Commands</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('arche:open-shortcuts'))}
-              className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-              title="Keyboard shortcuts (?)"
-              aria-label="Keyboard shortcuts"
-            >
-              <Keyboard size={14} />
-              <span className="hidden nav:inline">Shortcuts</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/archive')}
-              className="relative flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-              title="Archive"
-              aria-label="Archive"
-            >
-              <Archive size={14} />
-              <span className="hidden nav:inline">Archive</span>
-              {archiveTotal > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-accent text-white text-[10px] font-bold px-1 leading-none">
-                  {archiveTotal > 99 ? '99+' : archiveTotal}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/recycle-bin')}
-              className="relative flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-              title="Recycle bin"
-              aria-label="Recycle bin"
-            >
-              <Trash2 size={14} />
-              <span className="hidden nav:inline">Bin</span>
-              {binTotal > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-danger text-white text-[10px] font-bold px-1 leading-none">
-                  {binTotal > 99 ? '99+' : binTotal}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/settings')}
-              className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-              title="Settings"
-              aria-label="Settings"
-            >
-              <Settings size={14} />
-              <span className="hidden nav:inline">Settings</span>
-            </button>
           </div>
 
           {/* Actions - mobile: lock + ordered menu (search is the bar below) */}
@@ -445,6 +357,42 @@ export default function DashboardPage() {
 
       {/* ── Main content ──────────────────────────────── */}
       <main className="max-w-5xl mx-auto px-4 py-6">
+        {/* Search - desktop */}
+        <div className="hidden sm:block max-w-xl mb-6">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              placeholder="Search…"
+              value={search}
+              onChange={e => { setSearch(e.target.value); setSearchActive(-1) }}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              onKeyDown={handleSearchKeyDown}
+              role="combobox"
+              aria-expanded={showSearchResults}
+              aria-controls="global-search-listbox"
+              aria-activedescendant={activeOptionId}
+              aria-autocomplete="list"
+              className="w-full bg-bg-elevated border border-bg-border rounded-xl pl-9 pr-12 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+            />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted font-mono">/</kbd>
+            {showSearchResults && (
+              <GlobalSearchResults
+                search={search}
+                globalMatches={globalMatches}
+                itemMeta={globalSearchData?.itemMeta}
+                truncated={globalSearchData?.truncated}
+                onSelectSpace={goSpaceFromSearch}
+                onSelectItem={goItemFromSearch}
+                activeOptionId={activeOptionId}
+                listboxId="global-search-listbox"
+                className="absolute top-full mt-2 left-0 right-0 z-40 max-h-[60vh] overflow-y-auto rounded-2xl border border-bg-border bg-bg-surface shadow-2xl p-3 space-y-3"
+              />
+            )}
+          </div>
+        </div>
+
         {/* Mobile search */}
         <div className="sm:hidden mb-4">
           <div className="relative">
@@ -784,6 +732,7 @@ export default function DashboardPage() {
           </p>
         </Modal>
       )}
+      </div>
     </div>
   )
 }
