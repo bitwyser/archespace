@@ -411,24 +411,6 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {spaces.length > 1 && !selectMode && (
-              <SortMenu value={spaceSort} onChange={setSpaceSort} />
-            )}
-            {filtered.length > 0 && (
-              <button
-                type="button"
-                onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-                title={selectMode ? 'Done' : 'Select'}
-                className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
-                  selectMode
-                    ? 'border-accent bg-accent-muted text-accent'
-                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary'
-                }`}
-              >
-                <CheckSquare size={16} />
-                <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
-              </button>
-            )}
             {filtered.length > 0 && !selectMode && (
               <div className="flex items-center gap-1 p-1 rounded-xl border border-bg-border bg-bg-surface">
                 <button
@@ -460,6 +442,24 @@ export default function DashboardPage() {
                   <List size={16} />
                 </button>
               </div>
+            )}
+            {filtered.length > 0 && (
+              <button
+                type="button"
+                onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+                title={selectMode ? 'Done' : 'Select'}
+                className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                  selectMode
+                    ? 'border-accent bg-accent-muted text-accent'
+                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                <CheckSquare size={16} />
+                <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
+              </button>
+            )}
+            {spaces.length > 1 && !selectMode && (
+              <SortMenu value={spaceSort} onChange={setSpaceSort} />
             )}
             <button
               type="button"
