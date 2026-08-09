@@ -371,6 +371,7 @@ export function NumberedListEditor(props) {
  */
 export function CardListEditor({ content, onChange }) {
   const [items, setItems] = useState(content?.items || [])
+  const dragFromIndex = useRef(null)
 
   const adjust = (el) => {
     if (!el) return
@@ -392,16 +393,54 @@ export function CardListEditor({ content, onChange }) {
   const removeItem = (id) =>
     push(items.filter(item => item.id !== id))
 
+  const moveItem = (fromIndex, toIndex) => {
+    if (toIndex < 0 || toIndex >= items.length) return
+    const nextItems = [...items]
+    const [moved] = nextItems.splice(fromIndex, 1)
+    nextItems.splice(toIndex, 0, moved)
+    push(nextItems)
+  }
+
+  const handleDragStart = (e, idx) => {
+    dragFromIndex.current = idx
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', items[idx].id)
+  }
+
+  const handleDrop = (e, toIndex) => {
+    e.preventDefault()
+    const draggedId = e.dataTransfer.getData('text/plain')
+    const fromIndex = dragFromIndex.current ?? items.findIndex(item => item.id === draggedId)
+    dragFromIndex.current = null
+    if (fromIndex === null || fromIndex === -1 || fromIndex === toIndex) return
+    moveItem(fromIndex, toIndex)
+  }
+
+  const handleReorderKeyDown = (e, idx) => {
+    if (e.key === 'ArrowUp') { e.preventDefault(); moveItem(idx, idx - 1) }
+    if (e.key === 'ArrowDown') { e.preventDefault(); moveItem(idx, idx + 1) }
+  }
+
   return (
     <div className="space-y-2">
-      {items.map(item => (
-        <div key={item.id} className="group bg-bg-elevated border border-bg-border rounded-xl p-3 space-y-2">
+      {items.map((item, idx) => (
+        <div
+          key={item.id}
+          className="group bg-bg-elevated border border-bg-border rounded-xl p-3 space-y-2"
+          onDragOver={e => e.preventDefault()}
+          onDrop={e => handleDrop(e, idx)}
+        >
           <div className="flex items-center gap-2">
             <input
               value={item.title}
               onChange={e => updateItem(item.id, 'title', e.target.value)}
               placeholder="Title…"
               className="flex-1 bg-transparent text-sm font-semibold focus:outline-none text-text-primary placeholder-text-muted"
+            />
+            <ReorderBtn
+              onDragStart={e => handleDragStart(e, idx)}
+              onDragEnd={() => { dragFromIndex.current = null }}
+              onKeyDown={e => handleReorderKeyDown(e, idx)}
             />
             <DelBtn onClick={() => removeItem(item.id)} label="Delete card" />
           </div>
