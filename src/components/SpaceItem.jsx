@@ -22,7 +22,7 @@ import { createPortal } from 'react-dom'
 import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X,
   Pin, PinOff, Save, AlertTriangle, GripVertical, Copy, Archive,
-  CheckSquare, Square, Maximize2, Minimize2, MoveRight,
+  Maximize2, Minimize2, MoveRight,
   ClipboardCopy, ClipboardCheck, FileDown, Eye, EyeOff,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, MenuListEditor, NumberedListEditor, CardListEditor } from './editors/ItemEditors'
@@ -285,7 +285,7 @@ function SpaceItem({
         ? 'fixed inset-0 z-[80] flex flex-col rounded-none border-0 bg-bg-base'
         : 'relative border rounded-2xl'
     } transition-colors ${
-      selected && !isFullscreen ? 'ring-2 ring-accent border-accent bg-accent/5' :
+      selected && !isFullscreen ? 'ring-1 ring-accent border-accent bg-accent/5' :
       item.pinned && !isFullscreen ? 'bg-accent/5 border-accent' :
       !isFullscreen ? 'bg-bg-surface border-bg-border' : ''
     }`}>
@@ -295,16 +295,7 @@ function SpaceItem({
       } ${
         !collapsed || collapseGuard ? 'border-b border-bg-border' : ''
       }`}>
-        {selectMode ? (
-          <button
-            type="button"
-            onClick={() => onSelectedChange?.(item.id)}
-            className="shrink-0 text-text-muted hover:text-accent transition-colors"
-            aria-label={selected ? 'Deselect' : 'Select'}
-          >
-            {selected ? <CheckSquare size={16} className="text-accent" /> : <Square size={16} />}
-          </button>
-        ) : (
+        {!selectMode && (
           <div
             {...dragHandleProps}
             className="cursor-grab active:cursor-grabbing shrink-0 text-text-muted hover:text-text-secondary transition-colors"
@@ -496,6 +487,19 @@ function SpaceItem({
             </>
           )}
         </div>
+        )}
+        {selectMode && (
+          <button
+            type="button"
+            onClick={() => onSelectedChange?.(item.id)}
+            aria-label={selected ? 'Deselect' : 'Select'}
+            aria-pressed={selected}
+            className={`shrink-0 ml-auto flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
+              selected ? 'bg-accent border-accent text-white' : 'border-bg-border text-transparent'
+            }`}
+          >
+            <Check size={14} />
+          </button>
         )}
       </div>
 
