@@ -5,21 +5,23 @@ import {
   ArrowRight,
   Boxes,
   CheckCircle2,
-  Copy,
   Download,
+  FileDown,
+  Fingerprint,
   GitFork,
   Keyboard,
   Layers,
-  ListChecks,
   LockKeyhole,
   Mail,
   Palette,
+  Pin,
   RefreshCw,
   Save,
   Search,
   Server,
   ShieldCheck,
   Smartphone,
+  Users,
   WifiOff,
 } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
@@ -48,21 +50,24 @@ const navPrimaryClass =
 
 const heroWords = ['Encrypted', 'Private', 'Own']
 
-const trustPoints = ['Zero-knowledge', 'Open source', 'No trackers', 'Self-hostable']
+const trustPoints = ['Open source', 'Zero-knowledge', 'No trackers', 'Self-hostable']
 
 const features = [
   { icon: Layers, label: 'A space for every project' },
   { icon: Boxes, label: 'Multiple formats' },
+  { icon: Pin, label: 'Pin important spaces and items' },
   { icon: Search, label: 'Search across everything' },
-  { icon: WifiOff, label: 'Works offline' },
-  { icon: RefreshCw, label: 'Syncs across devices' },
   { icon: Save, label: 'Saves as you type' },
+  { icon: Keyboard, label: 'Command palette and keyboard shortcuts' },
+  { icon: FileDown, label: 'Export items and spaces to PDF' },
+  { icon: RefreshCw, label: 'Syncs across devices' },
+  { icon: WifiOff, label: 'Works offline' },
   { icon: ArchiveRestore, label: 'Archive and recycle bin' },
-  { icon: ListChecks, label: 'Bulk actions' },
-  { icon: Copy, label: 'Duplicate and move' },
   { icon: Download, label: 'Backup and restore' },
-  { icon: Keyboard, label: 'Command palette and shortcuts' },
-  { icon: Palette, label: 'Themes' },
+  { icon: LockKeyhole, label: 'Lockable encrypted vault' },
+  { icon: Fingerprint, label: 'Passkey and biometric unlock' },
+  { icon: Palette, label: 'Dark and light themes with accent colors' },
+  { icon: Users, label: 'Single or multi-user mode' },
 ]
 
 const steps = [
@@ -87,7 +92,7 @@ const serverFacts = [
   'Two secrets: one proves who you are, the other unlocks your content.',
   'Your key is built on your device, never on the server.',
   'The database holds unreadable content plus plain metadata like ids, timestamps, and order.',
-  'No reset link and no override. Lose the PIN and the recovery code and it stays sealed.',
+  'No reset link and no override. Lose both the PIN and the recovery code, and your data can never be unlocked again.',
 ]
 
 export default function HomePage() {
@@ -214,7 +219,7 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-1 pt-20 pb-10 text-center sm:pt-24 sm:pb-12">
           <div className="hero-headline">
-            <h1 className="max-w-4xl text-4xl font-semibold leading-[1.02] tracking-normal sm:text-6xl lg:text-7xl">
+            <h1 className="max-w-4xl whitespace-nowrap text-[clamp(1.5rem,6.5vw,4.5rem)] font-semibold leading-[1.02] tracking-normal">
               Your{' '}
               <span
                 className="home-word-slot text-cyan-200 drop-shadow-[0_0_22px_rgba(103,232,249,0.3)]"
@@ -236,7 +241,7 @@ export default function HomePage() {
             </h1>
             <div
               aria-hidden="true"
-              className="hero-reflection text-4xl font-semibold leading-[1.02] tracking-normal sm:text-6xl lg:text-7xl"
+              className="hero-reflection whitespace-nowrap text-[clamp(1.5rem,6.5vw,4.5rem)] font-semibold leading-[1.02] tracking-normal"
             >
               Your <span className="text-cyan-200">{heroWords[heroWordIndex]}</span> Space
             </div>
