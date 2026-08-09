@@ -12,3 +12,6 @@ export const BUILD_TIME = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__
 
 export const REPO_URL = 'https://github.com/patkarmandar/archespace'
 export const COMMIT_URL = BUILD_HASH === 'dev' ? REPO_URL : `${REPO_URL}/commit/${BUILD_HASH}`
+
+/** Companion Android app (Flutter), open source alongside the web app. */
+export const MOBILE_REPO_URL = 'https://github.com/patkarmandar/archespace-mobile'

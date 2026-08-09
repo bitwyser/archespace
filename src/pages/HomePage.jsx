@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArchiveRestore,
@@ -23,7 +23,7 @@ import {
   WifiOff,
 } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
-import { APP_VERSION, BUILD_HASH, COMMIT_URL, REPO_URL } from '../lib/buildInfo'
+import { APP_VERSION, BUILD_HASH, COMMIT_URL, MOBILE_REPO_URL, REPO_URL } from '../lib/buildInfo'
 
 function GithubMark({ size = 16, className = '' }) {
   return (
@@ -46,7 +46,9 @@ const navButtonClass =
 const navPrimaryClass =
   'home-link-lift inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-[#10201c] hover:bg-emerald-200 transition-colors'
 
-const heroWords = ['Arche', 'Private', 'Own']
+const heroWords = ['Encrypted', 'Private', 'Own']
+
+const trustPoints = ['Zero-knowledge', 'Open source', 'No trackers', 'Self-hostable']
 
 const features = [
   { icon: Layers, label: 'A space for every project' },
@@ -90,16 +92,40 @@ const serverFacts = [
 
 export default function HomePage() {
   const [heroWordIndex, setHeroWordIndex] = useState(0)
-  const heroWord = heroWords[heroWordIndex]
+  const [heroPrevIndex, setHeroPrevIndex] = useState(null)
+  const [heroSlotWidth, setHeroSlotWidth] = useState(null)
+  const heroSizerRef = useRef(null)
   const year = new Date().getFullYear()
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setHeroWordIndex(index => (index + 1) % heroWords.length)
+      setHeroWordIndex(index => {
+        setHeroPrevIndex(index)
+        return (index + 1) % heroWords.length
+      })
     }, 3000)
 
     return () => window.clearInterval(interval)
   }, [])
+
+  // Drop the outgoing word once its exit animation has finished.
+  useEffect(() => {
+    if (heroPrevIndex === null) return
+    const timer = window.setTimeout(() => setHeroPrevIndex(null), 700)
+    return () => window.clearTimeout(timer)
+  }, [heroPrevIndex, heroWordIndex])
+
+  // Measure the active word so the slot can animate its width, keeping the
+  // surrounding "Your"/"Space" words from snapping when the word changes.
+  // Re-measure on resize since the headline font size is responsive.
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (heroSizerRef.current) setHeroSlotWidth(heroSizerRef.current.offsetWidth)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [heroWordIndex])
 
   const handlePointerMove = (event) => {
     event.currentTarget.style.setProperty('--home-cursor-x', `${event.clientX}px`)
@@ -122,7 +148,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(50,211,170,0.18),transparent_28%),radial-gradient(circle_at_80%_16%,rgba(124,106,247,0.18),transparent_30%),linear-gradient(135deg,#0f1117_0%,#171923_46%,#11221f_100%)]" />
         <div className="absolute inset-0 opacity-[0.18] bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:44px_44px]" />
 
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="home-float absolute top-[16%] left-[5%] hidden md:block w-56 rounded-xl border border-white/10 bg-white/[0.07] backdrop-blur-md p-4 shadow-2xl">
             <div className="flex items-center gap-2 text-xs text-emerald-200">
               <CheckCircle2 size={14} />
@@ -153,13 +179,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        <header className="absolute left-0 right-0 top-0 z-50 flex items-center justify-end px-4 py-4 sm:px-8 sm:py-5">
+        <header className="absolute left-0 right-0 top-0 z-50 flex items-center justify-between px-4 py-4 sm:px-8 sm:py-5">
+          <a href="#" className="flex items-center gap-2.5" aria-label="Arche Space home">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-300 to-cyan-300 text-sm font-bold text-[#10201c]">
+              AS
+            </span>
+            <span className="hidden text-sm font-semibold text-white sm:inline">Arche Space</span>
+          </a>
           <nav className="flex items-center gap-2">
             <a href="#features" className={`${navButtonClass} hidden md:inline-flex`}>
               Features
             </a>
             <a href="#how-it-works" className={`${navButtonClass} hidden md:inline-flex`}>
               How it works
+            </a>
+            <a href="#mobile" className={`${navButtonClass} hidden lg:inline-flex`}>
+              Android
             </a>
             <a
               href={REPO_URL}
@@ -178,20 +213,34 @@ export default function HomePage() {
         </header>
 
         <div className="relative z-10 mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-1 pt-20 pb-10 text-center sm:pt-24 sm:pb-12">
-          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200/20 bg-emerald-200/10 px-3 py-1.5 text-xs font-medium text-emerald-100">
-            <ShieldCheck size={14} />
-            Encrypted private space
-          </p>
-          <h1 className="max-w-4xl text-4xl font-semibold leading-[1.02] tracking-normal sm:text-6xl lg:text-7xl">
-            Your{' '}
-            <span
-              key={heroWord}
-              className="home-word inline-block text-cyan-200 drop-shadow-[0_0_22px_rgba(103,232,249,0.3)]"
+          <div className="hero-headline">
+            <h1 className="max-w-4xl text-4xl font-semibold leading-[1.02] tracking-normal sm:text-6xl lg:text-7xl">
+              Your{' '}
+              <span
+                className="home-word-slot text-cyan-200 drop-shadow-[0_0_22px_rgba(103,232,249,0.3)]"
+                style={heroSlotWidth != null ? { width: heroSlotWidth } : undefined}
+              >
+                <span ref={heroSizerRef} aria-hidden="true" className="home-word-sizer">
+                  {heroWords[heroWordIndex]}
+                </span>
+                {heroPrevIndex !== null && (
+                  <span key={`out-${heroPrevIndex}`} aria-hidden="true" className="home-word home-word-out">
+                    {heroWords[heroPrevIndex]}
+                  </span>
+                )}
+                <span key={`in-${heroWordIndex}`} className="home-word home-word-in">
+                  {heroWords[heroWordIndex]}
+                </span>
+              </span>{' '}
+              Space
+            </h1>
+            <div
+              aria-hidden="true"
+              className="hero-reflection text-4xl font-semibold leading-[1.02] tracking-normal sm:text-6xl lg:text-7xl"
             >
-              {heroWord}
-            </span>{' '}
-            Space
-          </h1>
+              Your <span className="text-cyan-200">{heroWords[heroWordIndex]}</span> Space
+            </div>
+          </div>
           <p className="mt-6 max-w-2xl text-base leading-7 text-white/72 sm:text-lg">
             An open-source space to capture, organise, and come back to everything you are
             working on. Yours alone, on every device.
@@ -211,6 +260,17 @@ export default function HomePage() {
               See how it works
             </a>
           </div>
+          <ul className="mt-8 flex flex-wrap items-center justify-center gap-2">
+            {trustPoints.map(point => (
+              <li
+                key={point}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/70"
+              >
+                <CheckCircle2 size={12} className="text-emerald-300" />
+                {point}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -330,7 +390,7 @@ export default function HomePage() {
                     <p>arc1:Wq7hB3n.Yc6sT2eJ9uXa</p>
                     <p>arc1:Kd4mV8r.Pz5nQ1wE7bHt</p>
                   </div>
-                  <p className="mt-4 text-[11px] leading-5 text-white/40">
+                  <p className="mt-4 text-[11px] leading-5 text-white/55">
                     The same three items.
                   </p>
                 </div>
@@ -422,6 +482,66 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Mobile app ───────────────────────────────────── */}
+      <section id="mobile" className="scroll-mt-20 border-t border-white/5 bg-[#101820] px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div>
+              <p className="text-sm font-semibold text-emerald-200">Also on Android</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">
+                Your space, in your pocket
+              </h2>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-white/62">
+                A native Android app, built with Flutter and open source like the web
+                app. It uses the same zero-knowledge vault - unlock with your PIN or
+                biometrics and your spaces sync across every device. In active
+                development: follow along or build it yourself on GitHub.
+              </p>
+              <div className="mt-8">
+                <a
+                  href={MOBILE_REPO_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="home-link-lift inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-5 py-3 text-sm font-semibold text-[#10201c] hover:bg-emerald-200 transition-colors"
+                >
+                  <GithubMark size={16} />
+                  View the Android app on GitHub
+                </a>
+              </div>
+            </div>
+
+            {/* Phone mockup */}
+            <div className="flex justify-center lg:justify-end" aria-hidden="true">
+              <div className="w-full max-w-[248px] rounded-[2rem] border border-white/12 bg-[#141824] p-3 shadow-2xl">
+                <div className="rounded-[1.5rem] border border-white/8 bg-[#0f1117] p-4">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-300 to-cyan-300 text-[11px] font-bold text-[#10201c]">
+                      AS
+                    </span>
+                    <span className="text-sm font-semibold text-white">Arche Space</span>
+                    <LockKeyhole size={13} className="ml-auto text-emerald-200/70" />
+                  </div>
+                  <div className="mt-4 space-y-2.5">
+                    <div className="rounded-lg border border-white/8 bg-white/[0.04] p-3">
+                      <div className="h-2 w-20 rounded-full bg-white/25" />
+                      <div className="mt-2 h-2 w-28 rounded-full bg-white/10" />
+                    </div>
+                    <div className="rounded-lg border border-emerald-200/20 bg-emerald-200/[0.06] p-3">
+                      <div className="h-2 w-16 rounded-full bg-emerald-200/40" />
+                      <div className="mt-2 h-2 w-24 rounded-full bg-white/10" />
+                    </div>
+                    <div className="rounded-lg border border-white/8 bg-white/[0.04] p-3">
+                      <div className="h-2 w-24 rounded-full bg-white/20" />
+                      <div className="mt-2 h-2 w-14 rounded-full bg-white/10" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Final CTA ────────────────────────────────────── */}
       <section className="relative overflow-hidden border-t border-white/5 bg-[#12141b] px-4 py-20 text-center sm:px-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(50,211,170,0.12),transparent_55%)]" />
@@ -442,11 +562,13 @@ export default function HomePage() {
               <ArrowRight size={16} />
             </Link>
             <a
-              href="#"
+              href={MOBILE_REPO_URL}
+              target="_blank"
+              rel="noreferrer"
               className="home-link-lift inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15 transition-colors"
             >
               <Smartphone size={16} />
-              Get it on Android
+              See the Android app
             </a>
           </div>
         </div>
@@ -464,17 +586,16 @@ export default function HomePage() {
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/40">Product</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/55">Product</p>
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li><a href="#features" className="text-white/60 hover:text-white transition-colors">Features</a></li>
                 <li><a href="#how-it-works" className="text-white/60 hover:text-white transition-colors">How it works</a></li>
                 <li><Link to="/login" className="text-white/60 hover:text-white transition-colors">Sign in</Link></li>
-                <li><a href="#" className="text-white/60 hover:text-white transition-colors">Android app</a></li>
               </ul>
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/40">Project</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/55">Project</p>
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li>
                   <a href={REPO_URL} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
@@ -482,13 +603,8 @@ export default function HomePage() {
                   </a>
                 </li>
                 <li>
-                  <a href={`${REPO_URL}/issues`} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
-                    Report an issue
-                  </a>
-                </li>
-                <li>
-                  <a href={`${REPO_URL}#setup`} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
-                    Self-hosting
+                  <a href={MOBILE_REPO_URL} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
+                    Mobile source
                   </a>
                 </li>
                 <li>
@@ -500,7 +616,7 @@ export default function HomePage() {
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/40">Contact</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/55">Contact</p>
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li>
                   <a href="mailto:help@archespace.cc" className="text-white/60 hover:text-white transition-colors">
@@ -517,10 +633,10 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
-            <p className="text-xs text-white/40">
-              © {year} Arche Space. Created and maintained by the Arche Space Project.
+            <p className="text-xs text-white/55">
+              © {year} · Created and maintained by the Arche Space Project.
             </p>
-            <p className="text-xs text-white/40">
+            <p className="text-xs text-white/55">
               v{APP_VERSION} · build{' '}
               <a
                 href={COMMIT_URL}

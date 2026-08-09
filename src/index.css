@@ -193,8 +193,19 @@ body.bulk-bar-active .toast-stack {
 }
 
 @keyframes homeWordIn {
-  from { opacity: 0; transform: translate3d(0, 0.14em, 0); filter: blur(5px); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+  from { opacity: 0; transform: scale(0.94); filter: blur(4px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes homeWordOut {
+  from { opacity: 1; transform: scale(1); filter: blur(0); }
+  to { opacity: 0; transform: scale(1.05); filter: blur(4px); }
+}
+
+/* Gentle "water surface" wobble for the headline reflection. */
+@keyframes heroRipple {
+  0%, 100% { transform: translateX(-50%) scaleY(-1) skewX(0deg); opacity: 0.36; }
+  50% { transform: translateX(-50%) scaleY(-1) translateY(0.6px) skewX(0.5deg); opacity: 0.46; }
 }
 
 .animate-fade-in { animation: fadeIn 0.4s ease-out; }
@@ -206,7 +217,44 @@ body.bulk-bar-active .toast-stack {
 .animate-slide-out { animation: slideOutRight 0.2s ease-in forwards; }
 .home-float { animation: homeFloat 8s ease-in-out infinite; }
 .home-float-delayed { animation: homeFloatDelayed 10s ease-in-out infinite; }
-.home-word { animation: homeWordIn 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; }
+/* Rotating hero word: a fixed slot whose width animates so the neighbouring
+   "Your"/"Space" glide instead of snapping, with the words themselves stacked
+   and cross-fading in and out. */
+.home-word-slot {
+  position: relative;
+  display: inline-block;
+  text-align: center;
+  transition: width 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.home-word-sizer { visibility: hidden; white-space: nowrap; }
+.home-word {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  white-space: nowrap;
+  will-change: opacity, transform, filter;
+}
+.home-word-in { animation: homeWordIn 0.6s ease both; }
+.home-word-out { animation: homeWordOut 0.55s ease both; }
+
+/* Faint mirrored reflection beneath the headline, gently rippling like water. */
+.hero-headline { position: relative; }
+.hero-reflection {
+  position: absolute;
+  top: calc(100% - 0.08em);
+  left: 50%;
+  z-index: -1;
+  white-space: nowrap;
+  transform-origin: center;
+  transform: translateX(-50%) scaleY(-1);
+  opacity: 0.4;
+  filter: blur(0.6px);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 62%, rgba(0, 0, 0, 0.65) 100%);
+  mask-image: linear-gradient(to bottom, transparent 62%, rgba(0, 0, 0, 0.65) 100%);
+  animation: heroRipple 6s ease-in-out infinite;
+}
 .home-page {
   --home-cursor-x: 50vw;
   --home-cursor-y: 42vh;
