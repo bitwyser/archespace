@@ -58,7 +58,7 @@ const FOCUSABLE =
  *
  * @param {{ title: string, onClose: Function, children: React.ReactNode, footer?: React.ReactNode, onSubmit?: Function }} props
  */
-export function Modal({ title, onClose, children, footer, onSubmit }) {
+export function Modal({ title, onClose, children, footer, onSubmit, size = 'md' }) {
   const titleId = useId()
   const panelRef = useRef(null)
 
@@ -122,7 +122,7 @@ export function Modal({ title, onClose, children, footer, onSubmit }) {
         aria-modal="true"
         aria-labelledby={titleId}
         onSubmit={onSubmit}
-        className="bg-bg-surface border border-bg-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl flex flex-col max-h-[90vh] outline-none"
+        className={`bg-bg-surface border border-bg-border rounded-t-2xl sm:rounded-2xl w-full ${size === 'lg' ? 'sm:max-w-2xl' : 'sm:max-w-md'} shadow-2xl flex flex-col max-h-[90vh] outline-none`}
       >
         {/* Header - always visible */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-bg-border shrink-0">

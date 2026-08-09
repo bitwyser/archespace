@@ -532,9 +532,9 @@ export default function SpacePage() {
 
       {/* ── Add item type picker modal ───────────────── */}
       {addModal && (
-        <Modal title="Add item" onClose={() => setAddModal(false)}>
+        <Modal title="Add item" onClose={() => setAddModal(false)} size="lg">
           <p className="text-text-muted text-xs mb-3">Choose the type of content to add</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
             {ITEM_TYPE_OPTIONS.map(({ type, label, desc, icon: Icon, color, bg }) => (
               <button
                 key={type}
