@@ -410,6 +410,15 @@ function SpaceItem({
                 </>
               ) : (
                 <>
+                  <button
+                    type="button"
+                    onClick={handleCollapseClick}
+                    className="p-2 rounded-lg border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all"
+                    aria-label={collapsed ? 'Expand item' : 'Collapse item'}
+                    title={collapsed ? 'Expand' : 'Collapse'}
+                  >
+                    {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                  </button>
                   {item.type !== 'secret' && item.type !== 'draw' && (
                   <button
                     type="button"
@@ -448,15 +457,6 @@ function SpaceItem({
                       </button>
                     ) : null
                   )}
-                  <button
-                    type="button"
-                    onClick={handleCollapseClick}
-                    className="p-2 rounded-lg border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all"
-                    aria-label={collapsed ? 'Expand item' : 'Collapse item'}
-                    title={collapsed ? 'Expand' : 'Collapse'}
-                  >
-                    {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-                  </button>
                   <ActionMenu
                     label="Item actions"
                     actions={[

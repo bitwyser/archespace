@@ -310,6 +310,20 @@ export default function SpacePage() {
 
           {/* Header actions */}
           <div className="flex items-center gap-2 shrink-0 relative">
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+                className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all ${
+                  selectMode
+                    ? 'border-accent bg-accent-muted text-accent'
+                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                }`}
+              >
+                <CheckSquare size={14} />
+                <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
+              </button>
+            )}
             {items.length > 1 && !selectMode && (
               <SortMenu value={itemSort} onChange={setItemSort} />
             )}
@@ -323,20 +337,6 @@ export default function SpacePage() {
               >
                 <FileDown size={14} />
                 <span className="hidden sm:inline">Export</span>
-              </button>
-            )}
-            {items.length > 0 && (
-              <button
-                type="button"
-                onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-                className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all ${
-                  selectMode
-                    ? 'border-accent bg-accent-muted text-accent'
-                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-                }`}
-              >
-                <CheckSquare size={14} />
-                <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
               </button>
             )}
             <button
