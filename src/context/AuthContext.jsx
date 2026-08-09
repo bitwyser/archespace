@@ -108,8 +108,14 @@ export function AuthProvider({ children }) {
     return { error: signOutError }
   }
 
-  /** End the current session */
-  const signOut = async (options) => {
+  /**
+   * End the current session. Defaults to `local` scope so signing out on one
+   * device does NOT revoke the user's sessions on their other devices — only
+   * this browser is signed out. Callers can still pass an explicit scope.
+   * (Global, all-device revocation is intentional only for password changes,
+   * handled separately in updatePasswordAndSignOut.)
+   */
+  const signOut = async (options = { scope: 'local' }) => {
     // Record the logout while the session (and auth.uid()) is still valid.
     await logAudit({ action: 'logout' })
     clearVaultSession()

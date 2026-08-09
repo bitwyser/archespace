@@ -19,7 +19,10 @@ export function useSessionTimeout() {
   useEffect(() => {
     const expire = () => {
       window.dispatchEvent(new CustomEvent('arche:session-expired', { detail: { reason: 'absolute' } }))
-      supabase.auth.signOut()
+      // Local scope: this device's own absolute timeout must not revoke the
+      // user's sessions on their other devices (that would log out every
+      // platform at once). Global sign-out is reserved for password changes.
+      supabase.auth.signOut({ scope: 'local' })
     }
 
     const scheduleFrom = (startedAt) => {
