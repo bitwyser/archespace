@@ -4,7 +4,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Download, Upload, Eye, EyeOff, ChevronDown, ChevronRight, Check, AlertTriangle, User, Palette, ShieldCheck, Archive, Trash2, Lock } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Eye, EyeOff, ChevronDown, Check, AlertTriangle, User, Palette, ShieldCheck, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { useTheme } from '../context/ThemeCore'
@@ -681,46 +681,6 @@ export default function SettingsPage() {
                 onChange={handleImport}
                 className="hidden"
               />
-            </div>
-          </SettingsSection>
-
-          <SettingsSection
-            id="storage"
-            title="Storage"
-            description="Archived items and the recycle bin."
-            icon={Archive}
-            openSection={openSection}
-            setOpenSection={setOpenSection}
-          >
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => navigate('/archive')}
-                className="w-full flex items-center gap-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base px-4 py-3 text-left transition-colors"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-bg-border bg-bg-surface text-text-secondary">
-                  <Archive size={17} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-text-primary">Archive</span>
-                  <span className="block text-xs text-text-muted mt-0.5">Items hidden without deleting</span>
-                </span>
-                <ChevronRight size={16} className="shrink-0 text-text-muted" />
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/recycle-bin')}
-                className="w-full flex items-center gap-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base px-4 py-3 text-left transition-colors"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-bg-border bg-bg-surface text-text-secondary">
-                  <Trash2 size={17} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-text-primary">Recycle bin</span>
-                  <span className="block text-xs text-text-muted mt-0.5">Restore or permanently delete</span>
-                </span>
-                <ChevronRight size={16} className="shrink-0 text-text-muted" />
-              </button>
             </div>
           </SettingsSection>
 
