@@ -34,6 +34,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Pinning for important spaces and items.
 - Drag-and-drop reordering for spaces and page items, plus keyboard reordering inside lists.
 - Sort spaces and page items by default order, name, or newest, with the choice remembered per view.
+- Grid or list view for spaces on the dashboard.
 - Unified dashboard search across spaces, tags, and item content, with keyboard navigation and jump-to-item.
 - Command palette with `Ctrl+K` / `Cmd+K`.
 - Keyboard shortcuts for common actions, with an in-app shortcuts dialog (see [Keyboard shortcuts](#keyboard-shortcuts)).
@@ -48,6 +49,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Appearance settings with `System`, `Dark`, and `Light` theme modes.
 - Accent color settings with multiple color options.
 - Private, encrypted vault to keep your content secure (see [Security model](#security-model)).
+- Configurable vault auto-lock that re-locks the vault after a chosen period of inactivity (see [Security model](#security-model)).
 - Passkey / biometric vault unlock using WebAuthn - unlock with Face ID, Touch ID, or Windows Hello alongside your PIN (see [Security model](#security-model)).
 - Accessibility throughout: full keyboard operation (cards, menus, command palette, and search), a visible focus indicator, screen-reader live regions.
 - Offline queue for pending changes while the browser is offline.
@@ -83,7 +85,7 @@ All list-style types support adding, removing, drag-and-drop reordering, and key
 | `Ctrl+L` / `Cmd+L` | Lock the vault |
 | `Ctrl+S` / `Cmd+S` | Save all dirty items on the current page |
 | `Esc` | Close menus, modals, or active overlays |
-| `Arrow Up` / `Arrow Down` | Reorder the focused row inside a list, numbered list, or checklist |
+| `Arrow Up` / `Arrow Down` | Reorder the focused row inside a list, numbered list, checklist, or card list |
 
 ## Security model
 
@@ -97,7 +99,7 @@ Arche Space uses a browser-side vault model. You sign in with Supabase Auth usin
 
 **Sessions and access**
 
-- The unlocked vault key is held as a non-extractable key in IndexedDB - usable for decryption within the tab but not readable or exportable by scripts - and auto-locks after 24 hours.
+- The unlocked vault key is held as a non-extractable key in IndexedDB - usable for decryption within the tab but not readable or exportable by scripts - and auto-locks after a configurable period of inactivity (5 minutes, 15 minutes, 1 hour, 8 hours, 24 hours, or never), defaulting to 24 hours and adjustable in Settings.
 - The login session has an absolute lifetime of 1 week.
 - Password reset and password change flows globally sign out existing sessions.
 - Failed login attempts and failed vault PIN attempts are rate limited, and repeated PIN failures lock the vault server-side.
