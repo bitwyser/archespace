@@ -37,6 +37,8 @@ export default function VaultUnlockGate({ children }) {
   const [forgotPin, setForgotPin] = useState(false)
   const [formError, setFormError] = useState('')
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  // Which action is running, so only its button shows a spinner (not all).
+  const [pendingAction, setPendingAction] = useState(null) // 'passkey' | 'pin' | null
   // When set (to the just-used PIN), show the "enable biometric unlock?" prompt
   // before letting the unlocked app through.
   const [pendingEnrollPin, setPendingEnrollPin] = useState('')
@@ -78,12 +80,15 @@ export default function VaultUnlockGate({ children }) {
       return
     }
     try {
+      setPendingAction('pin')
       const enteredPin = pin
       await unlock(enteredPin)
       if (canOfferBiometric) setPendingEnrollPin(enteredPin)
       resetFields()
     } catch {
       // unlockError set in context
+    } finally {
+      setPendingAction(null)
     }
   }
 
@@ -91,10 +96,13 @@ export default function VaultUnlockGate({ children }) {
     clearUnlockError()
     setFormError('')
     try {
+      setPendingAction('passkey')
       await unlockWithPasskey()
       resetFields()
     } catch {
       // unlockError set in context
+    } finally {
+      setPendingAction(null)
     }
   }
 
@@ -112,6 +120,7 @@ export default function VaultUnlockGate({ children }) {
       return
     }
     try {
+      setPendingAction('pin')
       const enteredPin = pin
       const { recoveryCode, recoveryUnavailable } = await setup(enteredPin)
       // Shown after the recovery-code screen (render priority handles ordering).
@@ -126,6 +135,8 @@ export default function VaultUnlockGate({ children }) {
       resetFields()
     } catch {
       // unlockError set in context
+    } finally {
+      setPendingAction(null)
     }
   }
 
@@ -147,12 +158,15 @@ export default function VaultUnlockGate({ children }) {
       return
     }
     try {
+      setPendingAction('pin')
       const { recoveryCode } = await recoverPinWithCode(recoveryCodeInput, pin)
       showRecoveryCode(recoveryCode)
       setForgotPin(false)
       resetFields()
     } catch {
       // unlockError set in context
+    } finally {
+      setPendingAction(null)
     }
   }
 
@@ -307,7 +321,7 @@ export default function VaultUnlockGate({ children }) {
                 className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 <Fingerprint size={16} />
-                {unlocking ? 'Waiting…' : 'Unlock with passkey'}
+                {pendingAction === 'passkey' ? 'Waiting…' : 'Unlock with passkey'}
               </button>
               <div className="flex items-center gap-3 py-1">
                 <div className="h-px flex-1 bg-bg-border" />
@@ -374,7 +388,7 @@ export default function VaultUnlockGate({ children }) {
             className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
           >
             <Lock size={14} />
-            {unlocking
+            {pendingAction === 'pin'
               ? 'Working…'
               : needsSetup
                 ? 'Create PIN'
