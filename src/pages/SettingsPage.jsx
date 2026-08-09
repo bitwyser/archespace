@@ -108,6 +108,7 @@ export default function SettingsPage() {
   const [pinRecoveryLoading, setPinRecoveryLoading] = useState(false)
   const [openSection, setOpenSection] = useState('')
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
   const [emailStep, setEmailStep] = useState('form')     // 'form' | 'code'
   const deleteConfirmationPhrase = `DELETE ${user?.email || ''}`
 
@@ -560,6 +561,22 @@ export default function SettingsPage() {
 
             <Divider />
 
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">Sign out of all devices</h3>
+              <p className="text-text-muted text-xs mt-0.5">
+                End your session everywhere, including this one. Use this if you've signed in on a device you no longer have access to.
+              </p>
+              <button
+                type="button"
+                onClick={() => setConfirmSignOutAll(true)}
+                className="mt-3 w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-danger/10 hover:border-danger/30 text-sm font-semibold text-text-secondary hover:text-danger transition-colors"
+              >
+                Sign out of all devices
+              </button>
+            </div>
+
+            <Divider />
+
             <div className="rounded-xl border border-danger/30 bg-danger/10 p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle size={20} className="mt-0.5 shrink-0 text-danger" />
@@ -995,6 +1012,21 @@ export default function SettingsPage() {
             toast.info('Signed out')
           }}
           onClose={() => setConfirmSignOut(false)}
+        />
+      )}
+
+      {confirmSignOutAll && (
+        <ConfirmDialog
+          title="Sign out of all devices?"
+          message="This ends your session on every device, including this one. You'll need your login password and vault PIN to sign back in."
+          confirmLabel="Sign out everywhere"
+          destructive
+          onConfirm={() => {
+            setConfirmSignOutAll(false)
+            signOut({ scope: 'global' })
+            toast.info('Signed out of all devices')
+          }}
+          onClose={() => setConfirmSignOutAll(false)}
         />
       )}
     </div>
