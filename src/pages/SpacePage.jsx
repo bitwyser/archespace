@@ -540,14 +540,14 @@ export default function SpacePage() {
                 key={type}
                 type="button"
                 onClick={() => handleAddItem(type)}
-                className="flex flex-col gap-2 p-4 bg-bg-elevated hover:bg-bg-hover border border-bg-border hover:border-accent/30 rounded-xl text-left transition-all"
+                className="flex items-start gap-2.5 p-2.5 bg-bg-elevated hover:bg-bg-hover border border-bg-border hover:border-accent/30 rounded-lg text-left transition-all"
               >
-                <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
-                  <Icon size={16} className={color} />
+                <div className={`w-7 h-7 shrink-0 rounded-lg ${bg} flex items-center justify-center`}>
+                  <Icon size={15} className={color} />
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">{label}</p>
-                  <p className="text-xs text-text-muted mt-0.5">{desc}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-text-primary leading-tight">{label}</p>
+                  <p className="text-xs text-text-muted mt-0.5 leading-snug">{desc}</p>
                 </div>
               </button>
             ))}
