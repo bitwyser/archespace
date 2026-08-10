@@ -4,7 +4,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Download, Upload, Eye, EyeOff, ChevronDown, Check, AlertTriangle, User, Palette, ShieldCheck, Lock } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, ShieldCheck, Lock, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { useTheme } from '../context/ThemeCore'
@@ -23,38 +23,39 @@ import ReauthCode from '../components/ReauthCode'
 import { Modal, ConfirmDialog } from '../components/ui/UI'
 import { queryKeys } from '../lib/queryKeys'
 
-function SettingsSection({ id, title, description, icon: Icon, openSection, setOpenSection, children }) {
-  const open = openSection === id
+/**
+ * A settings section rendered in the content pane. Only the section matching
+ * the active nav item renders; the header shows the section's icon, title and
+ * description for context.
+ */
+function SettingsSection({ id, title, description, icon: Icon, active, children }) {
+  if (active !== id) return null
 
   return (
-    <section className="border-b border-bg-border last:border-b-0">
-      <button
-        type="button"
-        onClick={() => setOpenSection(current => (current === id ? '' : id))}
-        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-bg-elevated/40 transition-colors"
-      >
+    <section>
+      <div className="mb-6 flex items-center gap-3">
         {Icon && (
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
-            <Icon size={17} />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+            <Icon size={19} />
           </span>
         )}
-        <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
           <p className="text-text-muted text-xs mt-0.5">{description}</p>
         </div>
-        <ChevronDown
-          size={16}
-          className={`shrink-0 text-text-muted transition-transform ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-      {open && (
-        <div className="px-4 pb-4">
-          {children}
-        </div>
-      )}
+      </div>
+      {children}
     </section>
   )
 }
+
+/** Nav rail entries (drive the left rail; content lives in the pane below). */
+const SECTIONS = [
+  { id: 'account', title: 'Account', description: 'Email, login password, and account.', icon: User },
+  { id: 'appearance', title: 'Appearance', description: 'Theme mode and accent color synced to your account.', icon: Palette },
+  { id: 'backup', title: 'Backup', description: 'Export or import all spaces as JSON.', icon: Download },
+  { id: 'security', title: 'Security', description: 'Vault PIN, recovery code, passkeys, and auto-lock.', icon: ShieldCheck },
+]
 
 function Divider() {
   return <div className="my-5 border-t border-bg-border" />
@@ -106,7 +107,7 @@ export default function SettingsPage() {
   const [pinLoading, setPinLoading] = useState(false)
   const [recoverySetupLoading, setRecoverySetupLoading] = useState(false)
   const [pinRecoveryLoading, setPinRecoveryLoading] = useState(false)
-  const [openSection, setOpenSection] = useState('')
+  const [activeSection, setActiveSection] = useState('account')
   const [confirmSignOut, setConfirmSignOut] = useState(false)
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
   const [emailStep, setEmailStep] = useState('form')     // 'form' | 'code'
@@ -393,15 +394,47 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-8">
-        <div className="bg-bg-surface border border-bg-border rounded-2xl overflow-hidden">
-          <SettingsSection
-            id="account"
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="mb-6 text-xl font-semibold text-text-primary">Settings</h1>
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+          {/* Nav rail */}
+          <nav className="w-full shrink-0 md:sticky md:top-6 md:w-56">
+            <div className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
+              {SECTIONS.map(({ id, title, icon: NavIcon }) => {
+                const on = activeSection === id
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setActiveSection(id)}
+                    aria-current={on ? 'page' : undefined}
+                    className={`flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${on ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'}`}
+                  >
+                    <NavIcon size={17} />
+                    {title}
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                onClick={() => setConfirmSignOut(true)}
+                className="flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-danger/10 hover:text-danger md:mt-2"
+              >
+                <LogOut size={17} />
+                Sign out
+              </button>
+            </div>
+          </nav>
+
+          {/* Content pane */}
+          <div className="min-w-0 flex-1">
+            <div className="rounded-2xl border border-bg-border bg-bg-surface p-5 sm:p-6">
+              <SettingsSection
+                id="account"
             title="Account"
             description="Email, login password, and account."
             icon={User}
-            openSection={openSection}
-            setOpenSection={setOpenSection}
+            active={activeSection}
           >
             <div className="flex items-center gap-3 rounded-xl border border-bg-border bg-bg-elevated px-4 py-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
@@ -602,8 +635,7 @@ export default function SettingsPage() {
             title="Appearance"
             description="Theme mode and accent color synced to your account."
             icon={Palette}
-            openSection={openSection}
-            setOpenSection={setOpenSection}
+            active={activeSection}
           >
             <div>
               <h3 className="text-sm font-semibold text-text-primary">Theme</h3>
@@ -671,8 +703,7 @@ export default function SettingsPage() {
             title="Backup"
             description="Export or import all spaces as JSON."
             icon={Download}
-            openSection={openSection}
-            setOpenSection={setOpenSection}
+            active={activeSection}
           >
             <div className="flex flex-col sm:flex-row gap-2">
               <button
@@ -706,8 +737,7 @@ export default function SettingsPage() {
             title="Security"
             description="Vault PIN, recovery code, passkeys, and auto-lock."
             icon={ShieldCheck}
-            openSection={openSection}
-            setOpenSection={setOpenSection}
+            active={activeSection}
           >
             <div>
               <h3 className="text-sm font-semibold text-text-primary">Change vault PIN</h3>
@@ -860,30 +890,22 @@ export default function SettingsPage() {
             </button>
           </SettingsSection>
 
+            </div>
+
+            <p className="mt-6 text-center text-xs text-text-muted">
+              Arche Space <span className="text-text-secondary">v{APP_VERSION}</span> · build{' '}
+              <a
+                href={COMMIT_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="font-mono underline hover:text-text-secondary transition-colors"
+                title="View this build's source commit"
+              >
+                {BUILD_HASH}
+              </a>
+            </p>
+          </div>
         </div>
-
-        <section className="mt-6">
-          <button
-            type="button"
-            onClick={() => setConfirmSignOut(true)}
-            className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 text-sm font-semibold text-text-secondary hover:text-danger transition-colors"
-          >
-            Sign out
-          </button>
-        </section>
-
-        <p className="mt-6 text-center text-xs text-text-muted">
-          Arche Space <span className="text-text-secondary">v{APP_VERSION}</span> · build{' '}
-          <a
-            href={COMMIT_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="font-mono underline hover:text-text-secondary transition-colors"
-            title="View this build's source commit"
-          >
-            {BUILD_HASH}
-          </a>
-        </p>
       </main>
 
       {deleteStep === 'warning' && (
