@@ -15,7 +15,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate, useBlocker, useLocation } from 'react-router-dom'
-import { ArrowLeft, Plus, CheckSquare, FileDown } from 'lucide-react'
+import { ArrowLeft, Plus, CheckSquare, FileDown, LayoutGrid, List } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useSpaces } from '../hooks/useSpaces'
@@ -80,8 +80,18 @@ export default function SpacePage() {
     () => sortEntities(items, itemSort, i => i.title),
     [items, itemSort]
   )
-  // Manual drag order only applies to the default sort.
-  const reorderDisabled = selectMode || itemSort !== 'default'
+  // Grid (masonry) and list share the same items; list is a single column.
+  const [viewMode, setViewMode] = useState(() => {
+    try { return localStorage.getItem('arche:items-view') === 'grid' ? 'grid' : 'list' } catch { return 'list' }
+  })
+  const changeViewMode = (mode) => {
+    setViewMode(mode)
+    try { localStorage.setItem('arche:items-view', mode) } catch { /* storage unavailable */ }
+  }
+
+  // Manual drag order only applies to the default sort in the single-column
+  // list view; masonry grid order is column-major so reordering is disabled.
+  const reorderDisabled = selectMode || itemSort !== 'default' || viewMode === 'grid'
 
   const selectedCount = selectedIds.size
   const selectedItems = useMemo(
@@ -310,6 +320,38 @@ export default function SpacePage() {
 
           {/* Header actions */}
           <div className="flex items-center gap-2 shrink-0 relative">
+            {items.length > 0 && !selectMode && (
+              <div className="flex items-center gap-1 p-1 rounded-xl border border-bg-border bg-bg-surface">
+                <button
+                  type="button"
+                  onClick={() => changeViewMode('grid')}
+                  aria-label="Grid view"
+                  aria-pressed={viewMode === 'grid'}
+                  title="Grid view"
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    viewMode === 'grid'
+                      ? 'bg-accent-muted text-accent'
+                      : 'text-text-muted hover:text-text-primary'
+                  }`}
+                >
+                  <LayoutGrid size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeViewMode('list')}
+                  aria-label="List view"
+                  aria-pressed={viewMode === 'list'}
+                  title="List view"
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-accent-muted text-accent'
+                      : 'text-text-muted hover:text-text-primary'
+                  }`}
+                >
+                  <List size={16} />
+                </button>
+              </div>
+            )}
             {items.length > 0 && (
               <button
                 type="button"
@@ -353,7 +395,7 @@ export default function SpacePage() {
       </header>
 
       {/* ── Main content ─────────────────────────────── */}
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main className={`mx-auto px-4 py-6 ${viewMode === 'grid' ? 'max-w-6xl' : 'max-w-3xl'}`}>
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
@@ -383,8 +425,11 @@ export default function SpacePage() {
             </button>
           </div>
         ) : (
-          /* Items list with drag-and-drop */
-          <div className="space-y-3 pb-24">
+          /* Items in list (single column) or grid (masonry) view */
+          <div className={viewMode === 'grid'
+            ? 'columns-1 sm:columns-2 lg:columns-3 gap-3 pb-24'
+            : 'space-y-3 pb-24'}
+          >
             {sortedItems.map((item, index) => (
               <div
                 key={item.id}
@@ -392,6 +437,8 @@ export default function SpacePage() {
                 onDragOver={reorderDisabled ? undefined : (e) => handleDragOver(e, index)}
                 onDrop={reorderDisabled ? undefined : () => handleDrop(index)}
                 className={`transition-all duration-300 animate-fade-in-up ${
+                  viewMode === 'grid' ? 'mb-3 break-inside-avoid' : ''
+                } ${
                   !reorderDisabled && dragOverIndex === index && dragIndex !== index
                     ? 'border-t-2 border-accent pt-1'
                     : ''
