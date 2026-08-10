@@ -34,16 +34,16 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Pinning for important spaces and items.
 - Drag-and-drop reordering for spaces and page items, plus keyboard reordering inside lists.
 - Sort spaces and page items by default order, name, or newest, with the choice remembered per view.
-- Grid or list view for spaces on the dashboard.
+- Grid or list view for spaces on the dashboard, and for items inside a space (grid uses a masonry layout so items keep their natural height).
 - Unified dashboard search across spaces, tags, and item content, with keyboard navigation and jump-to-item.
 - Command palette with `Ctrl+K` / `Cmd+K`.
 - Keyboard shortcuts for common actions, with an in-app shortcuts dialog (see [Keyboard shortcuts](#keyboard-shortcuts)).
-- Bulk actions for spaces and items.
-- Duplicate, move, archive, restore, and delete workflows.
-- Recycle bin with restore and permanent delete.
-- Archive area for hiding content without deleting it.
 - Auto-save for edited items.
 - One-click copy of any item's content to the clipboard as clean plain text.
+- Bulk actions for spaces and items.
+- Duplicate, move, archive, restore, and delete workflows.
+- Archive area for hiding content without deleting it.
+- Recycle bin with restore and permanent delete.
 - Export a whole space or a single item to PDF via the browser's print dialog.
 - Backup import/export to JSON.
 - Appearance settings with `System`, `Dark`, and `Light` theme modes.
@@ -51,12 +51,12 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Private, encrypted vault to keep your content secure (see [Security model](#security-model)).
 - Configurable vault auto-lock that re-locks the vault after a chosen period of inactivity (see [Security model](#security-model)).
 - Passkey / biometric vault unlock using WebAuthn - unlock with Face ID, Touch ID, or Windows Hello alongside your PIN (see [Security model](#security-model)).
-- Accessibility throughout: full keyboard operation (cards, menus, command palette, and search), a visible focus indicator, screen-reader live regions.
+- Owner-only audit log of authentication and security events (see [Audit logging](#audit-logging)).
 - Offline queue for pending changes while the browser is offline.
 - Single-user self-hosting mode by default, with an optional multi-user mode.
 - PWA support for installing as an app.
 - Verifiable build hash shown in Settings, linking to the exact source commit on GitHub.
-- Owner-only audit log of authentication and security events (see [Audit logging](#audit-logging)).
+- Accessibility throughout: full keyboard operation (cards, menus, command palette, and search), a visible focus indicator, screen-reader live regions.
 
 ## Item types
 
@@ -102,6 +102,7 @@ Arche Space uses a browser-side vault model. You sign in with Supabase Auth usin
 
 - The unlocked vault key is held as a non-extractable key in IndexedDB - usable for decryption within the tab but not readable or exportable by scripts - and auto-locks after a configurable period of inactivity (5 minutes, 15 minutes, 1 hour, 8 hours, 24 hours, or never), defaulting to 24 hours and adjustable in Settings.
 - The login session has an absolute lifetime of 1 week.
+- Signing out ends only the current device's session by default; Settings also offers "Sign out of all devices" to revoke every session at once. The absolute session timeout is likewise per-device.
 - Password reset and password change flows globally sign out existing sessions.
 - Failed login attempts and failed vault PIN attempts are rate limited, and repeated PIN failures lock the vault server-side.
 - Supabase Row Level Security restricts each user to their own rows.
@@ -255,6 +256,7 @@ The account-deletion email is separate; its HTML lives inside `notify_account_de
 | Encryption | Web Crypto API (AES-GCM), Argon2id key derivation via `@noble/hashes` |
 | Icons | Lucide React |
 | Drawing | `perfect-freehand` for vector ink strokes |
+| Syntax highlighting | `highlight.js` (automatic language detection for the Code item type) |
 | File handling | JSZip |
 | Asset generation | `sharp` (dev-only script that renders the app icons and social image) |
 | Hosting / deploy | Cloudflare (Git-connected builds), or any static host |
