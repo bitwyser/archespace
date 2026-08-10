@@ -219,7 +219,7 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-1 pt-20 pb-10 text-center sm:pt-24 sm:pb-12">
           <div className="hero-headline">
-            <h1 className="max-w-4xl whitespace-nowrap text-[clamp(1.5rem,6.5vw,4.5rem)] font-semibold leading-[1.02] tracking-normal">
+            <h1 className="max-w-4xl whitespace-nowrap text-[clamp(1.5rem,8vw,4.5rem)] font-semibold leading-[1.02] tracking-normal">
               Your{' '}
               <span
                 className="home-word-slot text-cyan-200 drop-shadow-[0_0_22px_rgba(103,232,249,0.3)]"
@@ -241,7 +241,7 @@ export default function HomePage() {
             </h1>
             <div
               aria-hidden="true"
-              className="hero-reflection whitespace-nowrap text-[clamp(1.5rem,6.5vw,4.5rem)] font-semibold leading-[1.02] tracking-normal"
+              className="hero-reflection whitespace-nowrap text-[clamp(1.5rem,8vw,4.5rem)] font-semibold leading-[1.02] tracking-normal"
             >
               Your <span className="text-cyan-200">{heroWords[heroWordIndex]}</span> Space
             </div>
