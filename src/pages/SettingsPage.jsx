@@ -4,7 +4,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, ShieldCheck, Lock, LogOut } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, ShieldCheck, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { useTheme } from '../context/ThemeCore'
@@ -394,12 +394,13 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="mb-6 text-xl font-semibold text-text-primary">Settings</h1>
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
-          {/* Nav rail */}
-          <nav className="w-full shrink-0 md:sticky md:top-6 md:w-56">
-            <div className="flex gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
+      <main className="max-w-4xl mx-auto px-4 py-8 md:flex md:h-[calc(100dvh-3.5rem)] md:flex-col md:overflow-hidden">
+        <h1 className="mb-6 shrink-0 text-xl font-semibold text-text-primary">Settings</h1>
+
+        <div className="flex flex-col gap-6 md:min-h-0 md:flex-1 md:flex-row md:items-stretch">
+          {/* Left pane */}
+          <nav className="w-full shrink-0 md:w-52 md:self-start">
+            <div className="flex gap-1 overflow-x-auto rounded-xl border border-bg-border bg-bg-elevated p-1 md:flex-col md:overflow-visible">
               {SECTIONS.map(({ id, title, icon: NavIcon }) => {
                 const on = activeSection === id
                 return (
@@ -408,27 +409,19 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => setActiveSection(id)}
                     aria-current={on ? 'page' : undefined}
-                    className={`flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors ${on ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'}`}
+                    className={`flex min-w-fit items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:w-full ${on ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
                   >
-                    <NavIcon size={17} />
+                    <NavIcon size={16} />
                     {title}
                   </button>
                 )
               })}
-              <button
-                type="button"
-                onClick={() => setConfirmSignOut(true)}
-                className="flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-medium text-text-secondary transition-colors hover:bg-danger/10 hover:text-danger md:mt-2"
-              >
-                <LogOut size={17} />
-                Sign out
-              </button>
             </div>
           </nav>
 
           {/* Content pane */}
-          <div className="min-w-0 flex-1">
-            <div className="rounded-2xl border border-bg-border bg-bg-surface p-5 sm:p-6">
+          <div className="min-w-0 flex-1 md:flex md:min-h-0 md:flex-col">
+            <div className="rounded-2xl border border-bg-border bg-bg-surface p-5 sm:p-6 md:min-h-0 md:flex-1 md:overflow-y-auto">
               <SettingsSection
                 id="account"
             title="Account"
@@ -591,6 +584,22 @@ export default function SettingsPage() {
                 {resetLoading ? 'Sending reset link...' : 'Forgot current password? Send reset link'}
               </button>
             </form>
+
+            <Divider />
+
+            <div>
+              <h3 className="text-sm font-semibold text-text-primary">Sign out</h3>
+              <p className="text-text-muted text-xs mt-0.5">
+                Sign out of this device only. You'll need your login password and vault PIN to sign back in.
+              </p>
+              <button
+                type="button"
+                onClick={() => setConfirmSignOut(true)}
+                className="mt-3 w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-danger/10 hover:border-danger/30 text-sm font-semibold text-text-secondary hover:text-danger transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
 
             <Divider />
 
@@ -892,7 +901,7 @@ export default function SettingsPage() {
 
             </div>
 
-            <p className="mt-6 text-center text-xs text-text-muted">
+            <p className="mt-6 shrink-0 text-center text-xs text-text-muted">
               Arche Space <span className="text-text-secondary">v{APP_VERSION}</span> · build{' '}
               <a
                 href={COMMIT_URL}
