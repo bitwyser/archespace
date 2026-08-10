@@ -45,6 +45,8 @@ export function itemToClipboardText({ type, content } = {}) {
     case 'textbox':
     case 'markdown':
       return c.text ?? ''
+    case 'code':
+      return c.code ?? ''
     case 'menu_list':
     case 'checkbox_list':
       return listToText(c.items)

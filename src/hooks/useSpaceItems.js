@@ -25,6 +25,7 @@ const defaultContent = {
   numbered_list: { items: [] },
   card_list: { items: [] },
   markdown: { text: '' },
+  code: { code: '' },
   secret: { secret: true, cipher: '' },
   draw: { strokes: [] },
   table: { columns: ['', ''], rows: [['', ''], ['', '']] },

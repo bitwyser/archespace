@@ -29,6 +29,7 @@ import { TextboxEditor, MarkdownEditor, ChecklistEditor, MenuListEditor, Numbere
 import { SecretEditor } from './editors/SecretEditor'
 import { DrawEditor } from './editors/DrawEditor'
 import { TableEditor } from './editors/TableEditor'
+import { CodeEditor } from './editors/CodeEditor'
 import { ActionMenu } from './ui/ActionMenu'
 import { getChecklistProgress } from '../lib/checklistProgress'
 import { isOnline, enqueueOffline } from '../lib/offlineQueue'
@@ -540,6 +541,7 @@ function SpaceItem({
           {/* Render only the editor for this item's type (not all four) */}
           {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+          {item.type === 'code'          && <CodeEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'checkbox_list' && <ChecklistEditor  key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'menu_list'     && <MenuListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'numbered_list' && <NumberedListEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}

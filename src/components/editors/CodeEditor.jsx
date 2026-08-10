@@ -1,0 +1,95 @@
+/**
+ * CodeEditor.jsx - Editor for the "code" item type.
+ *
+ * Content shape: { code: string }. A transparent, auto-resizing <textarea> is
+ * layered over a highlighted <pre>: you type into the textarea (its text is
+ * hidden, only the caret shows) while the <pre> behind renders the same text
+ * with highlight.js auto-detecting the language - so there is no language
+ * picker. The highlighted markup is decorative; the raw text is what gets
+ * stored, copied, and exported.
+ */
+import { useState, useRef, useEffect } from 'react'
+import hljs from 'highlight.js/lib/common'
+
+const CODE_FONT =
+  'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace'
+
+// Shared metrics so the textarea and the <pre> lay out character-for-character
+// identically (any drift misaligns the caret from the highlighted text).
+const METRICS = {
+  margin: 0,
+  padding: 14,
+  border: 0,
+  fontFamily: CODE_FONT,
+  fontSize: 13,
+  lineHeight: 1.6,
+  whiteSpace: 'pre-wrap',
+  overflowWrap: 'break-word',
+  wordBreak: 'break-word',
+  tabSize: 2,
+  boxSizing: 'border-box',
+}
+
+export function CodeEditor({ content, onChange }) {
+  const [code, setCode] = useState(content?.code || '')
+  const taRef = useRef(null)
+
+  // Grow the textarea to fit its content; the <pre> (absolute) follows.
+  const resize = () => {
+    const el = taRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
+  useEffect(() => { resize() }, [code])
+
+  const update = (next) => {
+    setCode(next)
+    onChange({ code: next })
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key !== 'Tab') return
+    e.preventDefault()
+    const el = e.target
+    const start = el.selectionStart
+    const end = el.selectionEnd
+    const next = `${code.slice(0, start)}  ${code.slice(end)}`
+    update(next)
+    requestAnimationFrame(() => {
+      el.selectionStart = el.selectionEnd = start + 2
+    })
+  }
+
+  const highlighted = code ? hljs.highlightAuto(code).value : ''
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-bg-border bg-bg-elevated text-text-primary">
+      <pre
+        aria-hidden="true"
+        className="hljs pointer-events-none absolute inset-0"
+        style={{ ...METRICS, background: 'transparent', color: 'inherit' }}
+      >
+        <code dangerouslySetInnerHTML={{ __html: highlighted }} />
+      </pre>
+      <textarea
+        ref={taRef}
+        value={code}
+        onChange={e => update(e.target.value)}
+        onKeyDown={handleKeyDown}
+        rows={3}
+        spellCheck={false}
+        placeholder="Paste or write code…"
+        className="relative z-10 block w-full resize-none overflow-hidden bg-transparent caret-text-primary placeholder-text-muted focus:outline-none"
+        style={{
+          ...METRICS,
+          minHeight: 96,
+          // Only hide the textarea's own text once there is highlighted text
+          // behind it, so the placeholder stays visible while empty.
+          color: code ? 'transparent' : 'inherit',
+          WebkitTextFillColor: code ? 'transparent' : undefined,
+        }}
+      />
+    </div>
+  )
+}

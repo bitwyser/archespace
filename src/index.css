@@ -329,6 +329,23 @@ body.bulk-bar-active .toast-stack {
 .prose-custom pre { background: var(--bg-base); padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; border: 1px solid var(--bg-border); font-family: monospace; font-size: 0.875rem; }
 .prose-custom code { background: var(--bg-base); padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; color: var(--accent); border: 1px solid var(--bg-border); }
 .prose-custom pre code { background: transparent; padding: 0; border: none; color: inherit; }
+
+/* ── Code item: highlight.js token colours ──────────────────
+   A single mid-tone palette (One-Dark/Light-ish) chosen to stay legible on
+   both the light and dark elevated surface, so no per-theme highlight CSS or
+   external theme file is needed. */
+.hljs-comment, .hljs-quote { color: #7d8590; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag,
+.hljs-name, .hljs-section, .hljs-type { color: #a855f7; }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-meta-string { color: #2f9e57; }
+.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-link { color: #d97706; }
+.hljs-title, .hljs-title.function_, .hljs-built_in { color: #2563eb; }
+.hljs-attr, .hljs-attribute, .hljs-variable, .hljs-template-variable,
+.hljs-class .hljs-title, .hljs-selector-attr, .hljs-selector-pseudo { color: #0891b2; }
+.hljs-tag, .hljs-selector-id, .hljs-selector-class, .hljs-deletion { color: #e11d48; }
+.hljs-meta { color: #8b5cf6; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 600; }
 .prose-custom a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 .prose-custom a:hover { color: var(--accent-hover); }
 .prose-custom hr { border: none; border-top: 1px solid var(--bg-border); margin: 1.5rem 0; }

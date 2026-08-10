@@ -56,6 +56,8 @@ function itemBodyHtml({ type, content }) {
       return c.text ? `<p class="plain">${escapeHtml(c.text)}</p>` : ''
     case 'markdown':
       return c.text ? `<div class="md">${markdownToHtml(c.text)}</div>` : ''
+    case 'code':
+      return c.code ? `<pre class="code">${escapeHtml(c.code)}</pre>` : ''
     case 'menu_list':
       return listHtml(c.items, false)
     case 'numbered_list':
@@ -114,6 +116,7 @@ const PRINT_STYLES = `
   .item h2 { font-size: 13.5pt; margin: 0 0 6px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
   .type { font-size: 9pt; font-weight: normal; color: #777; border: 1px solid #ccc; border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
   .plain { margin: 0; white-space: pre-wrap; }
+  pre.code { margin: 0; padding: 10px 12px; background: #f6f8fa; border: 1px solid #ddd; border-radius: 6px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 9.5pt; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
   .empty { color: #999; font-style: italic; }
   ul, ol { margin: 0; padding-left: 22px; }
   li { margin: 2px 0; }
