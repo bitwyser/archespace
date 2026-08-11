@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { markdownToHtml } from './MarkdownPreview'
 
-describe('markdownToHtml — XSS hardening', () => {
+describe('markdownToHtml - XSS hardening', () => {
   it('escapes raw HTML tags', () => {
     const out = markdownToHtml('<script>alert(1)</script>')
     expect(out).not.toContain('<script')
@@ -30,7 +30,7 @@ describe('markdownToHtml — XSS hardening', () => {
   })
 })
 
-describe('markdownToHtml — rendering', () => {
+describe('markdownToHtml - rendering', () => {
   it('allows safe https links with rel/target', () => {
     const out = markdownToHtml('[docs](https://example.com)')
     expect(out).toContain('href="https://example.com"')

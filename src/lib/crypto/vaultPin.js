@@ -17,7 +17,7 @@ const DIGITS_ONLY = /^\d+$/
 export function validateVaultPin(pin) {
   const value = String(pin ?? '')
   if (value.length < VAULT_PIN_MIN_LENGTH || value.length > VAULT_PIN_MAX_LENGTH) {
-    return `Must be ${VAULT_PIN_MIN_LENGTH}–${VAULT_PIN_MAX_LENGTH} characters.`
+    return `Must be ${VAULT_PIN_MIN_LENGTH}-${VAULT_PIN_MAX_LENGTH} characters.`
   }
   return null
 }

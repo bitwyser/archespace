@@ -87,7 +87,7 @@ async function main() {
   const plaintexts = [
     'Hello, Arche',
     JSON.stringify({ text: 'a note', items: [1, 2, 3], done: false }),
-    'unicode: héllo 🔐 你好 — end',
+    'unicode: héllo 🔐 你好 - end',
     ' ', // whitespace stays intact
   ]
   for (const plaintext of plaintexts) {

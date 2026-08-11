@@ -166,7 +166,7 @@ export default function LoginPage() {
               <path d="M8 11h8" />
             </svg>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-semibold text-text-primary tracking-widest mb-1.5 sm:mb-2">ARCHE SPACE</h1>
+          <h1 className="text-3xl sm:text-4xl font-semibold text-text-primary tracking-widest mb-1.5 sm:mb-2">ArcheSpace</h1>
           <p className="text-text-muted text-sm">
             {MULTI_USER_ENABLED ? 'Sign in or create an account' : 'Sign in to your account'}
           </p>

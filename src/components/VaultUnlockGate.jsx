@@ -301,7 +301,7 @@ export default function VaultUnlockGate({ children }) {
           </h1>
           <p className="text-text-muted text-sm mt-1.5 sm:mt-2 leading-relaxed">
             {needsSetup
-              ? `Choose a PIN or passphrase — at least ${VAULT_PIN_MIN_LENGTH} characters (letters, numbers, or symbols). A one-time recovery code will be shown next.`
+              ? `Choose a PIN or passphrase - at least ${VAULT_PIN_MIN_LENGTH} characters (letters, numbers, or symbols). A one-time recovery code will be shown next.`
               : forgotPin
                 ? 'Enter your recovery code and choose a new vault PIN.'
               : 'Enter your vault PIN to decrypt your spaces on this device.'}

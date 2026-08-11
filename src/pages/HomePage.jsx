@@ -185,11 +185,11 @@ export default function HomePage() {
         </div>
 
         <header className="absolute left-0 right-0 top-0 z-50 flex items-center justify-between px-4 py-4 sm:px-8 sm:py-5">
-          <a href="#" className="flex items-center gap-2.5" aria-label="Arche Space home">
+          <a href="#" className="flex items-center gap-2.5" aria-label="ArcheSpace home">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-300 to-cyan-300 text-sm font-bold text-[#10201c]">
               AS
             </span>
-            <span className="hidden text-sm font-semibold text-white sm:inline">Arche Space</span>
+            <span className="hidden text-sm font-semibold text-white sm:inline">ArcheSpace</span>
           </a>
           <nav className="flex items-center gap-2">
             <a href="#features" className={`${navButtonClass} hidden md:inline-flex`}>
@@ -316,7 +316,7 @@ export default function HomePage() {
       <section id="features" className="scroll-mt-20 bg-[#0f1117] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-2xl">
-            <p className="text-sm font-semibold text-emerald-200">Why Arche Space</p>
+            <p className="text-sm font-semibold text-emerald-200">Why ArcheSpace</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">
               Made for the way you actually work
             </h2>
@@ -523,7 +523,7 @@ export default function HomePage() {
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-300 to-cyan-300 text-[11px] font-bold text-[#10201c]">
                       AS
                     </span>
-                    <span className="text-sm font-semibold text-white">Arche Space</span>
+                    <span className="text-sm font-semibold text-white">ArcheSpace</span>
                     <LockKeyhole size={13} className="ml-auto text-emerald-200/70" />
                   </div>
                   <div className="mt-4 space-y-2.5">
@@ -584,7 +584,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
-              <p className="text-sm font-semibold text-white">Arche Space</p>
+              <p className="text-sm font-semibold text-white">ArcheSpace</p>
               <p className="mt-3 max-w-xs text-sm leading-6 text-white/50">
                 An open-source, private, encrypted space for everything you are working on.
               </p>
@@ -639,7 +639,7 @@ export default function HomePage() {
 
           <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
             <p className="text-xs text-white/55">
-              © {year} · Created and maintained by the Arche Space Project.
+              © {year} · Created and maintained by the ArcheSpace Project.
             </p>
             <p className="text-xs text-white/55">
               v{APP_VERSION} · build{' '}

@@ -1,5 +1,5 @@
 /**
- * ErrorBoundary.jsx - Catch-all error boundary for Arche Space.
+ * ErrorBoundary.jsx - Catch-all error boundary for ArcheSpace.
  *
  * Wraps the entire app so that a runtime crash in any child
  * component shows a friendly recovery screen instead of a blank

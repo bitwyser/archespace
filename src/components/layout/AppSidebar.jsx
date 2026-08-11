@@ -77,7 +77,7 @@ export default function AppSidebar({
       <button
         type="button"
         onClick={() => navigate('/app')}
-        aria-label="Arche Space"
+        aria-label="ArcheSpace"
         className={`flex items-center gap-2.5 h-16 shrink-0 ${collapsed ? 'justify-center px-0' : 'px-4'}`}
       >
         <div className="h-9 w-9 shrink-0 rounded-lg bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white font-bold text-xs tracking-wide">

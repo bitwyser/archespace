@@ -8,7 +8,7 @@ export const RECOVERY_CODE_LENGTH = 12
 export function generateRecoveryCode() {
   const n = RECOVERY_CODE_ALPHABET.length
   // Largest multiple of n that fits in a byte (252 for n=36). Reject bytes at
-  // or above it so every symbol is equally likely — a plain `byte % n` would
+  // or above it so every symbol is equally likely - a plain `byte % n` would
   // bias the first (256 % n) symbols. ~1.6% of draws are rejected.
   const limit = Math.floor(256 / n) * n
   const buf = new Uint8Array(1)

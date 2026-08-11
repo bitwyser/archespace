@@ -62,7 +62,7 @@
     {
       "keyB64": "BwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSY=",
       "arc1": "arc1:S0MWnsAaHboJNwmp.vT1tcBQCPMQ0cqzLYXF8ND7IWjGlZGECd9I0+AWhY06O/D65z1r1ghbojKdfbkVXEJPP",
-      "expectedPlaintext": "unicode: héllo 🔐 你好 — end"
+      "expectedPlaintext": "unicode: héllo 🔐 你好 - end"
     },
     {
       "keyB64": "BwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSY=",

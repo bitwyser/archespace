@@ -14,7 +14,7 @@
 import { encryptString, decryptString } from './cipher'
 import { bytesFromBase64, bytesToBase64 } from './encoding'
 
-const RP_NAME = 'Arche Space'
+const RP_NAME = 'ArcheSpace'
 // Domain-separation label for the HKDF that turns the PRF secret into a key.
 const PRF_INFO = 'arche-passkey-vault-wrap-v1'
 
@@ -44,7 +44,7 @@ async function exportRawAesKey(key) {
 
 /**
  * True when this browser + device can do platform (biometric) passkeys.
- * Note: this does NOT prove PRF support — that is only known once a credential
+ * Note: this does NOT prove PRF support - that is only known once a credential
  * is created/asserted, so enrollment surfaces a clear error if PRF is missing.
  * @returns {Promise<boolean>}
  */

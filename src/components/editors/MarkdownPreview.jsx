@@ -3,7 +3,7 @@
  *
  * Supports a practical subset of Markdown:
  *   - **bold**, *italic*, ~~strikethrough~~, `inline code`
- *   - # headings (h1–h3)
+ *   - # headings (h1-h3)
  *   - [links](url)
  *   - Unordered lists (- or *)
  *   - Ordered lists (1.)

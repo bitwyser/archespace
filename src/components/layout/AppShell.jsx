@@ -48,7 +48,7 @@ export default function AppShell() {
     })
   }, [])
 
-  // No sidebar during the unlock gate / redirect — render the route full-width.
+  // No sidebar during the unlock gate / redirect - render the route full-width.
   if (!user || !isUnlocked) return <Outlet />
 
   return (

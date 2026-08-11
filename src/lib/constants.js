@@ -1,5 +1,5 @@
 /**
- * constants.js - Shared constants for Arche Space.
+ * constants.js - Shared constants for ArcheSpace.
  *
  * Centralises magic numbers and configuration values so they
  * can be tuned from a single location.

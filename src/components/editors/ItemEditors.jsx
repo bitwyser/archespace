@@ -149,7 +149,7 @@ export function MarkdownEditor({ content, onChange }) {
       <div className="space-y-1">
         <div className="flex justify-end">
           <span className="text-xs text-text-muted px-2 py-0.5 rounded-md bg-bg-elevated border border-bg-border">
-            Editing — click outside to preview
+            Editing - click outside to preview
           </span>
         </div>
         <textarea
@@ -209,8 +209,8 @@ function ListEditor({ content, onChange, variant }) {
   }
 
   // Resize every textarea only when rows are added/removed. Edits resize their
-  // own textarea inline (below), so there's no need to sweep the whole list —
-  // via querySelectorAll — on every keystroke.
+  // own textarea inline (below), so there's no need to sweep the whole list -
+  // via querySelectorAll - on every keystroke.
   useEffect(() => {
     const inputs = containerRef.current?.querySelectorAll(`[${inputAttr}]`)
     inputs?.forEach(adjustItemText)

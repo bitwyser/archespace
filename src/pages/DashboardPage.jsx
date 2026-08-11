@@ -238,7 +238,7 @@ export default function DashboardPage() {
         <div className="w-full px-4 h-14 flex items-center justify-between gap-3">
           {/* Logo */}
           <div className="shrink-0">
-            <span className="text-lg font-semibold tracking-widest text-text-primary">ARCHE SPACE</span>
+            <span className="text-lg font-semibold tracking-widest text-text-primary">ArcheSpace</span>
             {MULTI_USER_ENABLED && user?.email && (
               <p className="text-[10px] text-text-muted truncate max-w-[140px]">{user.email}</p>
             )}

@@ -70,7 +70,7 @@ async function idbDelete() {
       db.close()
     }
   } catch {
-    // IndexedDB unavailable — nothing to delete.
+    // IndexedDB unavailable - nothing to delete.
   }
 }
 

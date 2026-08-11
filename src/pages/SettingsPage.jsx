@@ -902,7 +902,7 @@ export default function SettingsPage() {
             </div>
 
             <p className="mt-6 shrink-0 text-center text-xs text-text-muted">
-              Arche Space <span className="text-text-secondary">v{APP_VERSION}</span> · build{' '}
+              ArcheSpace <span className="text-text-secondary">v{APP_VERSION}</span> · build{' '}
               <a
                 href={COMMIT_URL}
                 target="_blank"

@@ -101,7 +101,7 @@ function itemSectionHtml(item) {
 }
 
 function footerHtml() {
-  return `<footer class="doc">Exported from Arche Space · ${escapeHtml(new Date().toLocaleDateString())}</footer>`
+  return `<footer class="doc">Exported from ArcheSpace · ${escapeHtml(new Date().toLocaleDateString())}</footer>`
 }
 
 const PRINT_STYLES = `

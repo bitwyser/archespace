@@ -1,10 +1,10 @@
-# Arche Space
+# ArcheSpace
 
 [![CI](https://github.com/patkarmandar/archespace/actions/workflows/ci.yml/badge.svg)](https://github.com/patkarmandar/archespace/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/release/patkarmandar/archespace)](https://github.com/patkarmandar/archespace/releases)
 [![Live](https://img.shields.io/badge/live-archespace.cc-32d3aa)](https://archespace.cc)
 
-Arche Space is an open source, private, encrypted space to organize everything you are working on. It is built as a self-hostable web app with Supabase sync and a client-side encrypted vault, ensuring that your saved content stays private even from the application owner and developers.
+ArcheSpace is an open source, private, encrypted space to organize everything you are working on. It is built as a self-hostable web app with Supabase sync and a client-side encrypted vault, ensuring that your saved content stays private even from the application owner and developers.
 
 It follows a zero-knowledge architecture: your content is encrypted in the browser and the backend only ever stores ciphertext, so the server, its operators, and the developers never see your data in readable form.
 
@@ -90,7 +90,7 @@ All list-style types support adding, removing, drag-and-drop reordering, and key
 
 ## Security model
 
-Arche Space uses a browser-side vault model. You sign in with Supabase Auth using a login password, then unlock a separate vault PIN or passphrase to access encrypted data - the password proves account ownership, the PIN or passphrase protects the content itself.
+ArcheSpace uses a browser-side vault model. You sign in with Supabase Auth using a login password, then unlock a separate vault PIN or passphrase to access encrypted data - the password proves account ownership, the PIN or passphrase protects the content itself.
 
 **Encryption**
 
@@ -136,7 +136,7 @@ Arche Space uses a browser-side vault model. You sign in with Supabase Auth usin
 
 ## Audit logging
 
-Arche Space keeps an owner-only `audit_log` table for authentication and security events. It is deliberately scoped:
+ArcheSpace keeps an owner-only `audit_log` table for authentication and security events. It is deliberately scoped:
 
 - **Auth events only.** Space and item content is never written to the audit log.
 - **Owner-only access.** Row Level Security has no policies and table grants are revoked, so end users cannot read or write it directly. Writes come only from `SECURITY DEFINER` triggers and a whitelisted RPC. The app owner reads it from the Supabase dashboard or with the service role.
@@ -369,7 +369,7 @@ That triggers the workflow; the tag also becomes the version shown in Settings a
 
 A living list of directions the project is exploring. These are intentions, not commitments or dates, and they may change. Ideas and contributions are welcome, so open an issue or start a discussion (see [Contributing and development](#contributing-and-development)).
 
-- **First-party backend (exploring).** Today Arche Space runs on Supabase as a backend-as-a-service, covering the database, authentication, realtime sync, and server-side secret storage in one managed platform. A planned direction is a dedicated, self-contained backend that the project owns and ships itself, rather than depending on a single external provider. The goals are fewer moving parts for anyone self-hosting (one service to run instead of wiring up a managed platform), a data layer that stays portable across databases and hosts, and full control over the auth and sync surface. This is a large change and would land incrementally, likely behind configuration so existing Supabase deployments keep working during the transition.
+- **First-party backend (exploring).** Today ArcheSpace runs on Supabase as a backend-as-a-service, covering the database, authentication, realtime sync, and server-side secret storage in one managed platform. A planned direction is a dedicated, self-contained backend that the project owns and ships itself, rather than depending on a single external provider. The goals are fewer moving parts for anyone self-hosting (one service to run instead of wiring up a managed platform), a data layer that stays portable across databases and hosts, and full control over the auth and sync surface. This is a large change and would land incrementally, likely behind configuration so existing Supabase deployments keep working during the transition.
 
   The zero-knowledge design does not change: content is still encrypted in the browser and the backend still only ever stores ciphertext. What changes is where that ciphertext lives and how authentication and sync are served, not who can read your data.
 
@@ -377,7 +377,7 @@ A living list of directions the project is exploring. These are intentions, not 
 
 ## Help and support
 
-Need help setting up, self-hosting, logging in, password recovery, vault PIN recovery, or using Arche Space? Reach out at **[help@archespace.cc](mailto:help@archespace.cc)**.
+Need help setting up, self-hosting, logging in, password recovery, vault PIN recovery, or using ArcheSpace? Reach out at **[help@archespace.cc](mailto:help@archespace.cc)**.
 
 Before emailing, it helps to include:
 
@@ -410,7 +410,7 @@ For development questions, architecture discussions, feature requests, bug repor
 - Hosted and deployed on Cloudflare.
 - Source hosted on GitHub.
 - Email delivery powered by Resend.
-- Crafted and maintained by the Arche Space project.
+- Crafted and maintained by the ArcheSpace project.
 
 ## License
 

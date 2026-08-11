@@ -1,5 +1,5 @@
 /**
- * ToastContext.jsx - Lightweight notification system for Arche Space.
+ * ToastContext.jsx - Lightweight notification system for ArcheSpace.
  *
  * Provides a `useToast()` hook that exposes a `toast` function.
  * Usage:

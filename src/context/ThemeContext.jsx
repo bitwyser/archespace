@@ -1,5 +1,5 @@
 /**
- * ThemeContext.jsx - Appearance provider for Arche Space.
+ * ThemeContext.jsx - Appearance provider for ArcheSpace.
  *
  * Keeps theme mode and accent color available before login through localStorage,
  * then syncs them to the signed-in user's `user_settings` row when available.

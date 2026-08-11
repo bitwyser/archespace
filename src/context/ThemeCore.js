@@ -22,7 +22,7 @@ export const ACCENT_COLORS = [
   {
     id: 'mint',
     name: 'Mint Green',
-    description: "Arche Space's signature accent, a refined mint green.",
+    description: "ArcheSpace's signature accent, a refined mint green.",
     swatch: '#32d3aa',
   },
   {

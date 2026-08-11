@@ -1,7 +1,7 @@
 /**
  * rateLimiter.js - Client-side rate limiting (localStorage-persisted).
  *
- * Defense in depth only — not a substitute for server-side limits.
+ * Defense in depth only - not a substitute for server-side limits.
  */
 const STORAGE_KEY = 'arche:rate-limits'
 

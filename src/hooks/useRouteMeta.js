@@ -8,8 +8,8 @@
  */
 import { useEffect } from 'react'
 
-const SITE_NAME = 'Arche Space'
-const DEFAULT_TITLE = 'Arche Space — Your private, end-to-end encrypted space'
+const SITE_NAME = 'ArcheSpace'
+const DEFAULT_TITLE = 'ArcheSpace - Your private, end-to-end encrypted space'
 
 function setDocumentTitle(title) {
   document.title = title ? `${title} · ${SITE_NAME}` : DEFAULT_TITLE
@@ -28,7 +28,7 @@ function setRobotsIndexable(indexable) {
 /**
  * @param {{ title?: string|null, indexable?: boolean }} options
  *   - title `null` sets the landing-page title; a string becomes
- *     "Title · Arche Space"; `undefined` leaves the current title untouched.
+ *     "Title · ArcheSpace"; `undefined` leaves the current title untouched.
  *   - indexable defaults to false (noindex), the safe default for app routes.
  */
 export function useRouteMeta({ title, indexable = false } = {}) {

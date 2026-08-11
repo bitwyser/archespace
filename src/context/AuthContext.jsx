@@ -1,5 +1,5 @@
 /**
- * AuthContext.jsx - Authentication provider for Arche Space.
+ * AuthContext.jsx - Authentication provider for ArcheSpace.
  *
  * Wraps the app in a React context that exposes:
  *   - `user`    - the current Supabase User object (or null)
@@ -110,7 +110,7 @@ export function AuthProvider({ children }) {
 
   /**
    * End the current session. Defaults to `local` scope so signing out on one
-   * device does NOT revoke the user's sessions on their other devices — only
+   * device does NOT revoke the user's sessions on their other devices - only
    * this browser is signed out. Callers can still pass an explicit scope.
    * (Global, all-device revocation is intentional only for password changes,
    * handled separately in updatePasswordAndSignOut.)

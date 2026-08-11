@@ -40,7 +40,7 @@ function lazyWithRetry(importFn) {
         // Return a never-resolving promise so React doesn't render while reloading
         return new Promise(() => {})
       }
-      // Already retried once – surface the real error
+      // Already retried once - surface the real error
       sessionStorage.removeItem('chunk_reload')
       throw error
     }),
@@ -130,7 +130,7 @@ function RootLayout() {
   )
 }
 
-/** React Router error boundary – renders when a route throws (including chunk-load failures). */
+/** React Router error boundary - renders when a route throws (including chunk-load failures). */
 function RouteErrorBoundary() {
   const error = useRouteError()
   console.error('[RouteErrorBoundary]', error)

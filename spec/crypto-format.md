@@ -1,6 +1,6 @@
-# Arche Space crypto format (`arc1`)
+# ArcheSpace crypto format (`arc1`)
 
-This is the language-neutral contract every Arche Space client must implement
+This is the language-neutral contract every ArcheSpace client must implement
 identically. The web app is the reference implementation; any other client
 (the Flutter mobile app, a future backend) must produce and consume the exact
 same bytes, or data encrypted on one client will not decrypt on another.
@@ -88,7 +88,7 @@ holds:
 ### Unlock flow (PIN)
 
 1. `pinKey = KDF(pin, salt)` (section 3).
-2. `rawB64 = decrypt(wrapped_key, pinKey)` — a wrong PIN makes GCM auth fail;
+2. `rawB64 = decrypt(wrapped_key, pinKey)` - a wrong PIN makes GCM auth fail;
    treat any failure here as "incorrect PIN".
 3. `masterKey = importAes(base64Decode(rawB64))`.
 4. `check = decrypt(key_check, masterKey)`; require `check == "ARCHE_VAULT_V1_OK"`.
@@ -109,9 +109,9 @@ timestamps, `position`, `type`, and flags (`pinned`, `archived_at`,
 Run `node scripts/gen-crypto-vectors.mjs` in the web repo to (re)generate
 `spec/vectors.json`. Each entry is one of:
 
-- `kdf` — `{ algo, secret, descriptor, expectedKeyB64 }`: derive and match.
-- `decrypt` — `{ keyB64, arc1, expectedPlaintext }`: decrypt and match.
-- `vaultUnlock` — a full row (`pin`, `salt`, `wrapped_key`, `key_check`,
+- `kdf` - `{ algo, secret, descriptor, expectedKeyB64 }`: derive and match.
+- `decrypt` - `{ keyB64, arc1, expectedPlaintext }`: decrypt and match.
+- `vaultUnlock` - a full row (`pin`, `salt`, `wrapped_key`, `key_check`,
   sample content): run the section-4 unlock and decrypt the samples.
 
 A client ports section 2-4, loads `vectors.json`, and asserts every entry. When

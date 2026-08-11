@@ -1,8 +1,8 @@
 -- ============================================================
--- Arche Space - Database Schema (Supabase / PostgreSQL)
+-- ArcheSpace - Database Schema (Supabase / PostgreSQL)
 -- ============================================================
 --
--- This is the complete schema for the Arche Space app.
+-- This is the complete schema for the ArcheSpace app.
 -- Run it once in the Supabase SQL Editor on a
 -- new project to create every table (with all columns already in
 -- place), index, function, trigger, RLS policy, and realtime
@@ -387,8 +387,8 @@ SET search_path = ''
 AS $$
 DECLARE
   v_api_key text;
-  v_from    text := 'Arche Space <auth@archespace.cc>';  -- verified Resend domain
-  v_subject text := 'Your Arche Space account has been deleted';
+  v_from    text := 'ArcheSpace <auth@archespace.cc>';  -- verified Resend domain
+  v_subject text := 'Your ArcheSpace account has been deleted';
   v_support text := 'help@archespace.cc';                 -- reply-to / support
   v_html    text;
   v_text    text;
@@ -414,10 +414,10 @@ BEGIN
   v_html :=
     $html$<div style="margin:0;padding:0;width:100%;background-color:#0f1115;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <div style="padding:64px 40px;">
-    <div style="font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#7fe3c0;">Arche Space</div>
+    <div style="font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#7fe3c0;">ArcheSpace</div>
     <h1 style="margin:28px 0 18px;font-size:30px;line-height:1.2;font-weight:700;color:#ffffff;">Sorry to see you go 👋</h1>
-    <p style="margin:0 0 18px;max-width:560px;font-size:16px;line-height:1.65;color:#c4cad6;">Your Arche Space account <strong style="color:#ffffff;">$html$ || OLD.email || $html$</strong> has been permanently deleted, along with all of your spaces, items, and encrypted vault data. This is just a confirmation, so there's nothing left for you to do.</p>
-    <p style="margin:0 0 40px;max-width:560px;font-size:16px;line-height:1.65;color:#c4cad6;">Thank you for giving Arche Space a try. If you ever change your mind, you're always welcome back. 💚</p>
+    <p style="margin:0 0 18px;max-width:560px;font-size:16px;line-height:1.65;color:#c4cad6;">Your ArcheSpace account <strong style="color:#ffffff;">$html$ || OLD.email || $html$</strong> has been permanently deleted, along with all of your spaces, items, and encrypted vault data. This is just a confirmation, so there's nothing left for you to do.</p>
+    <p style="margin:0 0 40px;max-width:560px;font-size:16px;line-height:1.65;color:#c4cad6;">Thank you for giving ArcheSpace a try. If you ever change your mind, you're always welcome back. 💚</p>
     <div style="height:1px;width:100%;max-width:560px;background-color:#262b36;margin:0 0 24px;"></div>
     <p style="margin:0;font-size:14px;line-height:1.6;color:#8b93a3;">Need help, or didn't request this? Contact us at <a href="mailto:$html$ || v_support || $html$" style="color:#7fe3c0;text-decoration:none;">$html$ || v_support || $html$</a>.</p>
   </div>
@@ -427,10 +427,10 @@ BEGIN
   -- that don't render HTML).
   v_text :=
     'Sorry to see you go 👋' || E'\n\n'
-    || 'Your Arche Space account ' || OLD.email || ' has been permanently deleted, '
+    || 'Your ArcheSpace account ' || OLD.email || ' has been permanently deleted, '
     || 'along with all of your spaces, items, and encrypted vault data. '
     || 'This is just a confirmation, so there is nothing left for you to do.' || E'\n\n'
-    || 'Thank you for giving Arche Space a try. If you ever change your mind, you are '
+    || 'Thank you for giving ArcheSpace a try. If you ever change your mind, you are '
     || 'always welcome back. 💚' || E'\n\n'
     || 'Need help, or did not request this? Contact us at ' || v_support || '.';
 
