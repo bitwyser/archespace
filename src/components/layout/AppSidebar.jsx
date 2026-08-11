@@ -7,7 +7,7 @@
  * section ('spaces' | 'archive' | 'bin' | 'settings').
  */
 import {
-  LayoutGrid, Archive, Trash2, Keyboard, Command, Lock, Settings,
+  LayoutGrid, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
   ChevronsLeft, ChevronsRight,
 } from 'lucide-react'
 
@@ -57,7 +57,7 @@ function NavItem({ icon: Icon, label, active, count, badge, badgeColor = 'bg-acc
 export default function AppSidebar({
   collapsed, onToggleCollapsed, active,
   user, isUnlocked, spacesCount, archiveTotal, binTotal,
-  onLock, onCommands, onShortcuts, navigate,
+  onLock, onSignOut, onCommands, onShortcuts, navigate,
 }) {
   const email = user?.email || ''
   const avatarLetter = (email || '?')[0].toUpperCase()
@@ -128,6 +128,20 @@ export default function AppSidebar({
       <div className="px-2 py-2 border-t border-bg-border space-y-1">
         {isUnlocked && (
           <NavItem icon={Lock} label="Lock vault" collapsed={collapsed} onClick={onLock} />
+        )}
+        {onSignOut && (
+          <button
+            type="button"
+            onClick={onSignOut}
+            title={collapsed ? 'Sign out' : undefined}
+            aria-label="Sign out"
+            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors ${
+              collapsed ? 'justify-center' : ''
+            }`}
+          >
+            <LogOut size={18} className="shrink-0" />
+            {!collapsed && <span className="flex-1 text-left truncate">Sign out</span>}
+          </button>
         )}
         <NavItem icon={Settings} label="Settings" active={active === 'settings'} collapsed={collapsed} onClick={() => navigate('/settings')} />
         <button

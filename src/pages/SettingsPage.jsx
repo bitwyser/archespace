@@ -108,7 +108,6 @@ export default function SettingsPage() {
   const [recoverySetupLoading, setRecoverySetupLoading] = useState(false)
   const [pinRecoveryLoading, setPinRecoveryLoading] = useState(false)
   const [activeSection, setActiveSection] = useState('account')
-  const [confirmSignOut, setConfirmSignOut] = useState(false)
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
   const [emailStep, setEmailStep] = useState('form')     // 'form' | 'code'
   const deleteConfirmationPhrase = `DELETE ${user?.email || ''}`
@@ -588,22 +587,6 @@ export default function SettingsPage() {
             <Divider />
 
             <div>
-              <h3 className="text-sm font-semibold text-text-primary">Sign out</h3>
-              <p className="text-text-muted text-xs mt-0.5">
-                Sign out of this device only. You'll need your login password and vault PIN to sign back in.
-              </p>
-              <button
-                type="button"
-                onClick={() => setConfirmSignOut(true)}
-                className="mt-3 w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-danger/10 hover:border-danger/30 text-sm font-semibold text-text-secondary hover:text-danger transition-colors"
-              >
-                Sign out
-              </button>
-            </div>
-
-            <Divider />
-
-            <div>
               <h3 className="text-sm font-semibold text-text-primary">Sign out of all devices</h3>
               <p className="text-text-muted text-xs mt-0.5">
                 End your session everywhere, including this one. Use this if you've signed in on a device you no longer have access to.
@@ -1029,21 +1012,6 @@ export default function SettingsPage() {
             />
           </div>
         </Modal>
-      )}
-
-      {confirmSignOut && (
-        <ConfirmDialog
-          title="Sign out?"
-          message="You'll need your login password and vault PIN to sign back in."
-          confirmLabel="Sign out"
-          destructive
-          onConfirm={() => {
-            setConfirmSignOut(false)
-            signOut()
-            toast.info('Signed out')
-          }}
-          onClose={() => setConfirmSignOut(false)}
-        />
       )}
 
       {confirmSignOutAll && (
