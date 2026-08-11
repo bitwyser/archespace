@@ -89,6 +89,19 @@ export default function SpacePage() {
     try { localStorage.setItem('arche:items-view', mode) } catch { /* storage unavailable */ }
   }
 
+  // On small screens grid cards are narrow (two columns), so render them denser
+  // (smaller text and padding) while still showing the full item content.
+  const [isSmallScreen, setIsSmallScreen] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const onChange = (e) => setIsSmallScreen(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  const denseItems = viewMode === 'grid' && isSmallScreen
+
   // Manual drag order only applies to the default sort in the single-column
   // list view; masonry grid order is column-major so reordering is disabled.
   const reorderDisabled = selectMode || itemSort !== 'default' || viewMode === 'grid'
@@ -395,7 +408,7 @@ export default function SpacePage() {
       </header>
 
       {/* ── Main content ─────────────────────────────── */}
-      <main className={`mx-auto px-4 py-6 ${viewMode === 'grid' ? 'max-w-6xl' : 'max-w-3xl'}`}>
+      <main className={`mx-auto px-2 sm:px-4 py-6 ${viewMode === 'grid' ? 'max-w-6xl' : 'max-w-5xl'}`}>
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
@@ -427,7 +440,7 @@ export default function SpacePage() {
         ) : (
           /* Items in list (single column) or grid (masonry) view */
           <div className={viewMode === 'grid'
-            ? 'columns-1 sm:columns-2 lg:columns-3 gap-3 pb-24'
+            ? 'columns-2 xl:columns-3 gap-2 sm:gap-3 pb-24'
             : 'space-y-3 pb-24'}
           >
             {sortedItems.map((item, index) => (
@@ -465,6 +478,7 @@ export default function SpacePage() {
                   onDragStart={handleItemDragStart}
                   onDragEnd={handleDragEnd}
                   dragDisabled={reorderDisabled}
+                  dense={denseItems}
                 />
               </div>
             ))}

@@ -61,6 +61,7 @@ function SpaceItem({
   selectMode = false,
   selected = false,
   onSelectedChange,
+  dense = false,
 }) {
   const { cryptoKey } = useEncryption()
 
@@ -264,6 +265,10 @@ function SpaceItem({
     setIsFullscreen(v => !v)
   }
 
+  // In grid view on small screens the card is shown denser (smaller text and
+  // padding) so its full content still fits in a narrow two-column cell.
+  const denseView = dense && !isFullscreen && !selectMode
+
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
     setEditingTitle(false)
@@ -285,13 +290,15 @@ function SpaceItem({
       isFullscreen
         ? 'fixed inset-0 z-[80] flex flex-col rounded-none border-0 bg-bg-base'
         : 'relative border rounded-2xl'
-    } transition-colors ${
+    } transition-colors ${denseView ? 'text-[13px]' : ''} ${
       selected && !isFullscreen ? 'ring-1 ring-accent border-accent bg-accent/5' :
       item.pinned && !isFullscreen ? 'bg-accent/5 border-accent' :
       !isFullscreen ? 'bg-bg-surface border-bg-border' : ''
     }`}>
       {/* ── Header ────────────────────────────────────── */}
-      <div className={`flex items-center gap-2 px-4 py-3 flex-wrap gap-y-2 ${
+      <div className={`flex items-center gap-2 flex-wrap gap-y-2 ${
+        denseView ? 'px-2.5 py-2' : 'px-4 py-3'
+      } ${
         isFullscreen ? 'sticky top-0 z-10 bg-bg-surface/95 backdrop-blur-md' : ''
       } ${
         !collapsed || collapseGuard ? 'border-b border-bg-border' : ''
@@ -537,7 +544,13 @@ function SpaceItem({
 
       {/* ── Content editor (conditionally rendered) ── */}
       {!collapsed && (
-        <div className={isFullscreen ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8' : 'px-4 py-4'}>
+        <div
+          onClick={denseView ? () => setIsFullscreen(true) : undefined}
+          className={isFullscreen ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8' : denseView ? 'px-2.5 py-3 cursor-pointer' : 'px-4 py-4'}
+        >
+          {/* In dense grid the content is a non-interactive preview; tapping it
+              opens full screen instead of editing inline in a narrow cell. */}
+          <div className={denseView ? 'pointer-events-none' : 'contents'}>
           {/* Render only the editor for this item's type (not all four) */}
           {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
@@ -549,6 +562,7 @@ function SpaceItem({
           {item.type === 'secret'        && <SecretEditor     key={`${item.id}:${editorVersion}`} ref={secretEditorRef} content={localContent} onChange={handleContentChange} onStateChange={setSecretState} />}
           {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+          </div>
         </div>
       )}
     </div>
