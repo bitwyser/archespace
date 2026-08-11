@@ -156,7 +156,7 @@ export default function DashboardPage() {
     [filtered, spaceSort]
   )
   // Manual drag order only applies to the default sort.
-  const reorderDisabled = !!search || selectMode || spaceSort !== 'default'
+  const reorderDisabled = !!search || selectMode || spaceSort !== 'default' || viewMode === 'grid'
 
   const showSearchResults = search.trim().length > 0 && searchFocused
 
@@ -513,12 +513,12 @@ export default function DashboardPage() {
             )}
           </div>
         ) : (
-          <div className={`grid pb-24 ${
-            viewMode === 'list' ? 'grid-cols-1 gap-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'
-          }`}>
+          <div className={viewMode === 'list'
+            ? 'grid grid-cols-1 gap-2 pb-24'
+            : 'columns-1 sm:columns-2 lg:columns-3 gap-3 pb-24'}>
             {sortedSpaces.map((col, index) => (
+              <div key={col.id} className={viewMode === 'grid' ? 'mb-3 break-inside-avoid' : ''}>
               <SpaceCard
-                key={col.id}
                 col={col}
                 index={index}
                 search={search}
@@ -547,6 +547,7 @@ export default function DashboardPage() {
                   onError: () => toast.error("Couldn't archive the space."),
                 })}
               />
+              </div>
             ))}
             <BulkSelectionBar
               count={selectedCount}
