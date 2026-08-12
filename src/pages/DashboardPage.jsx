@@ -515,7 +515,7 @@ export default function DashboardPage() {
         ) : (
           <div className={viewMode === 'list'
             ? 'grid grid-cols-1 gap-2 pb-24 max-w-[52rem] mx-auto'
-            : 'columns-1 sm:columns-2 lg:columns-3 gap-3 pb-24'}>
+            : 'columns-2 lg:columns-3 gap-2 sm:gap-3 pb-24'}>
             {sortedSpaces.map((col, index) => (
               <div key={col.id} className={viewMode === 'grid' ? 'mb-3 break-inside-avoid' : ''}>
               <SpaceCard
