@@ -397,10 +397,10 @@ export default function SpacePage() {
             <button
               type="button"
               onClick={() => setAddModal(true)}
-              className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20"
+              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20"
               title="Add item"
             >
-              <Plus size={16} />
+              <Plus size={16} strokeWidth={2.5} />
               <span className="hidden sm:inline">Add item</span>
             </button>
           </div>

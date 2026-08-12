@@ -448,13 +448,13 @@ export default function DashboardPage() {
                 type="button"
                 onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
                 title={selectMode ? 'Done' : 'Select'}
-                className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all ${
                   selectMode
                     ? 'border-accent bg-accent-muted text-accent'
-                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary'
+                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
                 }`}
               >
-                <CheckSquare size={16} />
+                <CheckSquare size={14} />
                 <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
               </button>
             )}
@@ -465,9 +465,9 @@ export default function DashboardPage() {
               type="button"
               onClick={() => setModal({ type: 'create' })}
               title="New space"
-              className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl px-2.5 sm:px-4 py-2.5 text-sm font-semibold transition-colors shadow-lg shadow-accent/20"
+              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20"
             >
-              <Plus size={18} strokeWidth={2.5} />
+              <Plus size={16} strokeWidth={2.5} />
               <span className="hidden sm:inline">New space</span>
             </button>
           </div>
