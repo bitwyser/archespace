@@ -156,7 +156,7 @@ export default function DashboardPage() {
     [filtered, spaceSort]
   )
   // Manual drag order only applies to the default sort.
-  const reorderDisabled = !!search || selectMode || spaceSort !== 'default' || viewMode === 'grid'
+  const reorderDisabled = !!search || selectMode || spaceSort !== 'default'
 
   const showSearchResults = search.trim().length > 0 && searchFocused
 

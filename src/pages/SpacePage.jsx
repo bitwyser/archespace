@@ -102,9 +102,9 @@ export default function SpacePage() {
   }, [])
   const denseItems = viewMode === 'grid' && isSmallScreen
 
-  // Manual drag order only applies to the default sort in the single-column
-  // list view; masonry grid order is column-major so reordering is disabled.
-  const reorderDisabled = selectMode || itemSort !== 'default' || viewMode === 'grid'
+  // Manual drag order (in both list and grid views) only applies to the
+  // default sort; other sorts and select mode disable it.
+  const reorderDisabled = selectMode || itemSort !== 'default'
 
   const selectedCount = selectedIds.size
   const selectedItems = useMemo(
