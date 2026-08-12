@@ -7,7 +7,7 @@ import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, Folder,
-  Trash2, Archive, Command, CheckSquare, Settings, Lock, Menu, Keyboard,
+  Trash2, Archive, Command, CheckSquare, Settings, Lock, Menu, Keyboard, LogOut,
   LayoutGrid, List,
 } from 'lucide-react'
 import GlobalSearchResults from '../components/GlobalSearchResults'
@@ -26,7 +26,7 @@ import { useArchive } from '../hooks/useArchive'
 import { useSpaceStats } from '../hooks/useSpaceStats'
 import { useGlobalSearchData } from '../hooks/useGlobalSearch'
 import { filterGlobalSearch, searchOptionId, SEARCH_ITEM_DISPLAY_LIMIT } from '../lib/search'
-import { Modal } from '../components/ui/UI'
+import { Modal, ConfirmDialog } from '../components/ui/UI'
 import { SortMenu } from '../components/ui/SortMenu'
 import { SpaceModal } from '../components/space/SpaceModal'
 import { SpaceCard } from '../components/space/SpaceCard'
@@ -34,7 +34,7 @@ import { usePersistedSort } from '../hooks/usePersistedSort'
 import { sortEntities } from '../lib/sortEntities'
 
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const { lock, isUnlocked } = useEncryption()
   const { toast } = useToast()
   const { openPalette } = useCommandPalette()
@@ -61,6 +61,7 @@ export default function DashboardPage() {
   const [selectedIds, setSelectedIds] = useState(() => new Set())
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
   const [viewMode, setViewMode] = useState(() => {
     try { return localStorage.getItem('arche:spaces-view') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
   })
@@ -312,6 +313,14 @@ export default function DashboardPage() {
             </button>
             <button
               type="button"
+              onClick={() => { setMobileMenuOpen(false); setConfirmSignOut(true) }}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-bg-border hover:bg-danger/10 hover:border-danger/30 text-text-secondary hover:text-danger transition-all text-sm font-medium"
+            >
+              <LogOut size={16} />
+              Sign out
+            </button>
+            <button
+              type="button"
               onClick={() => { navigate('/settings'); setMobileMenuOpen(false) }}
               className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
             >
@@ -321,6 +330,17 @@ export default function DashboardPage() {
           </div>
         )}
       </header>
+
+      {confirmSignOut && (
+        <ConfirmDialog
+          title="Sign out?"
+          message="You'll need your login password and vault PIN to sign back in."
+          confirmLabel="Sign out"
+          destructive
+          onConfirm={() => { setConfirmSignOut(false); signOut(); toast.info('Signed out') }}
+          onClose={() => setConfirmSignOut(false)}
+        />
+      )}
 
       {/* ── Main content ──────────────────────────────── */}
       <main className="px-4 sm:px-6 py-6">
