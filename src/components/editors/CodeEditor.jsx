@@ -1,12 +1,8 @@
 /**
- * CodeEditor.jsx - Editor for the "code" item type.
- *
- * Content shape: { code: string }. A transparent, auto-resizing <textarea> is
- * layered over a highlighted <pre>: you type into the textarea (its text is
- * hidden, only the caret shows) while the <pre> behind renders the same text
- * with highlight.js auto-detecting the language - so there is no language
- * picker. The highlighted markup is decorative; the raw text is what gets
- * stored, copied, and exported.
+ * Editor for the "code" item type (content: { code }). A transparent,
+ * auto-resizing <textarea> sits over a highlight.js-rendered <pre> (language
+ * auto-detected, so no picker); the highlighted markup is decorative and the
+ * raw text is what gets stored, copied, and exported.
  */
 import { useState, useRef, useEffect } from 'react'
 import hljs from 'highlight.js/lib/common'

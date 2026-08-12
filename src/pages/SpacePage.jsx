@@ -1,16 +1,6 @@
 /**
- * SpacePage.jsx - View and manage items within a single space.
- *
- * Features:
- *   - Inline header editing (name + description)
- *   - Add items via a type-picker modal (Note / Markdown / Checklist / List / Numbered List / Cards)
- *   - Drag-and-drop reordering (HTML5 Drag API)
- *   - Pin / delete / collapse individual items
- *   - Unsaved-changes badge + beforeunload warning
- *   - Delete confirmation modal (soft-delete → recycle bin)
- *
- * All data operations come from useSpaces / useSpaceItems
- * in the hooks layer. The page only calls `.mutate()` / `.mutateAsync()`.
+ * View and manage the items within a single space. Data flows through the
+ * useSpaces / useSpaceItems hooks; this page only triggers their mutations.
  */
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'

@@ -1,14 +1,7 @@
 /**
- * ToastContext.jsx - Lightweight notification system for ArcheSpace.
- *
- * Provides a `useToast()` hook that exposes a `toast` function.
- * Usage:
- *   const { toast } = useToast()
- *   toast.success('Space created')
- *   toast.error('Import failed')
- *
- * Toasts auto-dismiss after 3 seconds and stack vertically in the
- * bottom-right corner. Max 5 visible at once (oldest removed first).
+ * Toast notifications via a `useToast()` hook (toast.success/error/info).
+ * Toasts auto-dismiss after 3s and stack in the bottom-right, max 5 at once
+ * (oldest removed first).
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'

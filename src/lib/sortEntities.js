@@ -1,11 +1,7 @@
 /**
- * sortEntities.js - Client-side sort order for spaces and items.
- *
- * Names and titles are encrypted at rest, so they can't be ordered by the
- * database. Sorting happens here, after decryption, on the already-loaded list.
- *
- * Pinned entries always stay on top, whatever the sort, so pinning keeps its
- * meaning. "Default" preserves the manual drag order the list arrives in.
+ * Client-side sort for spaces and items. Names/titles are encrypted at rest so
+ * the database can't order them; sorting happens here after decryption. Pinned
+ * entries always stay on top, and "default" preserves the manual drag order.
  */
 
 export const SORT_OPTIONS = [

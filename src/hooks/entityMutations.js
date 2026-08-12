@@ -1,11 +1,8 @@
 /**
- * entityMutations.js - Shared TanStack Query mutation factories.
- *
- * `useSpaces` and `useSpaceItems` otherwise repeat the same soft-delete,
- * pin-toggle, and reorder patterns for the `spaces` and `space_items` tables.
- * Each factory returns a plain options object for `useMutation(...)`; the caller
- * supplies the table, the optimistic query key, the reorder RPC, and an
- * `invalidate` callback, so the exact invalidation scope stays with the hook.
+ * Shared TanStack Query mutation factories for the soft-delete, pin-toggle, and
+ * reorder patterns common to `useSpaces` and `useSpaceItems`. Each returns a
+ * `useMutation` options object; the caller supplies the table, query key,
+ * reorder RPC, and invalidate callback, keeping invalidation scope with the hook.
  */
 import { supabase } from '../lib/supabase'
 

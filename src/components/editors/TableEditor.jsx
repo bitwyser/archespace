@@ -1,11 +1,8 @@
 /**
- * TableEditor.jsx - Grid editor for the "table" item type.
- *
- * Stores a header row plus data rows as plain-text cells:
- *   content = { columns: ["Name", "Qty"], rows: [["Apples", "3"], …] }
- * The whole structure is encrypted like any other item content. Rows and
- * columns can be added or removed; every row is kept the same width as the
- * header. On narrow screens the grid scrolls horizontally.
+ * Grid editor for the "table" item type. Content is a header row plus data rows
+ * of plain-text cells: { columns: ["Name","Qty"], rows: [["Apples","3"], …] };
+ * every row stays the width of the header, and the grid scrolls horizontally on
+ * narrow screens.
  */
 import { useState } from 'react'
 import { Plus, X, Trash2 } from 'lucide-react'

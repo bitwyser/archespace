@@ -1,17 +1,10 @@
 /**
- * SecretEditor.jsx - Editor for the "secret" item type.
- *
- * The body is a nested ciphertext ({ secret: true, cipher }) that the normal
- * item decryption leaves sealed, so the plaintext is never in the query cache.
- * An empty secret is editable straight away (nothing to protect yet); revealing
- * or editing existing content requires re-entering the vault PIN. The reveal is
- * per-item and transient - it resets whenever the editor unmounts (the item is
- * collapsed or you leave the page).
- *
- * The Reveal / Hide affordances live in the item's action row (in SpaceItem):
- * this reports its state up via `onStateChange`, and exposes `startReveal()` /
- * `hide()` imperatively via ref. The content area only shows the masked dots,
- * the PIN prompt, or the editor.
+ * Editor for the "secret" item type. The body is a nested ciphertext
+ * ({ secret, cipher }) left sealed by normal item decryption, so the plaintext
+ * never enters the query cache. Revealing or editing an existing secret requires
+ * re-entering the vault PIN, and the reveal is transient (resets on unmount).
+ * Reveal/Hide live in SpaceItem's action row, driving this via `onStateChange`
+ * and the imperative `startReveal()` / `hide()` ref.
  */
 import { useState, useRef, useEffect, useId, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Lock } from 'lucide-react'

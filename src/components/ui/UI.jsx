@@ -1,14 +1,4 @@
-/**
- * UI.jsx - Shared presentational components for Arche.
- *
- * Exports:
- *   - Spinner - Animated SVG loading indicator
- *   - Modal   - Full-screen overlay with header, scrollable body,
- *               and optional pinned footer. Closes on backdrop
- *               click or Escape key.
- *   - ConfirmDialog - Small yes/no confirmation built on Modal, for
- *               guarding sensitive actions (sign out, delete, remove).
- */
+/** Shared presentational components: Spinner, Modal, and ConfirmDialog. */
 
 import { useEffect, useId, useRef } from 'react'
 import { X } from 'lucide-react'

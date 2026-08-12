@@ -1,18 +1,7 @@
 /**
- * ItemEditors.jsx - Content editors for each space-item type.
- *
- * Exports five editor components, one per item type:
- *   - TextboxEditor    - Free-form plain text area (Note)
- *   - MarkdownEditor   - Markdown with click-to-edit / blur-to-preview
- *   - ChecklistEditor  - Checkbox items (add / check / remove)
- *   - MenuListEditor   - Simple bullet list
- *   - NumberedListEditor - Ordered list with auto numbering
- *   - CardListEditor   - Title + description card pairs
- *
- * Each editor receives the current `content` object and an
- * `onChange(newContent)` callback. They manage their own local
- * state and push changes up on every keystroke so the parent
- * can track dirty state and auto-save.
+ * Content editors, one per space-item type. Each takes the current `content`
+ * and calls `onChange(newContent)` on every keystroke so the parent can track
+ * dirty state and auto-save.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'

@@ -1,13 +1,6 @@
 /**
- * DashboardPage.jsx - Main entry point for authenticated users.
- *
- * Displays a grid of the user's spaces.
- *
- * Features:
- *   - Create / Edit / Delete spaces
- *   - Pin spaces to top
- *   - Search spaces and item content
- *   - Access archive, recycle bin, settings
+ * The signed-in home: a searchable, sortable grid or list of the user's spaces,
+ * with create/edit/delete, pinning, and links to archive, bin, and settings.
  */
 
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'

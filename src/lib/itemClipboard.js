@@ -1,11 +1,6 @@
 /**
- * itemClipboard.js - Serialize an item's content to plain text for
- * copy-to-clipboard, per item type.
- *
- *   - textbox / markdown : the raw text as-is
- *   - list / checklist : one item per line, bullet-prefixed
- *   - numbered list : one item per line, numbered "1." "2." ...
- *   - cards : title, description on the next line, blank line between cards
+ * Serialize an item's content to plain text for copy-to-clipboard, formatted
+ * per item type (raw text, bulleted or numbered lines, or card blocks).
  */
 
 const BULLET = '• ' // "• "
