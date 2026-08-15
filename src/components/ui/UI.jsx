@@ -184,7 +184,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className={`px-4 py-2.5 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 ${
+            className={`px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent transition-colors disabled:opacity-50 ${
               destructive
                 ? 'bg-danger hover:bg-danger-hover text-white'
                 : 'bg-accent hover:bg-accent-hover text-white'

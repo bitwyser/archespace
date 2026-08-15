@@ -704,7 +704,7 @@ export default function DashboardPage() {
                     onError: () => toast.error("Couldn't delete the space."),
                   })
                 }}
-                className="px-4 py-2.5 text-sm font-semibold bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
                 Move to recycle bin
               </button>
@@ -735,7 +735,7 @@ export default function DashboardPage() {
                   })
                   setDeleteConfirm(null)
                 }}
-                className="px-4 py-2.5 text-sm font-semibold bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
                 Move to recycle bin
               </button>

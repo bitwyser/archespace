@@ -297,7 +297,7 @@ export default function RecycleBinPage() {
                 type="button"
                 onClick={handleEmptyBin}
                 disabled={emptyBin.isPending}
-                className="px-4 py-2.5 text-sm font-semibold bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
               >
                 {emptyBin.isPending && <Spinner size={14} />}
                 Empty bin permanently
@@ -332,7 +332,7 @@ export default function RecycleBinPage() {
               <button
                 type="button"
                 onClick={runBulkPurge}
-                className="px-4 py-2.5 text-sm font-semibold bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
                 Delete forever
               </button>
@@ -359,7 +359,7 @@ export default function RecycleBinPage() {
               <button
                 type="button"
                 onClick={handlePurge}
-                className="px-4 py-2.5 text-sm font-semibold bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
                 Delete forever
               </button>
