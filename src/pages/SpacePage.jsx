@@ -92,6 +92,18 @@ export default function SpacePage() {
   }, [])
   const denseItems = viewMode === 'grid' && isSmallScreen
 
+  // Grid is a round-robin masonry (2 columns, 3 on xl) so the sort order reads
+  // left-to-right across the top row - pinned/newest items stay at the top.
+  const [gridCols, setGridCols] = useState(
+    () => (typeof window !== 'undefined' && window.matchMedia('(min-width: 1280px)').matches ? 3 : 2),
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1280px)')
+    const onChange = (e) => setGridCols(e.matches ? 3 : 2)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
   // Manual drag order (in both list and grid views) only applies to the
   // default sort; other sorts and select mode disable it.
   const reorderDisabled = selectMode || itemSort !== 'default'
@@ -291,6 +303,44 @@ export default function SpacePage() {
     )
   }
 
+  const renderItemCard = (item, index) => (
+    <div
+      key={item.id}
+      data-item-id={item.id}
+      onDragOver={reorderDisabled ? undefined : (e) => handleDragOver(e, index)}
+      onDrop={reorderDisabled ? undefined : () => handleDrop(index)}
+      className={`transition-all duration-300 animate-fade-in-up ${
+        !reorderDisabled && dragOverIndex === index && dragIndex !== index
+          ? 'border-t-2 border-accent pt-1'
+          : ''
+      } ${!reorderDisabled && dragIndex === index ? 'opacity-40 scale-95' : ''} ${
+        flashItemId === item.id ? 'rounded-2xl ring-2 ring-accent' : ''
+      }`}
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
+      <SpaceItem
+        item={item}
+        index={index}
+        selectMode={selectMode}
+        selected={selectedIds.has(item.id)}
+        onSelectedChange={toggleSelected}
+        collapsed={collapsedIds.has(item.id)}
+        onCollapsedChange={setItemCollapsed}
+        onUpdate={handleItemUpdate}
+        onTogglePin={handleTogglePin}
+        onDelete={setDeleteConfirm}
+        onDuplicate={handleDuplicateItem}
+        onMove={handleMoveOne}
+        onArchive={handleArchiveItem}
+        onDirtyChange={handleDirtyChange}
+        onDragStart={handleItemDragStart}
+        onDragEnd={handleDragEnd}
+        dragDisabled={reorderDisabled}
+        dense={denseItems}
+      />
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-bg-base">
 
@@ -428,50 +478,24 @@ export default function SpacePage() {
             </button>
           </div>
         ) : (
-          /* Items in list (single column) or grid (masonry) view */
-          <div className={viewMode === 'grid'
-            ? 'columns-2 xl:columns-3 gap-2 sm:gap-3'
-            : 'space-y-3'}
-          >
-            {sortedItems.map((item, index) => (
-              <div
-                key={item.id}
-                data-item-id={item.id}
-                onDragOver={reorderDisabled ? undefined : (e) => handleDragOver(e, index)}
-                onDrop={reorderDisabled ? undefined : () => handleDrop(index)}
-                className={`transition-all duration-300 animate-fade-in-up ${
-                  viewMode === 'grid' ? 'mb-3 break-inside-avoid' : ''
-                } ${
-                  !reorderDisabled && dragOverIndex === index && dragIndex !== index
-                    ? 'border-t-2 border-accent pt-1'
-                    : ''
-                } ${!reorderDisabled && dragIndex === index ? 'opacity-40 scale-95' : ''} ${
-                  flashItemId === item.id ? 'rounded-2xl ring-2 ring-accent' : ''
-                }`}
-                style={{ animationDelay: `${index * 40}ms` }}
-              >
-                <SpaceItem
-                  item={item}
-                  index={index}
-                  selectMode={selectMode}
-                  selected={selectedIds.has(item.id)}
-                  onSelectedChange={toggleSelected}
-                  collapsed={collapsedIds.has(item.id)}
-                  onCollapsedChange={setItemCollapsed}
-                  onUpdate={handleItemUpdate}
-                  onTogglePin={handleTogglePin}
-                  onDelete={setDeleteConfirm}
-                  onDuplicate={handleDuplicateItem}
-                  onMove={handleMoveOne}
-                  onArchive={handleArchiveItem}
-                  onDirtyChange={handleDirtyChange}
-                  onDragStart={handleItemDragStart}
-                  onDragEnd={handleDragEnd}
-                  dragDisabled={reorderDisabled}
-                  dense={denseItems}
-                />
+          /* Items in list (single column) or grid (round-robin masonry) view */
+          <>
+            {viewMode === 'grid' ? (
+              <div className="flex items-start gap-2 sm:gap-3">
+                {Array.from({ length: gridCols }, (_, col) => (
+                  <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
+                    {sortedItems
+                      .map((item, index) => ({ item, index }))
+                      .filter(({ index }) => index % gridCols === col)
+                      .map(({ item, index }) => renderItemCard(item, index))}
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="space-y-3">
+                {sortedItems.map((item, index) => renderItemCard(item, index))}
+              </div>
+            )}
 
             <BulkSelectionBar
               count={selectedCount}
@@ -567,7 +591,7 @@ export default function SpacePage() {
                 },
               ]}
             />
-          </div>
+          </>
         )}
 
         {/* "Add another" button at the bottom */}

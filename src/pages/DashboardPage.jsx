@@ -71,6 +71,18 @@ export default function DashboardPage() {
     try { localStorage.setItem('arche:spaces-view', mode) } catch { /* storage unavailable */ }
   }, [])
 
+  // Grid is a round-robin masonry (2 columns, 3 on lg) so the sort order reads
+  // left-to-right across the top row - pinned/newest spaces stay at the top.
+  const [gridCols, setGridCols] = useState(
+    () => (typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches ? 3 : 2),
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const onChange = (e) => setGridCols(e.matches ? 3 : 2)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
   const [spaceSort, setSpaceSort] = usePersistedSort('arche-sort-spaces')
 
   const selectedCount = selectedIds.size
@@ -224,6 +236,39 @@ export default function DashboardPage() {
       })
     },
   })
+
+  const renderSpaceCard = (col, index) => (
+    <SpaceCard
+      key={col.id}
+      col={col}
+      index={index}
+      search={search}
+      stats={stats}
+      layout="grid"
+      reorderDisabled={reorderDisabled}
+      selectMode={selectMode}
+      selected={selectedIds.has(col.id)}
+      onToggleSelect={() => toggleSelected(col.id)}
+      dragIndex={dragIndex}
+      dragOverIndex={dragOverIndex}
+      handleDragStart={handleDragStart}
+      handleDragOver={handleDragOver}
+      handleDrop={handleDrop}
+      handleDragEnd={handleDragEnd}
+      navigate={navigate}
+      togglePin={togglePin}
+      setModal={setModal}
+      setDeleteConfirm={setDeleteConfirm}
+      onDuplicate={(id) => duplicate.mutate(id, {
+        onSuccess: () => toast.success('Space duplicated'),
+        onError: () => toast.error("Couldn't duplicate the space."),
+      })}
+      onArchive={(id) => archive.mutate(id, {
+        onSuccess: () => toast.success('Space archived'),
+        onError: () => toast.error("Couldn't archive the space."),
+      })}
+    />
+  )
 
   return (
     <div className="min-h-screen bg-bg-base">
@@ -526,42 +571,23 @@ export default function DashboardPage() {
             )}
           </div>
         ) : (
-          <div className={viewMode === 'list'
-            ? 'grid grid-cols-1 gap-2 pb-24 max-w-[52rem] mx-auto'
-            : 'columns-2 lg:columns-3 gap-2 sm:gap-3 pb-24'}>
-            {sortedSpaces.map((col, index) => (
-              <div key={col.id} className={viewMode === 'grid' ? 'mb-3 break-inside-avoid' : ''}>
-              <SpaceCard
-                col={col}
-                index={index}
-                search={search}
-                stats={stats}
-                layout="grid"
-                reorderDisabled={reorderDisabled}
-                selectMode={selectMode}
-                selected={selectedIds.has(col.id)}
-                onToggleSelect={() => toggleSelected(col.id)}
-                dragIndex={dragIndex}
-                dragOverIndex={dragOverIndex}
-                handleDragStart={handleDragStart}
-                handleDragOver={handleDragOver}
-                handleDrop={handleDrop}
-                handleDragEnd={handleDragEnd}
-                navigate={navigate}
-                togglePin={togglePin}
-                setModal={setModal}
-                setDeleteConfirm={setDeleteConfirm}
-                onDuplicate={(id) => duplicate.mutate(id, {
-                  onSuccess: () => toast.success('Space duplicated'),
-                  onError: () => toast.error("Couldn't duplicate the space."),
-                })}
-                onArchive={(id) => archive.mutate(id, {
-                  onSuccess: () => toast.success('Space archived'),
-                  onError: () => toast.error("Couldn't archive the space."),
-                })}
-              />
+          <>
+            {viewMode === 'grid' ? (
+              <div className="flex items-start gap-2 sm:gap-3 pb-24">
+                {Array.from({ length: gridCols }, (_, col) => (
+                  <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
+                    {sortedSpaces
+                      .map((space, index) => ({ space, index }))
+                      .filter(({ index }) => index % gridCols === col)
+                      .map(({ space, index }) => renderSpaceCard(space, index))}
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 gap-2 pb-24 max-w-[52rem] mx-auto">
+                {sortedSpaces.map((space, index) => renderSpaceCard(space, index))}
+              </div>
+            )}
             <BulkSelectionBar
               count={selectedCount}
               total={filtered.length}
@@ -625,7 +651,7 @@ export default function DashboardPage() {
                 },
               ]}
             />
-          </div>
+          </>
         )}
       </main>
 
