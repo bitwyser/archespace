@@ -97,7 +97,7 @@ export default function AppSidebar({
         onClick={() => navigate('/settings')}
         title={collapsed ? email : 'Account'}
         aria-label="Account settings"
-        className={`mx-2 mb-2 flex items-center gap-2.5 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated transition-colors ${
+        className={`mx-2 mb-2 flex items-center gap-2.5 rounded-xl bg-bg-surface hover:bg-bg-elevated transition-colors ${
           collapsed ? 'justify-center p-2' : 'px-3 py-2.5'
         }`}
       >
