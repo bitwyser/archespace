@@ -12,6 +12,8 @@ import { useSpaces } from '../hooks/useSpaces'
 import { useSpaceItems } from '../hooks/useSpaceItems'
 import { useToast } from '../context/ToastCore'
 import { useRegisterPageActions } from '../context/PageActionsCore'
+import { useCommandPalette } from '../context/CommandPaletteCore'
+import { useShortcut } from '../context/ShortcutsCore'
 import SpaceItem from '../components/SpaceItem'
 import { exportSpaceToPdf } from '../lib/pdfExport'
 import BulkSelectionBar from '../components/BulkSelectionBar'
@@ -54,6 +56,8 @@ export default function SpacePage() {
   // Private route: noindex, with the space name as the tab title once loaded.
   useRouteMeta({ title: space?.name || 'Space' })
 
+  const { registerCommands, closePalette } = useCommandPalette()
+
   // ── Local UI state ──
   const [addModal, setAddModal]           = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
@@ -65,6 +69,14 @@ export default function SpacePage() {
   const [moveRequest, setMoveRequest] = useState(null)
   const [flashItemId, setFlashItemId] = useState(null)
   const [itemSort, setItemSort] = usePersistedSort('arche-sort-items')
+
+  // While inside a space, expose a "New item" entry in the command palette
+  // and bind it to the same "I" shortcut advertised there.
+  const openAddItem = useCallback(() => setAddModal(true), [])
+  useShortcut('new-item', openAddItem)
+  useEffect(() => registerCommands([
+    { id: 'new-item', label: 'New item', hint: 'I', icon: Plus, run: () => { closePalette(); openAddItem() } },
+  ]), [registerCommands, closePalette, openAddItem])
 
   const sortedItems = useMemo(
     () => sortEntities(items, itemSort, i => i.title),

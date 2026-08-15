@@ -13,6 +13,7 @@ const SHORTCUTS = [
   { keys: [MOD, 'K'], label: 'Open the command palette' },
   { keys: ['/'],      label: 'Focus dashboard search' },
   { keys: ['N'],      label: 'Create a new space (on the dashboard)' },
+  { keys: ['I'],      label: 'Create a new item (inside a space)' },
   { keys: [MOD, 'L'], label: 'Lock the vault' },
   { keys: [MOD, 'S'], label: 'Save all edited items on the page' },
   { keys: ['↑'],      label: 'Move the focused list row up' },

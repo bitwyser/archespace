@@ -83,6 +83,7 @@ All list-style types support adding, removing, drag-and-drop reordering, and key
 | `Ctrl+K` / `Cmd+K` | Open command palette |
 | `/` | Focus dashboard search |
 | `N` | Create a new space on the dashboard |
+| `I` | Create a new item inside a space |
 | `Ctrl+L` / `Cmd+L` | Lock the vault |
 | `Ctrl+S` / `Cmd+S` | Save all dirty items on the current page |
 | `Esc` | Close menus, modals, or active overlays |

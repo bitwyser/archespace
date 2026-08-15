@@ -59,6 +59,14 @@ export function ShortcutsProvider({ children }) {
         }
       }
 
+      if (e.key === 'i' && !mod && !e.shiftKey) {
+        const fn = handlersRef.current.get('new-item')
+        if (fn) {
+          e.preventDefault()
+          fn()
+        }
+      }
+
       if (mod && e.key === 'l') {
         const fn = handlersRef.current.get('lock')
         if (fn) {
