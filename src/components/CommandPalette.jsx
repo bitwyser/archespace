@@ -43,7 +43,12 @@ export default function CommandPalette({ onNewSpace, onOpenSearch }) {
       : []),
   ], [closePalette, navigate, onNewSpace, onOpenSearch, toggle, isUnlocked, lock, toast])
 
-  const commands = useMemo(() => [...baseCommands, ...extraCommands], [baseCommands, extraCommands])
+  // Slot page commands (e.g. "New item") right after "New space" so creation
+  // actions stay grouped at the top rather than trailing the list.
+  const commands = useMemo(() => {
+    const [first, ...rest] = baseCommands
+    return [first, ...extraCommands, ...rest]
+  }, [baseCommands, extraCommands])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
