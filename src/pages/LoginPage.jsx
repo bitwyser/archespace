@@ -109,7 +109,9 @@ export default function LoginPage() {
         setInfo('Account created. Set your vault PIN on the next screen.')
         return
       }
-      setInfo('Account created. Check your email to confirm your address, then sign in.')
+      // Shown identically whether the email is new or already registered, so it
+      // never reveals which - preventing account enumeration.
+      setInfo('Check your email to confirm your address and finish signing up. Already have an account? Sign in instead.')
       setMode('signin')
       setPassword('')
       setConfirmPassword('')
