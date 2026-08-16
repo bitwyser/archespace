@@ -3,7 +3,7 @@
  */
 import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Archive, RotateCcw, Folder, LayoutList, CheckSquare } from 'lucide-react'
+import { ArrowLeft, Archive, RotateCcw, Folder, LayoutList, CheckSquare, ListChecks } from 'lucide-react'
 import { useArchive } from '../hooks/useArchive'
 import { useDualEntitySelection } from '../hooks/useDualEntitySelection'
 import { useToast } from '../context/ToastCore'
@@ -72,6 +72,18 @@ export default function ArchivePage() {
               {total} archived - hidden from dashboard, not deleted
             </p>
           </div>
+          {selectMode && selectableTotal > 0 && (
+            <button
+              type="button"
+              onClick={selectAll}
+              title="Select all"
+              aria-label="Select all"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary text-sm font-medium transition-all"
+            >
+              <ListChecks size={14} />
+              <span className="hidden sm:inline">Select all</span>
+            </button>
+          )}
           {selectableTotal > 0 && (
             <button
               type="button"
@@ -173,9 +185,7 @@ export default function ArchivePage() {
 
             <BulkSelectionBar
               count={selectedCount}
-              total={selectableTotal}
               onClear={exitSelectMode}
-              onSelectAll={selectAll}
               actions={bulkActions}
             />
           </div>

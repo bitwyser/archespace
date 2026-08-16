@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate, useBlocker, useLocation } from 'react-router-dom'
-import { ArrowLeft, Plus, CheckSquare, FileDown, LayoutGrid, List } from 'lucide-react'
+import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useSpaces } from '../hooks/useSpaces'
@@ -417,6 +417,18 @@ export default function SpacePage() {
                 </button>
               </div>
             )}
+            {selectMode && items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set(items.map(i => i.id)))}
+                title="Select all"
+                aria-label="Select all"
+                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
+              >
+                <ListChecks size={14} />
+                <span className="hidden sm:inline">Select all</span>
+              </button>
+            )}
             {items.length > 0 && (
               <button
                 type="button"
@@ -511,9 +523,7 @@ export default function SpacePage() {
 
             <BulkSelectionBar
               count={selectedCount}
-              total={items.length}
               onClear={exitSelectMode}
-              onSelectAll={() => setSelectedIds(new Set(items.map(i => i.id)))}
               actions={[
                 {
                   id: 'pin',

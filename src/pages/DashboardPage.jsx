@@ -7,7 +7,7 @@ import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, Folder,
-  Trash2, Archive, Command, CheckSquare, Settings, Lock, Menu, Keyboard, LogOut,
+  Trash2, Archive, Command, CheckSquare, ListChecks, Settings, Lock, Menu, Keyboard, LogOut,
   LayoutGrid, List,
 } from 'lucide-react'
 import GlobalSearchResults from '../components/GlobalSearchResults'
@@ -501,6 +501,18 @@ export default function DashboardPage() {
                 </button>
               </div>
             )}
+            {selectMode && filtered.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set(filtered.map(c => c.id)))}
+                title="Select all"
+                aria-label="Select all"
+                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
+              >
+                <ListChecks size={14} />
+                <span className="hidden sm:inline">Select all</span>
+              </button>
+            )}
             {filtered.length > 0 && (
               <button
                 type="button"
@@ -590,9 +602,7 @@ export default function DashboardPage() {
             )}
             <BulkSelectionBar
               count={selectedCount}
-              total={filtered.length}
               onClear={exitSelectMode}
-              onSelectAll={() => setSelectedIds(new Set(filtered.map(c => c.id)))}
               actions={[
                 {
                   id: 'pin',

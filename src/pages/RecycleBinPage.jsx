@@ -4,7 +4,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, Trash2, RotateCcw, Folder, LayoutList, AlertTriangle, CheckSquare,
+  ArrowLeft, Trash2, RotateCcw, Folder, LayoutList, AlertTriangle, CheckSquare, ListChecks,
 } from 'lucide-react'
 import { useRecycleBin } from '../hooks/useRecycleBin'
 import { useDualEntitySelection } from '../hooks/useDualEntitySelection'
@@ -130,6 +130,18 @@ export default function RecycleBinPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {selectMode && selectableTotal > 0 && (
+              <button
+                type="button"
+                onClick={selectAll}
+                title="Select all"
+                aria-label="Select all"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary text-sm font-medium transition-all"
+              >
+                <ListChecks size={14} />
+                <span className="hidden sm:inline">Select all</span>
+              </button>
+            )}
             {selectableTotal > 0 && (
               <button
                 type="button"
@@ -271,9 +283,7 @@ export default function RecycleBinPage() {
 
             <BulkSelectionBar
               count={selectedCount}
-              total={selectableTotal}
               onClear={exitSelectMode}
-              onSelectAll={selectAll}
               actions={bulkActions}
             />
           </div>
