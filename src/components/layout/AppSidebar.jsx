@@ -121,7 +121,7 @@ export default function AppSidebar({
 
         <SectionLabel collapsed={collapsed}>Tools</SectionLabel>
         <NavItem icon={Keyboard} label="Shortcuts" collapsed={collapsed} onClick={onShortcuts} />
-        <NavItem icon={Command} label="Commands" trailing="⌘K" collapsed={collapsed} onClick={onCommands} />
+        <NavItem icon={Command} label="Commands" collapsed={collapsed} onClick={onCommands} />
       </nav>
 
       {/* Footer */}
