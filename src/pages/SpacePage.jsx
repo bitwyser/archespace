@@ -460,7 +460,7 @@ export default function SpacePage() {
       </header>
 
       {/* ── Main content ─────────────────────────────── */}
-      <main className={`px-2 sm:px-4 pt-6 pb-24 ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto'}`}>
+      <main className={`px-2 sm:px-4 pt-6 pb-32 ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto'}`}>
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (

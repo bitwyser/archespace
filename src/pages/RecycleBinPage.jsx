@@ -110,7 +110,7 @@ export default function RecycleBinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-base pb-24">
+    <div className="min-h-screen bg-bg-base pb-32">
       <header className="sticky top-0 z-20 glass">
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
           <button
