@@ -354,7 +354,7 @@ export default function SpacePage() {
   )
 
   return (
-    <div className="min-h-screen bg-bg-base">
+    <div className="min-h-screen bg-bg-base flex flex-col">
 
       {/* ── Sticky header ──────────────────────────────── */}
       <header className="sticky top-0 z-20 glass">
@@ -460,7 +460,7 @@ export default function SpacePage() {
       </header>
 
       {/* ── Main content ─────────────────────────────── */}
-      <main className={`px-2 sm:px-4 pt-6 pb-32 ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto'}`}>
+      <main className={`flex-1 flex flex-col px-2 sm:px-4 pt-6 pb-32 ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto w-full'}`}>
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
@@ -606,14 +606,16 @@ export default function SpacePage() {
           </>
         )}
 
-        {/* "Add another" button at the bottom */}
+        {/* "Add another" button, anchored to the bottom of the page */}
         {items.length > 0 && (
-          <button
-            onClick={() => setAddModal(true)}
-            className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-bg-border rounded-2xl text-text-muted hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-all text-sm font-medium"
-          >
-            <Plus size={16} /> Add another item
-          </button>
+          <div className="mt-auto pt-4">
+            <button
+              onClick={() => setAddModal(true)}
+              className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-bg-border rounded-2xl text-text-muted hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-all text-sm font-medium"
+            >
+              <Plus size={16} /> Add another item
+            </button>
+          </div>
         )}
       </main>
 
