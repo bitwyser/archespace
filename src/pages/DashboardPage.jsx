@@ -518,11 +518,7 @@ export default function DashboardPage() {
                 type="button"
                 onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
                 title={selectMode ? 'Done' : 'Select'}
-                className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all ${
-                  selectMode
-                    ? 'border-accent bg-accent-muted text-accent'
-                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-                }`}
+                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
               >
                 <CheckSquare size={14} />
                 <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>

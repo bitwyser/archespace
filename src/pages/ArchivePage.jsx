@@ -88,11 +88,7 @@ export default function ArchivePage() {
             <button
               type="button"
               onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all ${
-                selectMode
-                  ? 'border-accent bg-accent-muted text-accent'
-                  : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary'
-              }`}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary text-sm font-medium transition-all"
             >
               <CheckSquare size={14} />
               <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
