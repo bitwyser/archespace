@@ -13,6 +13,7 @@ import { useSpaces } from '../hooks/useSpaces'
 import { exportSpaces, importSpaces } from '../lib/exportImport'
 import PinInput from '../components/PinInput'
 import PasskeyManager from '../components/PasskeyManager'
+import MfaSettings from '../components/MfaSettings'
 import { validateVaultPin, getWeakPinWarning } from '../lib/crypto/vaultPin'
 import WeakPinWarning from '../components/WeakPinWarning'
 import { VAULT_PIN_MIN_LENGTH, VAULT_AUTO_LOCK_OPTIONS } from '../lib/constants'
@@ -583,6 +584,10 @@ export default function SettingsPage() {
                 {resetLoading ? 'Sending reset link...' : 'Forgot current password? Send reset link'}
               </button>
             </form>
+
+            <Divider />
+
+            <MfaSettings />
 
             <Divider />
 

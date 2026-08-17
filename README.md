@@ -51,6 +51,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Private, encrypted vault to keep your content secure (see [Security model](#security-model)).
 - Configurable vault auto-lock that re-locks the vault after a chosen period of inactivity (see [Security model](#security-model)).
 - Passkey / biometric vault unlock using WebAuthn - unlock with Face ID, Touch ID, or Windows Hello alongside your PIN (see [Security model](#security-model)).
+- Optional two-factor authentication (TOTP) for sign-in, with one-time backup codes, enabled per account from Settings (see [Security model](#security-model)).
 - Owner-only audit log of authentication and security events (see [Audit logging](#audit-logging)).
 - Offline queue for pending changes while the browser is offline.
 - Single-user self-hosting mode by default, with an optional multi-user mode.
@@ -115,6 +116,15 @@ ArcheSpace uses a browser-side vault model. You sign in with Supabase Auth using
 - The server only stores ciphertext, the credential ID, and a non-secret salt in the `user_passkeys` table (owner-scoped by Row Level Security) - none of which can decrypt anything without the enrolled device.
 - Multiple passkeys per account are supported (for example, one per device), and each can be removed independently from Settings. Changing your PIN re-wraps the same master key, so enrolled passkeys keep working without re-enrollment.
 - After setting up a PIN or unlocking with one, the app offers to enable biometric unlock when the device supports it and no passkey is enrolled yet. Availability is feature-detected, so the option is hidden where WebAuthn platform authenticators or PRF are unavailable.
+
+**Two-factor authentication (2FA)**
+
+- Optional TOTP two-factor authentication can be enabled per account from Settings, under Account. It is off by default for every existing and new account; each user opts in manually.
+- Enrolment uses Supabase's native MFA: scan the QR code (or enter the key) into an authenticator app such as Google Authenticator, Authy, or 1Password. The TOTP secret is held only by Supabase Auth and is never stored in a client-readable table, so 2FA still protects the account if the login password is compromised.
+- When 2FA is on, sign-in asks for the authenticator code after the password and before the vault unlock, so the order is login password, then 2FA, then vault PIN.
+- Row Level Security enforces this at the database as well: once a verified factor exists, the account's data - including the wrapped vault key - is only readable after the second factor is verified (AAL2), so 2FA cannot be bypassed by calling the API directly. Accounts without 2FA are unaffected.
+- Eight one-time backup codes are shown once when 2FA is enabled, and can be regenerated from Settings. Only their SHA-256 hashes are stored. A backup code can be used at sign-in if the authenticator is lost; using one removes the factor so you can sign in and set 2FA up again.
+- Disabling 2FA requires re-entering the login password.
 
 **Recovery**
 
@@ -307,9 +317,9 @@ Key areas:
 - `src/context/` contains auth, encryption, appearance/theme, toast, shortcuts, command palette, and page action providers.
 - `src/hooks/` contains data hooks for spaces, items, archive, recycle bin, global search, offline sync, drag reordering, and session timeout.
 - `src/lib/crypto/` contains AES-GCM encryption, Argon2id and PBKDF2 key derivation, vault setup, vault unlock, non-extractable session key storage, PIN recovery code, WebAuthn PRF passkey wrapping and unlock, and encoding helpers.
-- `src/lib/` contains Supabase client setup, data protection helpers, item type definitions, clipboard serialization, import/export, offline queue, rate limiting, audit logging, password policy, build info, and shared utilities.
+- `src/lib/` contains Supabase client setup, data protection helpers, item type definitions, clipboard serialization, import/export, offline queue, rate limiting, audit logging, two-factor auth (TOTP) and backup-code helpers, password policy, build info, and shared utilities.
 - `.github/` contains the CI workflow and Dependabot configuration; `docs/` contains audit and planning notes.
-- `schema.sql` contains tables, indexes, RLS policies, triggers, RPC functions, realtime setup, vault recovery and PIN lockout functions, the `user_passkeys` table for passkey/biometric unlock, the account-deletion email trigger, and the auth audit log.
+- `schema.sql` contains tables, indexes, RLS policies, triggers, RPC functions, realtime setup, vault recovery and PIN lockout functions, the `user_passkeys` table for passkey/biometric unlock, the `mfa_backup_codes` table with the backup-code redeem function and AAL2 enforcement policies for two-factor auth, the account-deletion email trigger, and the auth audit log.
 - `email-templates/` contains ready-to-paste Supabase auth email templates.
 - `scripts/` contains dev utilities, including `generate-icons.mjs`, which renders the PWA icons and social share image from the brand mark.
 - `public/_headers` contains deployment headers for hosts such as Netlify and Cloudflare Pages.

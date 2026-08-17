@@ -245,6 +245,122 @@ REVOKE ALL ON TABLE audit_log FROM anon, authenticated;
 
 
 -- ────────────────────────────────────────────────────────────
+-- 4b. TWO-FACTOR AUTH (MFA): backup codes + AAL2 enforcement
+-- ────────────────────────────────────────────────────────────
+-- The TOTP factor itself lives in Supabase's auth.mfa_factors (managed by the
+-- auth.mfa.* client API). This section adds recoverable one-time backup codes
+-- and enforces that a user who has enrolled a factor must reach AAL2 (i.e. pass
+-- 2FA) before any of their data - including the wrapped vault key - is readable.
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+
+-- Backup codes: only the SHA-256 hash is stored; the plaintext is shown once at
+-- enrolment (12-char codes, same format/normalisation as vault recovery codes).
+CREATE TABLE IF NOT EXISTS mfa_backup_codes (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  code_hash  text NOT NULL,
+  used_at    timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS mfa_backup_codes_user_idx ON mfa_backup_codes (user_id);
+ALTER TABLE mfa_backup_codes ENABLE ROW LEVEL SECURITY;
+
+-- Users can create / list / delete their own codes (enrol, regenerate, count
+-- remaining). UPDATE is intentionally NOT granted, so nobody can mark a code
+-- used except the SECURITY DEFINER redeem function below.
+GRANT SELECT, INSERT, DELETE ON TABLE mfa_backup_codes TO authenticated;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'mfa_backup_codes' AND policyname = 'Users manage own backup codes') THEN
+    CREATE POLICY "Users manage own backup codes"
+      ON mfa_backup_codes FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
+
+-- Redeem a backup code from an AAL1 session (password done, authenticator lost):
+-- match the hash against the caller's unused codes; on a hit, mark it used and
+-- delete the caller's verified MFA factors so they can sign in and re-enrol.
+-- SECURITY DEFINER to touch auth.mfa_factors, but it only ever acts on auth.uid().
+CREATE OR REPLACE FUNCTION redeem_mfa_backup_code(code text)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, extensions
+AS $$
+DECLARE
+  uid uuid := auth.uid();
+  target_id uuid;
+  hashed text := encode(
+    digest(lower(regexp_replace(code, '[^a-z0-9]', '', 'gi')), 'sha256'),
+    'hex'
+  );
+BEGIN
+  IF uid IS NULL THEN
+    RETURN false;
+  END IF;
+
+  SELECT id INTO target_id
+  FROM mfa_backup_codes
+  WHERE user_id = uid AND used_at IS NULL AND code_hash = hashed
+  LIMIT 1;
+
+  IF target_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  UPDATE mfa_backup_codes SET used_at = now() WHERE id = target_id;
+  DELETE FROM auth.mfa_factors WHERE user_id = uid AND status = 'verified';
+  RETURN true;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION redeem_mfa_backup_code(text) FROM public, anon;
+GRANT EXECUTE ON FUNCTION redeem_mfa_backup_code(text) TO authenticated;
+
+-- The `authenticated` role has no SELECT on auth.mfa_factors, so an RLS policy
+-- can't read that table directly (it runs as the caller). This SECURITY DEFINER
+-- helper checks it with elevated rights, scoped to the caller's own factors.
+CREATE OR REPLACE FUNCTION public.has_verified_mfa()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = auth, public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM auth.mfa_factors
+    WHERE user_id = auth.uid() AND status = 'verified'
+  );
+$$;
+REVOKE ALL ON FUNCTION public.has_verified_mfa() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.has_verified_mfa() TO authenticated;
+
+-- Require AAL2 for all user data once a verified MFA factor exists. Users with
+-- no factor are unaffected (aal1 allowed). Restrictive => ANDs with the
+-- ownership policies above, so both must pass. Re-runnable: drops then recreates.
+DO $$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['spaces','space_items','user_encryption','user_settings','user_passkeys'] LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "Require aal2 when MFA enrolled" ON %I', t);
+    EXECUTE format($f$
+      CREATE POLICY "Require aal2 when MFA enrolled" ON %I
+        AS RESTRICTIVE FOR ALL TO authenticated
+        USING (
+          (SELECT auth.jwt()->>'aal') = 'aal2'
+          OR NOT public.has_verified_mfa()
+        )
+        WITH CHECK (
+          (SELECT auth.jwt()->>'aal') = 'aal2'
+          OR NOT public.has_verified_mfa()
+        )
+    $f$, t);
+  END LOOP;
+END $$;
+
+
+-- ────────────────────────────────────────────────────────────
 -- 5. REALTIME
 -- ────────────────────────────────────────────────────────────
 

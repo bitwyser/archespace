@@ -10,6 +10,7 @@ import { AuthProvider } from './context/AuthContext'
 import { useAuth } from './context/AuthContextCore'
 import { EncryptionProvider } from './context/EncryptionContext'
 import VaultUnlockGate from './components/VaultUnlockGate'
+import MfaGate from './components/MfaGate'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
 import { CommandPaletteProvider } from './context/CommandPaletteContext'
@@ -85,11 +86,13 @@ function ProtectedRoute({ children, title }) {
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login" replace />
   return (
-    <VaultUnlockGate>
-      <Suspense fallback={<PageLoader />}>
-        {children}
-      </Suspense>
-    </VaultUnlockGate>
+    <MfaGate>
+      <VaultUnlockGate>
+        <Suspense fallback={<PageLoader />}>
+          {children}
+        </Suspense>
+      </VaultUnlockGate>
+    </MfaGate>
   )
 }
 
