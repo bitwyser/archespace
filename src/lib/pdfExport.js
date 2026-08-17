@@ -8,7 +8,7 @@
  */
 import { markdownToHtml } from '../components/editors/MarkdownPreview'
 import { TYPE_LABELS } from './itemTypes'
-import { strokeToSvgPath, DRAW_VIEW_W, DRAW_VIEW_H } from './drawing'
+import { strokeToSvgPath, drawDims } from './drawing'
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -71,10 +71,12 @@ function itemBodyHtml({ type, content }) {
     case 'draw': {
       const strokes = Array.isArray(c.strokes) ? c.strokes : []
       if (!strokes.length) return '<p class="empty">Empty drawing</p>'
+      const { w, h } = drawDims(c.orientation)
       const paths = strokes
         .map(s => `<path d="${strokeToSvgPath(s.points, s.size)}" fill="${s.color}"/>`)
         .join('')
-      return `<svg viewBox="0 0 ${DRAW_VIEW_W} ${DRAW_VIEW_H}" width="100%" style="max-width:520px;border:1px solid #ddd;border-radius:6px;background:#fff">${paths}</svg>`
+      const maxW = c.orientation === 'portrait' ? 320 : 520
+      return `<svg viewBox="0 0 ${w} ${h}" width="100%" style="max-width:${maxW}px;border:1px solid #ddd;border-radius:6px;background:#fff">${paths}</svg>`
     }
     case 'table': {
       const columns = Array.isArray(c.columns) ? c.columns : []
