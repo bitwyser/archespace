@@ -79,6 +79,8 @@ function validateItemContent(type, content) {
     case 'textbox':
     case 'markdown':
       return typeof content.text === 'string'
+    case 'code':
+      return typeof content.code === 'string'
     case 'checkbox_list':
     case 'menu_list':
     case 'numbered_list':
@@ -87,6 +89,18 @@ function validateItemContent(type, content) {
       // Basic check for reasonable size to prevent massive arrays
       if (content.items.length > 1000) return false
       return true
+    case 'table':
+      if (!Array.isArray(content.columns) || !Array.isArray(content.rows)) return false
+      if (content.columns.length > 100 || content.rows.length > 1000) return false
+      return true
+    case 'draw':
+      if (!Array.isArray(content.strokes)) return false
+      if (content.strokes.length > 10000) return false
+      return true
+    case 'secret':
+      // The body stays a nested ciphertext; keep it as-is (only decryptable in
+      // the same vault). An empty string is valid (an unset secret).
+      return typeof content.cipher === 'string'
     default:
       return false
   }
