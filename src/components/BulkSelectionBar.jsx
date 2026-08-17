@@ -36,7 +36,7 @@ export default function BulkSelectionBar({ count, onClear, actions }) {
   if (count === 0) return null
 
   return (
-    <div ref={barRef} className="sticky bottom-4 z-30 mx-auto w-fit max-w-[calc(100%-1rem)]">
+    <div ref={barRef} className="fixed left-1/2 -translate-x-1/2 bottom-4 z-30 w-fit max-w-[calc(100%-1rem)]">
       <div className="flex flex-wrap items-center gap-2 px-4 py-3 rounded-2xl border border-accent/30 bg-bg-surface shadow-2xl shadow-black/20 backdrop-blur-md">
         <span className="text-sm font-semibold text-text-primary tabular-nums shrink-0">
           {count} selected
