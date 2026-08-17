@@ -48,7 +48,19 @@ export async function decryptSpace(row, key) {
 
 export async function decryptSpaces(rows, key) {
   if (!rows?.length) return []
-  return Promise.all(rows.map(r => decryptSpace(r, key)))
+  // Without a key, let decryptSpace throw the "vault locked" signal as before.
+  if (!key) return Promise.all(rows.map(r => decryptSpace(r, key)))
+  // With a key, a single row that can't be decrypted (e.g. left over from a
+  // previous vault key) must not blank the whole list - skip it instead.
+  const results = await Promise.all(rows.map(async r => {
+    try {
+      return await decryptSpace(r, key)
+    } catch (err) {
+      console.warn('Skipping undecryptable space', r?.id, err)
+      return null
+    }
+  }))
+  return results.filter(Boolean)
 }
 
 // ── Space items ────────────────────────────────────────
@@ -91,6 +103,18 @@ export async function decryptItem(row, key) {
 
 export async function decryptItems(rows, key) {
   if (!rows?.length) return []
-  return Promise.all(rows.map(r => decryptItem(r, key)))
+  // Without a key, let decryptItem throw the "vault locked" signal as before.
+  if (!key) return Promise.all(rows.map(r => decryptItem(r, key)))
+  // With a key, skip any row that can't be decrypted rather than failing the
+  // whole list (or a whole export).
+  const results = await Promise.all(rows.map(async r => {
+    try {
+      return await decryptItem(r, key)
+    } catch (err) {
+      console.warn('Skipping undecryptable item', r?.id, err)
+      return null
+    }
+  }))
+  return results.filter(Boolean)
 }
 
