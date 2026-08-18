@@ -159,7 +159,7 @@ export default function MfaSettings() {
           </h3>
           <p className="text-xs text-text-muted mt-1 leading-relaxed">
             {enabled
-              ? `Enabled. You'll enter a code from your authenticator app when you sign in. ${remaining} backup code${remaining === 1 ? '' : 's'} remaining.`
+              ? `Enabled. You'll enter a code from your authenticator app when you sign in.${remaining === 0 ? ' No backup code left - regenerate one so you can get back in if you lose your authenticator.' : ''}`
               : 'Require a one-time code from an authenticator app (Google Authenticator, Authy, 1Password) each time you sign in, on top of your password.'}
           </p>
         </div>
@@ -193,7 +193,7 @@ export default function MfaSettings() {
           disabled={busy}
           className="mt-3 text-xs text-accent hover:underline disabled:opacity-50"
         >
-          Regenerate backup codes
+          Regenerate backup code
         </button>
       )}
 
@@ -230,15 +230,15 @@ export default function MfaSettings() {
         </Modal>
       )}
 
-      {/* One-time backup codes */}
+      {/* One-time backup code */}
       {backupCodes && (
-        <Modal title="Save your backup codes" onClose={() => setBackupCodes(null)} size="sm">
+        <Modal title="Save your backup code" onClose={() => setBackupCodes(null)} size="sm">
           <div className="space-y-4">
             <p className="text-sm text-text-secondary">
-              Keep these somewhere safe. Each code can be used once to sign in if you lose your authenticator. Using one turns off two-factor authentication so you can set it up again.
+              Keep this somewhere safe. It works once to sign in if you lose your authenticator, which turns off two-factor authentication so you can set it up again.
             </p>
-            <div className="grid grid-cols-2 gap-2 rounded-xl border border-bg-border bg-bg-base p-3 font-mono text-sm text-text-primary">
-              {backupCodes.map(c => <span key={c} className="select-all text-center">{c}</span>)}
+            <div className="rounded-xl border border-bg-border bg-bg-base p-3 text-center font-mono text-lg tracking-[0.2em] text-text-primary select-all">
+              {backupCodes[0]}
             </div>
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={copyCodes} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors">

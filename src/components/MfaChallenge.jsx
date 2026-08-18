@@ -54,7 +54,7 @@ export default function MfaChallenge({ onVerified }) {
           <h1 className="text-xl font-semibold text-text-primary">Two-factor authentication</h1>
           <p className="text-sm text-text-muted mt-1.5">
             {useBackup
-              ? 'Enter one of your backup codes. This turns off two-factor authentication so you can sign in - set it up again afterwards in Settings.'
+              ? 'Enter your backup code. This turns off two-factor authentication so you can sign in - set it up again afterwards in Settings.'
               : 'Enter the 6-digit code from your authenticator app.'}
           </p>
         </div>

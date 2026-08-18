@@ -13,7 +13,9 @@ import { createClient } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { generateRecoveryCode, normalizeRecoveryCode } from './crypto/recoveryCode'
 
-export const BACKUP_CODE_COUNT = 8
+// One code is enough: redeeming it disables 2FA, so extra codes would be dead
+// the moment the first is used.
+export const BACKUP_CODE_COUNT = 1
 
 /**
  * Check the account password without disturbing the active session. Signing in

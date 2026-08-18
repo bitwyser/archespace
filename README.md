@@ -51,7 +51,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Private, encrypted vault to keep your content secure (see [Security model](#security-model)).
 - Configurable vault auto-lock that re-locks the vault after a chosen period of inactivity (see [Security model](#security-model)).
 - Passkey / biometric vault unlock using WebAuthn - unlock with Face ID, Touch ID, or Windows Hello alongside your PIN (see [Security model](#security-model)).
-- Optional two-factor authentication (TOTP) for sign-in, with one-time backup codes, enabled per account from Settings (see [Security model](#security-model)).
+- Optional two-factor authentication (TOTP) for sign-in, with a one-time backup code, enabled per account from Settings (see [Security model](#security-model)).
 - Owner-only audit log of authentication and security events (see [Audit logging](#audit-logging)).
 - Offline queue for pending changes while the browser is offline.
 - Single-user self-hosting mode by default, with an optional multi-user mode.
@@ -123,7 +123,7 @@ ArcheSpace uses a browser-side vault model. You sign in with Supabase Auth using
 - Enrolment uses Supabase's native MFA: scan the QR code (or enter the key) into an authenticator app such as Google Authenticator, Authy, or 1Password. The TOTP secret is held only by Supabase Auth and is never stored in a client-readable table, so 2FA still protects the account if the login password is compromised.
 - When 2FA is on, sign-in asks for the authenticator code after the password and before the vault unlock, so the order is login password, then 2FA, then vault PIN.
 - Row Level Security enforces this at the database as well: once a verified factor exists, the account's data - including the wrapped vault key - is only readable after the second factor is verified (AAL2), so 2FA cannot be bypassed by calling the API directly. Accounts without 2FA are unaffected.
-- Eight one-time backup codes are shown once when 2FA is enabled, and can be regenerated from Settings. Only their SHA-256 hashes are stored. A backup code can be used at sign-in if the authenticator is lost; using one removes the factor so you can sign in and set 2FA up again.
+- A one-time backup code is shown once when 2FA is enabled, and can be regenerated from Settings. Only its SHA-256 hash is stored. The backup code can be used at sign-in if the authenticator is lost; using it removes the factor so you can sign in and set 2FA up again. (One code is enough because redeeming it disables 2FA.)
 - Disabling 2FA requires re-entering the login password.
 
 **Recovery**
