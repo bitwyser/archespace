@@ -245,12 +245,16 @@ REVOKE ALL ON TABLE audit_log FROM anon, authenticated;
 
 
 -- ────────────────────────────────────────────────────────────
--- 4b. TWO-FACTOR AUTH (MFA): backup codes + AAL2 enforcement
+-- 4b. TWO-FACTOR AUTH (MFA): backup code
 -- ────────────────────────────────────────────────────────────
 -- The TOTP factor itself lives in Supabase's auth.mfa_factors (managed by the
--- auth.mfa.* client API). This section adds recoverable one-time backup codes
--- and enforces that a user who has enrolled a factor must reach AAL2 (i.e. pass
--- 2FA) before any of their data - including the wrapped vault key - is readable.
+-- auth.mfa.* client API). This section adds a recoverable one-time backup code.
+-- 2FA is enforced at the APPLICATION level: after the password, the login gate
+-- requires the TOTP challenge (or the backup code) before the app and vault
+-- load. Database-level AAL2 enforcement is intentionally NOT used - gating
+-- user_encryption behind AAL2 made an RLS-filtered read look like "no vault"
+-- and could send a signed-in user to vault setup. All data is E2E encrypted, so
+-- an unelevated session only ever sees ciphertext regardless.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
@@ -317,47 +321,6 @@ $$;
 
 REVOKE ALL ON FUNCTION redeem_mfa_backup_code(text) FROM public, anon;
 GRANT EXECUTE ON FUNCTION redeem_mfa_backup_code(text) TO authenticated;
-
--- The `authenticated` role has no SELECT on auth.mfa_factors, so an RLS policy
--- can't read that table directly (it runs as the caller). This SECURITY DEFINER
--- helper checks it with elevated rights, scoped to the caller's own factors.
-CREATE OR REPLACE FUNCTION public.has_verified_mfa()
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = auth, public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM auth.mfa_factors
-    WHERE user_id = auth.uid() AND status = 'verified'
-  );
-$$;
-REVOKE ALL ON FUNCTION public.has_verified_mfa() FROM public, anon;
-GRANT EXECUTE ON FUNCTION public.has_verified_mfa() TO authenticated;
-
--- Require AAL2 for all user data once a verified MFA factor exists. Users with
--- no factor are unaffected (aal1 allowed). Restrictive => ANDs with the
--- ownership policies above, so both must pass. Re-runnable: drops then recreates.
-DO $$
-DECLARE t text;
-BEGIN
-  FOREACH t IN ARRAY ARRAY['spaces','space_items','user_encryption','user_settings','user_passkeys'] LOOP
-    EXECUTE format('DROP POLICY IF EXISTS "Require aal2 when MFA enrolled" ON %I', t);
-    EXECUTE format($f$
-      CREATE POLICY "Require aal2 when MFA enrolled" ON %I
-        AS RESTRICTIVE FOR ALL TO authenticated
-        USING (
-          (SELECT auth.jwt()->>'aal') = 'aal2'
-          OR NOT public.has_verified_mfa()
-        )
-        WITH CHECK (
-          (SELECT auth.jwt()->>'aal') = 'aal2'
-          OR NOT public.has_verified_mfa()
-        )
-    $f$, t);
-  END LOOP;
-END $$;
 
 
 -- ────────────────────────────────────────────────────────────
