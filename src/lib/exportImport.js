@@ -1,8 +1,12 @@
 /**
- * exportImport.js - Data export and import utilities for ArcheSpace.
+ * exportImport.js - JSON backup export and import for ArcheSpace.
  *
- * Provides functions to export active spaces as a JSON file,
- * and to import a JSON backup file with deep validation.
+ * Export produces a versioned, decrypted snapshot of the active spaces and items
+ * (only the fields that define the content - no internal ids, user ids, or
+ * timestamps). Import re-encrypts everything with the current vault key and
+ * recreates the spaces and items; it accepts both the current versioned format
+ * and the older bare-array format, validates every item type, and skips any it
+ * can't recognize rather than failing the whole import.
  */
 
 import { supabase } from './supabase'
@@ -16,37 +20,58 @@ import {
   ITEM_TYPES,
   MAX_NAME_LENGTH,
   MAX_DESCRIPTION_LENGTH,
-  MAX_TITLE_LENGTH
+  MAX_TITLE_LENGTH,
 } from './constants'
 
+const BACKUP_VERSION = 2
+
 /**
- * Export all active spaces (and their non-deleted items)
- * as a JSON file download.
+ * Export all active spaces (and their non-deleted, non-archived items) as a
+ * versioned JSON file download.
  *
- * @param {Array} spaces - The current spaces array (decrypted)
- * @param {CryptoKey} cryptoKey - Vault key for decrypting items from DB
+ * @param {Array} spaces - The current (decrypted) spaces array
+ * @param {CryptoKey} cryptoKey - Vault key for decrypting items from the DB
  */
 export async function exportSpaces(spaces, cryptoKey) {
   if (!cryptoKey) throw new Error('Vault must be unlocked to export')
 
   try {
-    const allData = await Promise.all(
+    const exportedSpaces = await Promise.all(
       spaces.map(async (c) => {
         const { data, error } = await supabase
           .from('space_items')
-          .select('*')
+          .select('type, title, content, position, pinned')
           .eq('space_id', c.id)
           .is('deleted_at', null)
           .is('archived_at', null)
           .order('position')
-        
         if (error) throw error
+
         const items = await decryptItems(data || [], cryptoKey)
-        return { ...c, items }
+        return {
+          name: c.name ?? '',
+          description: c.description ?? '',
+          color: typeof c.color === 'string' ? c.color : null,
+          tags: parseTags(c.tags),
+          pinned: !!c.pinned,
+          items: items.map((it) => ({
+            type: it.type,
+            title: it.title ?? '',
+            content: it.content ?? {},
+            pinned: !!it.pinned,
+          })),
+        }
       })
     )
 
-    const blob = new Blob([JSON.stringify(allData, null, 2)], {
+    const payload = {
+      app: 'ArcheSpace',
+      version: BACKUP_VERSION,
+      exportedAt: new Date().toISOString(),
+      spaces: exportedSpaces,
+    }
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
     })
     const url = URL.createObjectURL(blob)
@@ -58,10 +83,7 @@ export async function exportSpaces(spaces, cryptoKey) {
 
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
-      await logAudit({
-        action: 'export',
-        details: { count: spaces.length },
-      })
+      await logAudit({ action: 'export', details: { count: spaces.length } })
     }
   } catch (error) {
     console.error('Export failed:', error)
@@ -69,9 +91,7 @@ export async function exportSpaces(spaces, cryptoKey) {
   }
 }
 
-/**
- * Validates the shape of item content based on its type.
- */
+/** Validate an item's content shape for its type (matches the current editors). */
 function validateItemContent(type, content) {
   if (!content || typeof content !== 'object') return false
 
@@ -85,21 +105,19 @@ function validateItemContent(type, content) {
     case 'menu_list':
     case 'numbered_list':
     case 'card_list':
-      if (!Array.isArray(content.items)) return false
-      // Basic check for reasonable size to prevent massive arrays
-      if (content.items.length > 1000) return false
-      return true
+      return Array.isArray(content.items) && content.items.length <= 1000
     case 'table':
-      if (!Array.isArray(content.columns) || !Array.isArray(content.rows)) return false
-      if (content.columns.length > 100 || content.rows.length > 1000) return false
-      return true
+      return (
+        Array.isArray(content.columns) &&
+        Array.isArray(content.rows) &&
+        content.columns.length <= 100 &&
+        content.rows.length <= 1000
+      )
     case 'draw':
-      if (!Array.isArray(content.strokes)) return false
-      if (content.strokes.length > 10000) return false
-      return true
+      return Array.isArray(content.strokes) && content.strokes.length <= 10000
     case 'secret':
-      // The body stays a nested ciphertext; keep it as-is (only decryptable in
-      // the same vault). An empty string is valid (an unset secret).
+      // The body stays a nested ciphertext, only decryptable in the same vault.
+      // An empty string is valid (an unset secret).
       return typeof content.cipher === 'string'
     default:
       return false
@@ -107,128 +125,118 @@ function validateItemContent(type, content) {
 }
 
 /**
- * Import spaces from a JSON backup file.
+ * Import spaces from a JSON backup file. Accepts the current `{ version, spaces }`
+ * format and the older bare-array format.
  *
  * @param {File} file - The .json File object from an <input>
  * @param {string} userId - The authenticated user's UUID
- * @param {CryptoKey} cryptoKey - Vault key for encrypting imported data
- * @throws {Error} If the JSON is malformed or invalid
+ * @param {CryptoKey} cryptoKey - Vault key for encrypting the imported data
+ * @returns {Promise<{ spaces: number, items: number, skipped: number }>}
+ * @throws {Error} If the file is malformed or exceeds the import limits
  */
 export async function importSpaces(file, userId, cryptoKey) {
   if (!cryptoKey) throw new Error('Vault must be unlocked to import')
-  // Validate file size
   if (file.size > MAX_IMPORT_FILE_SIZE) {
-    throw new Error(`File is too large. Maximum size is ${MAX_IMPORT_FILE_SIZE / (1024 * 1024)}MB.`)
+    throw new Error(`File is too large. The maximum size is ${MAX_IMPORT_FILE_SIZE / (1024 * 1024)}MB.`)
   }
 
-  const text = await file.text()
   let parsed
   try {
-    parsed = JSON.parse(text)
+    parsed = JSON.parse(await file.text())
   } catch (error) {
-    throw new Error('Invalid backup format: Not valid JSON.', { cause: error })
+    throw new Error('Invalid backup: the file is not valid JSON.', { cause: error })
   }
 
-  if (!Array.isArray(parsed)) {
-    throw new Error('Invalid backup format: Expected an array of spaces.')
+  // Current format is { version, spaces: [...] }; older backups are a bare array.
+  const spacesList = Array.isArray(parsed)
+    ? parsed
+    : Array.isArray(parsed?.spaces)
+      ? parsed.spaces
+      : null
+  if (!spacesList) {
+    throw new Error('Invalid backup: expected a list of spaces.')
+  }
+  if (spacesList.length > MAX_IMPORT_SPACES) {
+    throw new Error(`Too many spaces. The maximum allowed is ${MAX_IMPORT_SPACES}.`)
   }
 
-  if (parsed.length > MAX_IMPORT_SPACES) {
-    throw new Error(`Too many spaces. Maximum allowed is ${MAX_IMPORT_SPACES}.`)
-  }
+  let itemsImported = 0
+  let itemsSkipped = 0
 
-  let totalItemsImported = 0
-
-  for (const col of parsed) {
-    if (typeof col !== 'object' || col === null) {
-      throw new Error('Invalid backup format: Space must be an object.')
+  for (const col of spacesList) {
+    if (!col || typeof col !== 'object') {
+      throw new Error('Invalid backup: each space must be an object.')
     }
 
-    const { items } = col
-    const colData = {
-      name: col.name,
-      description: col.description,
-      color: col.color,
-      tags: col.tags,
-    }
+    const name = (typeof col.name === 'string' && col.name.trim()
+      ? col.name.trim()
+      : 'Imported Space'
+    ).slice(0, MAX_NAME_LENGTH)
+    const description = (typeof col.description === 'string' ? col.description.trim() : '')
+      .slice(0, MAX_DESCRIPTION_LENGTH)
 
-    // Validate and sanitize space data
-    let sanitizedName = typeof colData.name === 'string' ? colData.name.trim() : 'Imported Space'
-    if (!sanitizedName) sanitizedName = 'Imported Space'
-    colData.name = sanitizedName.slice(0, MAX_NAME_LENGTH)
-
-    if (typeof colData.description === 'string') {
-      colData.description = colData.description.trim().slice(0, MAX_DESCRIPTION_LENGTH)
-    } else {
-      colData.description = ''
-    }
-
-    const encryptedCol = await encryptSpace({
-      name: colData.name,
-      description: colData.description || '',
-      tags: parseTags(colData.tags),
-    }, cryptoKey)
+    const encryptedCol = await encryptSpace(
+      { name, description, tags: parseTags(col.tags) },
+      cryptoKey
+    )
 
     const { data: newCol, error: colErr } = await supabase
       .from('spaces')
       .insert({
-        ...colData,
         name: encryptedCol.name,
         description: encryptedCol.description,
         tags: encryptedCol.tags,
+        color: typeof col.color === 'string' ? col.color : null,
+        pinned: !!col.pinned,
         user_id: userId,
       })
       .select()
       .single()
-
     if (colErr) throw colErr
 
-    if (Array.isArray(items) && items.length > 0) {
-      if (items.length > MAX_IMPORT_ITEMS_PER_SPACE) {
-        throw new Error(`Too many items in space "${colData.name}". Maximum allowed is ${MAX_IMPORT_ITEMS_PER_SPACE}.`)
+    const items = Array.isArray(col.items) ? col.items : []
+    if (items.length > MAX_IMPORT_ITEMS_PER_SPACE) {
+      throw new Error(`Too many items in space "${name}". The maximum allowed is ${MAX_IMPORT_ITEMS_PER_SPACE}.`)
+    }
+
+    const itemsToInsert = []
+    for (const item of items) {
+      if (
+        !item ||
+        typeof item !== 'object' ||
+        !ITEM_TYPES.includes(item.type) ||
+        !validateItemContent(item.type, item.content)
+      ) {
+        itemsSkipped++
+        continue
       }
 
-      const itemsToInsert = []
-      for (const item of items) {
-        // Validate type
-        if (!ITEM_TYPES.includes(item.type)) continue
+      const title = (typeof item.title === 'string' ? item.title.trim() : '')
+        .slice(0, MAX_TITLE_LENGTH)
+      const encryptedItem = await encryptItem({ title, content: item.content }, cryptoKey)
 
-        // Validate content shape
-        if (!validateItemContent(item.type, item.content)) continue
+      itemsToInsert.push({
+        space_id: newCol.id,
+        user_id: userId,
+        type: item.type,
+        title: encryptedItem.title,
+        content: encryptedItem.content,
+        position: itemsToInsert.length,
+        pinned: !!item.pinned,
+      })
+    }
 
-        // Sanitize title
-        let sanitizedTitle = typeof item.title === 'string' ? item.title.trim() : ''
-        sanitizedTitle = sanitizedTitle.slice(0, MAX_TITLE_LENGTH)
-
-        const encryptedItem = await encryptItem({
-          title: sanitizedTitle,
-          content: item.content,
-        }, cryptoKey)
-
-        itemsToInsert.push({
-          space_id: newCol.id,
-          user_id: userId,
-          type: item.type,
-          title: encryptedItem.title,
-          content: encryptedItem.content,
-          position: typeof item.position === 'number' ? item.position : itemsToInsert.length,
-          pinned: !!item.pinned
-        })
-      }
-      
-      if (itemsToInsert.length > 0) {
-        // Batch insert items
-        const { error: itemErr } = await supabase
-          .from('space_items')
-          .insert(itemsToInsert)
-        if (itemErr) throw itemErr
-        totalItemsImported += itemsToInsert.length
-      }
+    if (itemsToInsert.length > 0) {
+      const { error: itemErr } = await supabase.from('space_items').insert(itemsToInsert)
+      if (itemErr) throw itemErr
+      itemsImported += itemsToInsert.length
     }
   }
 
   await logAudit({
     action: 'import',
-    details: { spaces_count: parsed.length, items_count: totalItemsImported },
+    details: { spaces_count: spacesList.length, items_count: itemsImported, items_skipped: itemsSkipped },
   })
+
+  return { spaces: spacesList.length, items: itemsImported, skipped: itemsSkipped }
 }

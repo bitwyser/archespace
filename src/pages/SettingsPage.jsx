@@ -352,12 +352,15 @@ export default function SettingsPage() {
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      await importSpaces(file, user.id, cryptoKey)
+      const result = await importSpaces(file, user.id, cryptoKey)
       await queryClient.invalidateQueries({ queryKey: queryKeys.spaces() })
       await queryClient.invalidateQueries({ queryKey: queryKeys.bin() })
-      toast.success("Backup imported")
+      const spacesLabel = `${result.spaces} space${result.spaces === 1 ? '' : 's'}`
+      const itemsLabel = `${result.items} item${result.items === 1 ? '' : 's'}`
+      const skippedLabel = result.skipped ? ` (${result.skipped} skipped)` : ''
+      toast.success(`Imported ${spacesLabel} and ${itemsLabel}${skippedLabel}.`)
     } catch (err) {
-      toast.error("That backup file isn't valid.")
+      toast.error(err?.message || "That backup file isn't valid.")
       console.error(err)
     }
     e.target.value = ''
