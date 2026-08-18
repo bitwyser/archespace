@@ -245,16 +245,20 @@ REVOKE ALL ON TABLE audit_log FROM anon, authenticated;
 
 
 -- ────────────────────────────────────────────────────────────
--- 4b. TWO-FACTOR AUTH (MFA): backup code
+-- 4b. TWO-FACTOR AUTH (MFA): backup code + AAL2 enforcement
 -- ────────────────────────────────────────────────────────────
 -- The TOTP factor itself lives in Supabase's auth.mfa_factors (managed by the
--- auth.mfa.* client API). This section adds a recoverable one-time backup code.
--- 2FA is enforced at the APPLICATION level: after the password, the login gate
--- requires the TOTP challenge (or the backup code) before the app and vault
--- load. Database-level AAL2 enforcement is intentionally NOT used - gating
--- user_encryption behind AAL2 made an RLS-filtered read look like "no vault"
--- and could send a signed-in user to vault setup. All data is E2E encrypted, so
--- an unelevated session only ever sees ciphertext regardless.
+-- auth.mfa.* client API). This section adds a recoverable one-time backup code
+-- and enforces 2FA at BOTH layers: the app's login gate requires the TOTP
+-- challenge after the password, and the policies below require AAL2 at the
+-- database once a verified factor exists.
+--
+-- IMPORTANT: user_encryption is deliberately NOT gated. Gating it made an
+-- RLS-filtered read look like "no vault", which could send a signed-in user to
+-- vault setup and overwrite their key. The row is only wrapped ciphertext and
+-- public salts (useless without the vault PIN), so leaving it readable at AAL1
+-- costs nothing and keeps the vault-exists check reliable. The content tables
+-- (spaces, space_items, user_settings, user_passkeys) are gated.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
@@ -321,6 +325,57 @@ $$;
 
 REVOKE ALL ON FUNCTION redeem_mfa_backup_code(text) FROM public, anon;
 GRANT EXECUTE ON FUNCTION redeem_mfa_backup_code(text) TO authenticated;
+
+-- The `authenticated` role has no SELECT on auth.mfa_factors, so an RLS policy
+-- can't read that table directly (it runs as the caller). This SECURITY DEFINER
+-- helper checks it with elevated rights, scoped to the caller's own factors.
+CREATE OR REPLACE FUNCTION public.has_verified_mfa()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = auth, public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM auth.mfa_factors
+    WHERE user_id = auth.uid() AND status = 'verified'
+  );
+$$;
+REVOKE ALL ON FUNCTION public.has_verified_mfa() FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.has_verified_mfa() TO authenticated;
+
+-- Require AAL2 for the encrypted content once a verified MFA factor exists.
+-- Users with no factor are unaffected (aal1 allowed). Restrictive => ANDs with
+-- the ownership policies above. Only spaces + space_items are gated - that is
+-- the actual content. user_encryption / user_passkeys are only wrapped
+-- ciphertext, and user_settings is trivial prefs; gating those risked the
+-- vault-exists trap or breaking early appearance/biometric loads, for no real
+-- gain (all content is E2E encrypted). Re-runnable: drops then recreates.
+DO $$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['spaces','space_items'] LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "Require aal2 when MFA enrolled" ON %I', t);
+    EXECUTE format($f$
+      CREATE POLICY "Require aal2 when MFA enrolled" ON %I
+        AS RESTRICTIVE FOR ALL TO authenticated
+        USING (
+          (SELECT auth.jwt()->>'aal') = 'aal2'
+          OR NOT public.has_verified_mfa()
+        )
+        WITH CHECK (
+          (SELECT auth.jwt()->>'aal') = 'aal2'
+          OR NOT public.has_verified_mfa()
+        )
+    $f$, t);
+  END LOOP;
+  -- Remove the policy from tables an earlier version may have gated - they must
+  -- stay readable (user_encryption drives the vault-exists check; the others
+  -- load before 2FA completes).
+  FOREACH t IN ARRAY ARRAY['user_encryption','user_settings','user_passkeys'] LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "Require aal2 when MFA enrolled" ON %I', t);
+  END LOOP;
+END $$;
 
 
 -- ────────────────────────────────────────────────────────────

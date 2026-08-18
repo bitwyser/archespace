@@ -167,6 +167,14 @@ function isIncorrectPinError(err) {
  */
 export async function setupUserVault(userId, pin) {
   assertValidPin(pin)
+  // Safety net: never overwrite an existing vault. If a row already exists this
+  // is an unlock situation misread as first-run setup - replacing the master key
+  // would lock the user out of all their data. Fail closed (a read error also
+  // aborts, rather than risk an overwrite).
+  const existing = await fetchVaultMeta(userId)
+  if (existing && (existing.wrapped_key || existing.key_check)) {
+    throw new Error('A vault already exists for this account. Reload and unlock with your PIN.')
+  }
   const masterKey = await generateMasterKey()
   const recoveryCode = generateRecoveryCode()
   const { recoverySaved } = await persistPinWrappedVault(userId, pin, masterKey, { recoveryCode })
