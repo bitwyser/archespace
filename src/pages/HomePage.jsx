@@ -65,7 +65,7 @@ const features = [
   { icon: ArchiveRestore, label: 'Archive and recycle bin' },
   { icon: Download, label: 'Backup and restore' },
   { icon: LockKeyhole, label: 'Lockable encrypted vault' },
-  { icon: Fingerprint, label: 'Passkey and biometric unlock' },
+  { icon: Fingerprint, label: 'On-device passkey and biometric unlock' },
   { icon: Palette, label: 'Dark and light themes with accent colors' },
   { icon: Users, label: 'Single or multi-user mode' },
 ]

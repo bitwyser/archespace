@@ -1,9 +1,10 @@
 /**
- * PasskeyManager.jsx - Enroll and remove biometric (WebAuthn PRF) passkeys
- * that unlock the vault. Lives in Settings → Security.
+ * PasskeyManager.jsx - Enable or remove biometric (WebAuthn PRF) unlock for the
+ * vault. One passkey per browser (stored locally in IndexedDB). Lives in
+ * Settings → Security.
  */
 import { useState } from 'react'
-import { Fingerprint, Trash2 } from 'lucide-react'
+import { Fingerprint, ShieldCheck } from 'lucide-react'
 import { useEncryption } from '../context/EncryptionCore'
 import { useToast } from '../context/ToastCore'
 import PinInput from './PinInput'
@@ -35,42 +36,41 @@ export default function PasskeyManager() {
   const { toast } = useToast()
 
   const [pin, setPin] = useState('')
-  const [label, setLabel] = useState('')
   const [adding, setAdding] = useState(false)
-  const [removingId, setRemovingId] = useState('')
-  const [confirmRemove, setConfirmRemove] = useState(null)
+  const [removing, setRemoving] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState(false)
 
-  const handleAdd = async (e) => {
+  const passkey = passkeys[0] || null
+
+  const handleEnable = async (e) => {
     e.preventDefault()
     if (pin.length < VAULT_PIN_MIN_LENGTH) {
-      toast.error('Enter your current vault PIN to add a passkey.')
+      toast.error('Enter your current vault PIN to enable biometric unlock.')
       return
     }
     setAdding(true)
     try {
-      await enrollPasskey(pin, label)
+      await enrollPasskey(pin)
       setPin('')
-      setLabel('')
-      toast.success('Passkey added. You can now unlock with biometrics.')
+      toast.success('Biometric unlock enabled.')
     } catch (err) {
-      toast.error(err?.message || "Couldn't add passkey.")
+      toast.error(err?.message || "Couldn't enable biometric unlock.")
     } finally {
       setAdding(false)
     }
   }
 
   const handleRemove = async () => {
-    if (!confirmRemove) return
-    const id = confirmRemove.id
-    setRemovingId(id)
+    if (!passkey) return
+    setRemoving(true)
     try {
-      await removePasskey(id)
-      setConfirmRemove(null)
-      toast.success('Passkey removed.')
+      await removePasskey(passkey.id)
+      setConfirmRemove(false)
+      toast.success('Biometric unlock disabled.')
     } catch (err) {
-      toast.error(err?.message || "Couldn't remove passkey.")
+      toast.error(err?.message || "Couldn't disable biometric unlock.")
     } finally {
-      setRemovingId('')
+      setRemoving(false)
     }
   }
 
@@ -78,8 +78,8 @@ export default function PasskeyManager() {
     <div>
       <h3 className="text-sm font-semibold text-text-primary">Passkey / biometric unlock</h3>
       <p className="text-text-muted text-xs mt-0.5">
-        Unlock your vault with Face ID, Touch ID, or Windows Hello instead of typing your PIN.
-        Your PIN and recovery code still work as backups.
+        Unlock your vault with Face ID, Touch ID, or Windows Hello instead of typing your PIN,
+        on this browser. Your PIN and recovery code still work as backups.
       </p>
 
       {!passkeySupported ? (
@@ -88,90 +88,57 @@ export default function PasskeyManager() {
         </p>
       ) : !vaultStatus.hasVault ? (
         <p className="text-text-muted text-xs mt-3 bg-bg-elevated border border-bg-border rounded-lg px-3 py-2">
-          Create a vault PIN first, then you can add a passkey.
+          Create a vault PIN first, then you can enable biometric unlock.
         </p>
-      ) : (
-        <>
-          {passkeys.length > 0 && (
-            <ul className="mt-3 space-y-2">
-              {passkeys.map((pk) => {
-                const created = formatDate(pk.createdAt)
-                const lastUsed = formatDate(pk.lastUsedAt)
-                return (
-                  <li
-                    key={pk.id}
-                    className="flex items-center justify-between gap-3 bg-bg-elevated border border-bg-border rounded-xl px-3 py-2.5"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm text-text-primary truncate">
-                        {pk.label || 'Passkey'}
-                      </p>
-                      <p className="text-text-muted text-[11px] mt-0.5">
-                        {created ? `Added ${created}` : 'Added'}
-                        {lastUsed ? ` · Last used ${lastUsed}` : ''}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmRemove(pk)}
-                      disabled={removingId === pk.id}
-                      className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-bg-border text-text-secondary hover:text-danger hover:border-danger/30 hover:bg-danger/10 text-xs font-medium transition-colors disabled:opacity-50"
-                      aria-label={`Remove ${pk.label || 'passkey'}`}
-                    >
-                      <Trash2 size={14} />
-                      {removingId === pk.id ? 'Removing…' : 'Remove'}
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-
-          <form onSubmit={handleAdd} className="mt-3 space-y-3">
-            <div>
-              <label htmlFor="passkey-label" className="block text-xs font-medium text-text-secondary mb-1.5">
-                Passkey name (optional)
-              </label>
-              <input
-                id="passkey-label"
-                type="text"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="e.g. MacBook Touch ID"
-                maxLength={80}
-                autoComplete="off"
-                disabled={adding || unlocking}
-                className="w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors disabled:opacity-50"
-              />
+      ) : passkey ? (
+        <div className="mt-3 flex items-center justify-between gap-3 bg-bg-elevated border border-bg-border rounded-xl px-3 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <ShieldCheck size={16} className="text-success shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm text-text-primary">Biometric unlock is on</p>
+              {formatDate(passkey.createdAt) && (
+                <p className="text-text-muted text-[11px] mt-0.5">Enabled {formatDate(passkey.createdAt)}</p>
+              )}
             </div>
-            <PinInput
-              id="passkey-current-pin"
-              label="Current vault PIN"
-              value={pin}
-              onChange={setPin}
-              disabled={adding || unlocking}
-            />
-            <button
-              type="submit"
-              disabled={adding || unlocking || pin.length < VAULT_PIN_MIN_LENGTH}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-            >
-              <Fingerprint size={16} />
-              {adding ? 'Waiting for device…' : 'Add passkey'}
-            </button>
-          </form>
-        </>
+          </div>
+          <button
+            type="button"
+            onClick={() => setConfirmRemove(true)}
+            disabled={removing}
+            className="shrink-0 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            Disable
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleEnable} className="mt-3 space-y-3">
+          <PinInput
+            id="passkey-current-pin"
+            label="Current vault PIN"
+            value={pin}
+            onChange={setPin}
+            disabled={adding || unlocking}
+          />
+          <button
+            type="submit"
+            disabled={adding || unlocking || pin.length < VAULT_PIN_MIN_LENGTH}
+            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+          >
+            <Fingerprint size={16} />
+            {adding ? 'Waiting for device…' : 'Enable biometric unlock'}
+          </button>
+        </form>
       )}
 
       {confirmRemove && (
         <ConfirmDialog
-          title="Remove this passkey?"
-          message={`"${confirmRemove.label || 'Passkey'}" will no longer unlock your vault. You can still unlock with your PIN, and re-add a passkey later.`}
-          confirmLabel="Remove"
+          title="Disable biometric unlock?"
+          message="This browser will no longer unlock with biometrics. You can still unlock with your PIN, and re-enable it later."
+          confirmLabel="Disable"
           destructive
-          busy={removingId === confirmRemove.id}
+          busy={removing}
           onConfirm={handleRemove}
-          onClose={() => setConfirmRemove(null)}
+          onClose={() => setConfirmRemove(false)}
         />
       )}
     </div>

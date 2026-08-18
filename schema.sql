@@ -80,21 +80,9 @@ CREATE TABLE IF NOT EXISTS user_encryption (
   created_at           timestamptz NOT NULL DEFAULT now()
 );
 
--- Passkeys (WebAuthn PRF) that wrap the vault master key for biometric unlock.
--- The PRF secret never leaves the device; only the wrapped master key, the
--- credential id, and the PRF salt are stored here (useless without the device).
-CREATE TABLE IF NOT EXISTS user_passkeys (
-  id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       uuid        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  credential_id text        NOT NULL,
-  prf_salt      text        NOT NULL,
-  wrapped_key   text        NOT NULL,
-  label         text        DEFAULT NULL,
-  created_at    timestamptz NOT NULL DEFAULT now(),
-  last_used_at  timestamptz DEFAULT NULL,
-  UNIQUE (user_id, credential_id)
-);
-CREATE INDEX IF NOT EXISTS idx_user_passkeys_user ON user_passkeys(user_id);
+-- Passkey / biometric unlock stores its wrapped master key locally on each
+-- client (the browser's IndexedDB on web, the OS keystore on mobile), never on
+-- the server, so there is no passkey table here.
 
 -- User Settings: per-user application preferences.
 CREATE TABLE IF NOT EXISTS user_settings (
@@ -193,11 +181,9 @@ ALTER TABLE space_items     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_encryption ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_passkeys    ENABLE ROW LEVEL SECURITY;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_encryption TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_settings   TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_passkeys   TO authenticated;
 
 -- Spaces: full CRUD for the owning user only.
 DO $$ BEGIN
@@ -232,14 +218,6 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- User passkeys: full CRUD for the owning user only.
-DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_passkeys' AND policyname = 'Users manage own passkeys') THEN
-    CREATE POLICY "Users manage own passkeys"
-      ON user_passkeys FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-  END IF;
-END $$;
-
 -- audit_log: no policies + grants revoked = owner / service_role only.
 REVOKE ALL ON TABLE audit_log FROM anon, authenticated;
 
@@ -257,8 +235,8 @@ REVOKE ALL ON TABLE audit_log FROM anon, authenticated;
 -- RLS-filtered read look like "no vault", which could send a signed-in user to
 -- vault setup and overwrite their key. The row is only wrapped ciphertext and
 -- public salts (useless without the vault PIN), so leaving it readable at AAL1
--- costs nothing and keeps the vault-exists check reliable. The content tables
--- (spaces, space_items, user_settings, user_passkeys) are gated.
+-- costs nothing and keeps the vault-exists check reliable. Only the actual
+-- content tables (spaces, space_items) are gated.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 
@@ -347,10 +325,10 @@ GRANT EXECUTE ON FUNCTION public.has_verified_mfa() TO authenticated;
 -- Require AAL2 for the encrypted content once a verified MFA factor exists.
 -- Users with no factor are unaffected (aal1 allowed). Restrictive => ANDs with
 -- the ownership policies above. Only spaces + space_items are gated - that is
--- the actual content. user_encryption / user_passkeys are only wrapped
--- ciphertext, and user_settings is trivial prefs; gating those risked the
--- vault-exists trap or breaking early appearance/biometric loads, for no real
--- gain (all content is E2E encrypted). Re-runnable: drops then recreates.
+-- the actual content. user_encryption is only wrapped ciphertext and
+-- user_settings is trivial prefs; gating those risked the vault-exists trap or
+-- breaking early appearance loads, for no real gain (all content is E2E
+-- encrypted). Re-runnable: drops then recreates.
 DO $$
 DECLARE t text;
 BEGIN
@@ -370,9 +348,9 @@ BEGIN
     $f$, t);
   END LOOP;
   -- Remove the policy from tables an earlier version may have gated - they must
-  -- stay readable (user_encryption drives the vault-exists check; the others
-  -- load before 2FA completes).
-  FOREACH t IN ARRAY ARRAY['user_encryption','user_settings','user_passkeys'] LOOP
+  -- stay readable (user_encryption drives the vault-exists check; user_settings
+  -- loads before 2FA completes).
+  FOREACH t IN ARRAY ARRAY['user_encryption','user_settings'] LOOP
     EXECUTE format('DROP POLICY IF EXISTS "Require aal2 when MFA enrolled" ON %I', t);
   END LOOP;
 END $$;

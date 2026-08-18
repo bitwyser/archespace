@@ -88,6 +88,27 @@ function extractPrfFirst(credential) {
 }
 
 /**
+ * Turn a WebAuthn create()/get() failure into a friendly, product-level
+ * message. A cancelled or timed-out prompt surfaces as NotAllowedError with a
+ * spec URL; per WebAuthn privacy guidance the wording stays deliberately vague
+ * (it must not reveal whether a credential exists).
+ */
+function webAuthnErrorMessage(err, fallback) {
+  switch (err?.name) {
+    case 'NotAllowedError':
+      return 'Biometric unlock was cancelled or timed out. Try again, or use your PIN.'
+    case 'InvalidStateError':
+      return 'A passkey is already set up on this device. Try unlocking, or use your PIN.'
+    case 'SecurityError':
+      return 'Biometric unlock is not available on this page. Use your PIN.'
+    case 'NotSupportedError':
+      return 'This device does not support biometric unlock. Use your PIN.'
+    default:
+      return fallback
+  }
+}
+
+/**
  * Register a new platform passkey and wrap `masterKey` with its PRF secret.
  * @param {{ userId: string, userName: string, masterKey: CryptoKey }} params
  * @returns {Promise<{ credentialId: string, prfSalt: string, wrappedKey: string }>}
@@ -97,7 +118,9 @@ export async function enrollPasskeyCredential({ userId, userName, masterKey }) {
   const challenge = crypto.getRandomValues(new Uint8Array(32))
   const name = userName || 'Arche vault'
 
-  const credential = await navigator.credentials.create({
+  let credential
+  try {
+    credential = await navigator.credentials.create({
     publicKey: {
       challenge,
       rp: { name: RP_NAME }, // rp.id defaults to the current domain (works on localhost + prod)
@@ -118,8 +141,11 @@ export async function enrollPasskeyCredential({ userId, userName, masterKey }) {
       timeout: 60000,
       extensions: { prf: { eval: { first: prfSalt } } },
     },
-  })
-  if (!credential) throw new Error('Passkey registration was cancelled.')
+    })
+  } catch (err) {
+    throw new Error(webAuthnErrorMessage(err, "Couldn't set up biometric unlock. Try again, or use your PIN."), { cause: err })
+  }
+  if (!credential) throw new Error('Biometric setup was cancelled. Use your PIN.')
 
   const credentialId = bytesToB64url(new Uint8Array(credential.rawId))
 
@@ -144,15 +170,20 @@ export async function enrollPasskeyCredential({ userId, userName, masterKey }) {
 /** Assert a single credential to read its PRF output (fallback after create). */
 async function evaluatePrf(credentialId, prfSalt) {
   const challenge = crypto.getRandomValues(new Uint8Array(32))
-  const assertion = await navigator.credentials.get({
-    publicKey: {
-      challenge,
-      allowCredentials: [{ type: 'public-key', id: b64urlToBytes(credentialId) }],
-      userVerification: 'required',
-      timeout: 60000,
-      extensions: { prf: { eval: { first: prfSalt } } },
-    },
-  })
+  let assertion
+  try {
+    assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: [{ type: 'public-key', id: b64urlToBytes(credentialId) }],
+        userVerification: 'required',
+        timeout: 60000,
+        extensions: { prf: { eval: { first: prfSalt } } },
+      },
+    })
+  } catch (err) {
+    throw new Error(webAuthnErrorMessage(err, "Couldn't set up biometric unlock. Try again, or use your PIN."), { cause: err })
+  }
   return extractPrfFirst(assertion)
 }
 
@@ -174,16 +205,21 @@ export async function unlockWithPasskeyCredentials(rows) {
     evalByCredential[r.credentialId] = { first: bytesFromBase64(r.prfSalt) }
   }
 
-  const assertion = await navigator.credentials.get({
-    publicKey: {
-      challenge,
-      allowCredentials: rows.map(r => ({ type: 'public-key', id: b64urlToBytes(r.credentialId) })),
-      userVerification: 'required',
-      timeout: 60000,
-      extensions: { prf: { evalByCredential } },
-    },
-  })
-  if (!assertion) throw new Error('Passkey unlock was cancelled.')
+  let assertion
+  try {
+    assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials: rows.map(r => ({ type: 'public-key', id: b64urlToBytes(r.credentialId) })),
+        userVerification: 'required',
+        timeout: 60000,
+        extensions: { prf: { evalByCredential } },
+      },
+    })
+  } catch (err) {
+    throw new Error(webAuthnErrorMessage(err, 'Could not unlock with biometrics. Use your PIN instead.'), { cause: err })
+  }
+  if (!assertion) throw new Error('Biometric unlock was cancelled. Use your PIN instead.')
 
   const usedId = bytesToB64url(new Uint8Array(assertion.rawId))
   const row = byId.get(usedId)
