@@ -4,7 +4,7 @@
  * removes the factor and its backup codes.
  */
 import { useEffect, useState } from 'react'
-import { ShieldCheck, ShieldOff, Copy, Check } from 'lucide-react'
+import { ShieldCheck, ShieldOff, Copy, Check, RefreshCw } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useToast } from '../context/ToastCore'
 import { Modal } from './ui/UI'
@@ -191,9 +191,9 @@ export default function MfaSettings() {
           type="button"
           onClick={regenerate}
           disabled={busy}
-          className="mt-3 text-xs text-accent hover:underline disabled:opacity-50"
+          className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary text-xs font-medium transition-colors disabled:opacity-50"
         >
-          Regenerate backup code
+          <RefreshCw size={13} /> Regenerate backup code
         </button>
       )}
 

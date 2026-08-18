@@ -77,22 +77,20 @@ export default function MfaChallenge({ onVerified }) {
           >
             {loading ? 'Verifying…' : 'Verify'}
           </button>
-          <div className="flex items-center justify-between text-xs">
-            <button
-              type="button"
-              onClick={() => { setUseBackup(v => !v); setCode(''); setError('') }}
-              className="text-accent hover:underline"
-            >
-              {useBackup ? 'Use authenticator code' : 'Use a backup code'}
-            </button>
-            <button
-              type="button"
-              onClick={() => signOut()}
-              className="text-text-muted hover:text-text-primary"
-            >
-              Sign out
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => { setUseBackup(v => !v); setCode(''); setError('') }}
+            className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+          >
+            {useBackup ? 'Use authenticator code' : 'Use a backup code'}
+          </button>
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="block mx-auto text-xs text-text-muted hover:text-text-primary"
+          >
+            Sign out
+          </button>
         </form>
       </div>
     </div>
