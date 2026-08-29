@@ -586,7 +586,7 @@ export default function HomePage() {
             <div>
               <p className="text-sm font-semibold text-white">ArcheSpace</p>
               <p className="mt-3 max-w-xs text-sm leading-6 text-white/50">
-                An open-source, private, encrypted space for everything you are working on.
+                An open source, private space for everything you're working on.
               </p>
             </div>
 

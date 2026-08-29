@@ -53,8 +53,10 @@ export default function SpacePage() {
   /** The space object for this page */
   const space = spaces.find(c => c.id === id)
 
-  // Private route: noindex, with the space name as the tab title once loaded.
-  useRouteMeta({ title: space?.name || 'Space' })
+  // Private route: noindex, and a generic tab title - never the space name,
+  // which would leak private data into the browser tab, history, and app
+  // switcher. Item names are likewise kept out of the title.
+  useRouteMeta({ title: 'Space' })
 
   const { registerCommands, closePalette } = useCommandPalette()
 

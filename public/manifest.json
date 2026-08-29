@@ -1,7 +1,7 @@
 {
   "name": "ArcheSpace",
   "short_name": "ArcheSpace",
-  "description": "An open-source, private, encrypted space for everything you're working on.",
+  "description": "An open source, private space for everything you're working on. Your data is encrypted in your browser, so the server never sees it.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#18181f",
