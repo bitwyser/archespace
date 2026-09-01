@@ -470,7 +470,7 @@ export default function SpacePage() {
       </header>
 
       {/* ── Main content ─────────────────────────────── */}
-      <main className={`flex-1 flex flex-col px-2 sm:px-4 pt-6 pb-32 ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto w-full'}`}>
+      <main className={`flex-1 flex flex-col px-2 sm:px-4 pt-6 ${selectMode ? 'pb-32' : 'pb-6'} ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto w-full'}`}>
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
