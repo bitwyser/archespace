@@ -1,7 +1,7 @@
 /**
  * VaultUnlockGate.jsx - Post-login vault PIN unlock or setup.
  */
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Shield, Lock, Fingerprint } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
@@ -43,6 +43,44 @@ export default function VaultUnlockGate({ children }) {
   // before letting the unlocked app through.
   const [pendingEnrollPin, setPendingEnrollPin] = useState('')
   const [enrollError, setEnrollError] = useState('')
+  // Guards the one-shot auto passkey prompt so it fires at most once per mount.
+  const autoPasskeyTried = useRef(false)
+
+  // On launch, if a passkey is enrolled on this device, prompt for it straight
+  // away instead of waiting for a tap on "Unlock with passkey". Any failure
+  // (cancelled, timed out, or the browser blocking the prompt) falls back to
+  // the manual passkey/PIN UI below - nothing to catch here.
+  useEffect(() => {
+    if (autoPasskeyTried.current) return
+    if (!user) return
+    if (authLoading || vaultStatus.loading || sessionRestoring) return
+    if (isUnlocked) return
+    if (!vaultStatus.hasVault) return // setup mode: no passkey yet
+    if (!passkeySupported || passkeys.length === 0) return
+    if (unlocking) return
+    autoPasskeyTried.current = true
+    const run = async () => {
+      setPendingAction('passkey')
+      try {
+        await unlockWithPasskey()
+      } catch {
+        // unlockError is set in context; the manual passkey/PIN UI takes over.
+      } finally {
+        setPendingAction(null)
+      }
+    }
+    run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    user,
+    authLoading,
+    vaultStatus.loading,
+    vaultStatus.hasVault,
+    sessionRestoring,
+    isUnlocked,
+    passkeySupported,
+    passkeys.length,
+  ])
 
   if (!user) return children
   if (authLoading || vaultStatus.loading || sessionRestoring) {
