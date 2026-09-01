@@ -421,7 +421,7 @@ For development questions, architecture discussions, feature requests, bug repor
 - Hosted and deployed on Cloudflare.
 - Source hosted on GitHub.
 - Email delivery powered by Resend.
-- Crafted and maintained by the ArcheSpace project.
+- Crafted and maintained by BitWyser.
 
 ## License
 

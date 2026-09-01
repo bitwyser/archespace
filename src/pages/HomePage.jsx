@@ -639,7 +639,16 @@ export default function HomePage() {
 
           <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
             <p className="text-xs text-white/55">
-              © {year} · Created and maintained by the ArcheSpace Project.
+              © {year} · Created and maintained by{' '}
+              <a
+                href="https://github.com/bitwyser"
+                target="_blank"
+                rel="noreferrer"
+                className="no-underline hover:text-white/70 transition-colors"
+              >
+                BitWyser
+              </a>
+              .
             </p>
             <p className="text-xs text-white/55">
               v{APP_VERSION} · build{' '}
