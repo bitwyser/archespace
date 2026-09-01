@@ -448,7 +448,7 @@ function SpaceItem({
                       <button
                         type="button"
                         onClick={() => secretEditorRef.current?.startReveal()}
-                        className="p-2 rounded-lg border border-accent/30 bg-accent-muted text-accent hover:bg-accent/20 transition-all"
+                        className="p-2 rounded-lg border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all"
                         aria-label="Reveal secret"
                         title="Reveal secret"
                       >
