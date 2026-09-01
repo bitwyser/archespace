@@ -1,7 +1,7 @@
 # ArcheSpace
 
-[![CI](https://github.com/patkarmandar/archespace/actions/workflows/ci.yml/badge.svg)](https://github.com/patkarmandar/archespace/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/github/v/release/patkarmandar/archespace)](https://github.com/patkarmandar/archespace/releases)
+[![CI](https://github.com/bitwyser/archespace/actions/workflows/ci.yml/badge.svg)](https://github.com/bitwyser/archespace/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/release/bitwyser/archespace)](https://github.com/bitwyser/archespace/releases)
 [![Live](https://img.shields.io/badge/live-archespace.cc-32d3aa)](https://archespace.cc)
 
 ArcheSpace is an open source, private, encrypted space to organize everything you are working on. It is built as a self-hostable web app with Supabase sync and a client-side encrypted vault, ensuring that your saved content stays private even from the application owner and developers.
@@ -160,7 +160,7 @@ Recorded actions include: `account_created`, `account_deleted`, `email_change`, 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/patkarmandar/archespace
+git clone https://github.com/bitwyser/archespace
 cd archespace
 ```
 
@@ -352,7 +352,7 @@ cosign verify-blob \
   --certificate checksums.txt.pem \
   --signature checksums.txt.sig \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/patkarmandar/archespace/.github/workflows/release.yml@' \
+  --certificate-identity-regexp '^https://github.com/bitwyser/archespace/.github/workflows/release.yml@' \
   checksums.txt
 ```
 
