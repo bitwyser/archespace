@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/bitwyser/archespace/actions/workflows/ci.yml/badge.svg)](https://github.com/bitwyser/archespace/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/release/bitwyser/archespace)](https://github.com/bitwyser/archespace/releases)
-[![Live](https://img.shields.io/badge/live-archespace.cc-32d3aa)](https://archespace.cc)
+[![Live](https://img.shields.io/badge/live-archespace.app-32d3aa)](https://archespace.app)
 
 ArcheSpace is an open source, private, encrypted space to organize everything you are working on. It is built as a self-hostable web app with Supabase sync and a client-side encrypted vault, ensuring that your saved content stays private even from the application owner and developers.
 
@@ -388,7 +388,7 @@ A living list of directions the project is exploring. These are intentions, not 
 
 ## Help and support
 
-Need help setting up, self-hosting, logging in, password recovery, vault PIN recovery, or using ArcheSpace? Reach out at **[help@archespace.cc](mailto:help@archespace.cc)**.
+Need help setting up, self-hosting, logging in, password recovery, vault PIN recovery, or using ArcheSpace? Reach out at **[help@archespace.app](mailto:help@archespace.app)**.
 
 Before emailing, it helps to include:
 
@@ -412,7 +412,7 @@ Contributions are welcome, including bug fixes, features, docs, and translations
 - CI runs lint, tests, build, and a dependency audit on every pull request, and Dependabot proposes weekly dependency updates. The Node version is pinned in `.nvmrc`.
 - For larger changes, schema changes, or security-relevant work, open an issue or reach out first so the approach can be discussed.
 
-For development questions, architecture discussions, feature requests, bug reports, or anything related to contributing code, contact **[dev@archespace.cc](mailto:dev@archespace.cc)**.
+For development questions, architecture discussions, feature requests, bug reports, or anything related to contributing code, contact **[bitwyser@archespace.app](mailto:bitwyser@archespace.app)**.
 
 ## Credits
 

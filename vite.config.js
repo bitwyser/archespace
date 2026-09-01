@@ -56,7 +56,7 @@ function resolveVersion() {
 // sitemap, robots). Overridable per environment via VITE_SITE_URL; the trailing
 // slash is stripped so paths join cleanly.
 function resolveSiteUrl() {
-  return (process.env.VITE_SITE_URL || 'https://archespace.cc').replace(/\/+$/, '')
+  return (process.env.VITE_SITE_URL || 'https://archespace.app').replace(/\/+$/, '')
 }
 const siteUrl = resolveSiteUrl()
 

@@ -39,7 +39,7 @@ const ogImage = () => `
   <text x="360" y="285" font-family="Arial, sans-serif" font-size="76" font-weight="700" fill="#ffffff">ArcheSpace</text>
   <text x="362" y="345" font-family="Arial, sans-serif" font-size="30" fill="#aeb4c2">Private, end-to-end encrypted spaces</text>
   <text x="362" y="388" font-family="Arial, sans-serif" font-size="30" fill="#aeb4c2">for everything you're working on.</text>
-  <text x="100" y="560" font-family="Arial, sans-serif" font-size="26" font-weight="600" fill="${PURPLE}">archespace.cc</text>
+  <text x="100" y="560" font-family="Arial, sans-serif" font-size="26" font-weight="600" fill="${PURPLE}">archespace.app</text>
 </svg>`
 
 const png = (svg, file) =>

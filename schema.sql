@@ -499,9 +499,9 @@ SET search_path = ''
 AS $$
 DECLARE
   v_api_key text;
-  v_from    text := 'ArcheSpace <auth@archespace.cc>';  -- verified Resend domain
+  v_from    text := 'ArcheSpace <auth@archespace.app>';  -- verified Resend domain
   v_subject text := 'Your ArcheSpace account has been deleted';
-  v_support text := 'help@archespace.cc';                 -- reply-to / support
+  v_support text := 'help@archespace.app';                 -- reply-to / support
   v_html    text;
   v_text    text;
 BEGIN

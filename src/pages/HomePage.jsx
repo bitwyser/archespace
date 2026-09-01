@@ -473,12 +473,12 @@ export default function HomePage() {
               <h3 className="mt-4 text-base font-semibold text-white">Talk to a human</h3>
               <p className="mt-2 text-sm leading-6 text-white/62">
                 Trouble with setup, sign-in, or recovery? Email{' '}
-                <a className="font-semibold text-emerald-200 hover:underline" href="mailto:help@archespace.cc">
-                  help@archespace.cc
+                <a className="font-semibold text-emerald-200 hover:underline" href="mailto:help@archespace.app">
+                  help@archespace.app
                 </a>
                 . Feature ideas and bug reports go to{' '}
-                <a className="font-semibold text-emerald-200 hover:underline" href="mailto:dev@archespace.cc">
-                  dev@archespace.cc
+                <a className="font-semibold text-emerald-200 hover:underline" href="mailto:bitwyser@archespace.app">
+                  bitwyser@archespace.app
                 </a>
                 .
               </p>
@@ -624,13 +624,13 @@ export default function HomePage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-white/55">Contact</p>
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li>
-                  <a href="mailto:help@archespace.cc" className="text-white/60 hover:text-white transition-colors">
-                    help@archespace.cc
+                  <a href="mailto:help@archespace.app" className="text-white/60 hover:text-white transition-colors">
+                    help@archespace.app
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:dev@archespace.cc" className="text-white/60 hover:text-white transition-colors">
-                    dev@archespace.cc
+                  <a href="mailto:bitwyser@archespace.app" className="text-white/60 hover:text-white transition-colors">
+                    bitwyser@archespace.app
                   </a>
                 </li>
               </ul>
