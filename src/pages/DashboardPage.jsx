@@ -63,7 +63,12 @@ export default function DashboardPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
   const [viewMode, setViewMode] = useState(() => {
-    try { return localStorage.getItem('arche:spaces-view') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
+    try {
+      const saved = localStorage.getItem('arche:spaces-view')
+      if (saved === 'list' || saved === 'grid') return saved
+    } catch { /* storage unavailable */ }
+    // No saved preference: grid on large screens, list on mobile.
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches ? 'list' : 'grid'
   })
 
   const changeViewMode = useCallback((mode) => {

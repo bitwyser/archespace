@@ -86,7 +86,12 @@ export default function SpacePage() {
   )
   // Grid (masonry) and list share the same items; list is a single column.
   const [viewMode, setViewMode] = useState(() => {
-    try { return localStorage.getItem('arche:items-view') === 'grid' ? 'grid' : 'list' } catch { return 'list' }
+    try {
+      const saved = localStorage.getItem('arche:items-view')
+      if (saved === 'list' || saved === 'grid') return saved
+    } catch { /* storage unavailable */ }
+    // No saved preference: grid on large screens, list on mobile.
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches ? 'list' : 'grid'
   })
   const changeViewMode = (mode) => {
     setViewMode(mode)
