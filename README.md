@@ -116,6 +116,7 @@ ArcheSpace uses a browser-side vault model. You sign in with Supabase Auth using
 - Nothing is sent to the server: the wrapped master key, credential ID, and non-secret salt are stored locally in the browser (IndexedDB), scoped per account. None of it can decrypt anything without the enrolled device's passkey. Clearing browser data (or using another browser) just falls back to the PIN.
 - One passkey per browser: enabling biometric unlock on a browser replaces any previous one there, and you can disable it from Settings. Each browser (or device) enrolls its own, since storage is local. Changing your PIN re-wraps the same master key, so an enrolled passkey keeps working without re-enrollment.
 - After setting up a PIN or unlocking with one, the app offers to enable biometric unlock when the device supports it and no passkey is enrolled yet. Availability is feature-detected, so the option is hidden where WebAuthn platform authenticators or PRF are unavailable.
+- When a passkey is enrolled on the current browser, the app prompts for it automatically on launch instead of waiting for a tap; if the prompt is cancelled, times out, or is blocked, it falls back to the manual passkey/PIN screen.
 
 **Two-factor authentication (2FA)**
 
