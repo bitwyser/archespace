@@ -79,6 +79,17 @@ function SpaceItem({
   const [copied, setCopied] = useState(false)
   const [secretState, setSecretState] = useState({ revealed: false, prompting: false })
   const secretEditorRef = useRef(null)
+  // On mobile the header keeps only Collapse + Full screen direct; Copy moves
+  // into the action menu to leave room for the title.
+  const [isSmallScreen, setIsSmallScreen] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const onChange = e => setIsSmallScreen(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   const latestState = useRef({ title: item.title, content: item.content })
   
@@ -418,7 +429,20 @@ function SpaceItem({
                   >
                     {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                   </button>
-                  {item.type !== 'secret' && item.type !== 'draw' && (
+                  <button
+                    type="button"
+                    onClick={handleFullscreenClick}
+                    className={`p-2 rounded-lg border transition-all ${
+                      isFullscreen
+                        ? 'border-accent/30 bg-accent-muted text-accent hover:bg-accent/20'
+                        : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                    }`}
+                    aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+                    title={isFullscreen ? 'Exit full screen' : 'Full screen'}
+                  >
+                    {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                  </button>
+                  {!isSmallScreen && item.type !== 'secret' && item.type !== 'draw' && (
                   <button
                     type="button"
                     onClick={handleCopy}
@@ -466,12 +490,13 @@ function SpaceItem({
                         active: item.pinned,
                         onClick: () => onTogglePin(item.id, item.pinned),
                       },
-                      {
-                        id: 'fullscreen',
-                        label: isFullscreen ? 'Exit full screen' : 'Full screen',
-                        icon: isFullscreen ? Minimize2 : Maximize2,
-                        active: isFullscreen,
-                        onClick: handleFullscreenClick,
+                      // Copy is a direct header button on larger screens; on
+                      // mobile it lives here instead to keep the header compact.
+                      isSmallScreen && item.type !== 'secret' && item.type !== 'draw' && {
+                        id: 'copy',
+                        label: copied ? 'Copied' : 'Copy',
+                        icon: copied ? ClipboardCheck : ClipboardCopy,
+                        onClick: handleCopy,
                       },
                       { id: 'rename', label: 'Rename', icon: Pencil, onClick: () => setEditingTitle(true) },
                       onDuplicate && { id: 'duplicate', label: 'Duplicate', icon: Copy, onClick: () => onDuplicate(item) },
