@@ -43,6 +43,12 @@ export default function VaultUnlockGate({ children }) {
   // before letting the unlocked app through.
   const [pendingEnrollPin, setPendingEnrollPin] = useState('')
   const [enrollError, setEnrollError] = useState('')
+  // Held true while an unlock/setup/recover call is in flight and until we've
+  // decided which post-action screen to show. unlock() flips isUnlocked to true
+  // mid-call (before we can set the recovery-code or biometric prompt), so
+  // without this the gate would briefly leak `children` and the recovery code
+  // shown after setup could be skipped. See the pass-through guard below.
+  const [awaitingVaultResult, setAwaitingVaultResult] = useState(false)
   // Guards the one-shot auto passkey prompt so it fires at most once per mount.
   const autoPasskeyTried = useRef(false)
 
@@ -90,7 +96,7 @@ export default function VaultUnlockGate({ children }) {
       </div>
     )
   }
-  if (isUnlocked && !oneTimeRecoveryCode && !recoverySetupWarning && !pendingEnrollPin) return children
+  if (isUnlocked && !oneTimeRecoveryCode && !recoverySetupWarning && !pendingEnrollPin && !awaitingVaultResult) return children
 
   // Offer biometric enrollment only when the device supports it and the user
   // has none enrolled yet (matches the mobile "enable biometric unlock?" prompt).
@@ -119,6 +125,7 @@ export default function VaultUnlockGate({ children }) {
     }
     try {
       setPendingAction('pin')
+      setAwaitingVaultResult(true)
       const enteredPin = pin
       await unlock(enteredPin)
       if (canOfferBiometric) setPendingEnrollPin(enteredPin)
@@ -127,6 +134,7 @@ export default function VaultUnlockGate({ children }) {
       // unlockError set in context
     } finally {
       setPendingAction(null)
+      setAwaitingVaultResult(false)
     }
   }
 
@@ -159,6 +167,7 @@ export default function VaultUnlockGate({ children }) {
     }
     try {
       setPendingAction('pin')
+      setAwaitingVaultResult(true)
       const enteredPin = pin
       const { recoveryCode, recoveryUnavailable } = await setup(enteredPin)
       // Shown after the recovery-code screen (render priority handles ordering).
@@ -175,6 +184,7 @@ export default function VaultUnlockGate({ children }) {
       // unlockError set in context
     } finally {
       setPendingAction(null)
+      setAwaitingVaultResult(false)
     }
   }
 
@@ -197,6 +207,7 @@ export default function VaultUnlockGate({ children }) {
     }
     try {
       setPendingAction('pin')
+      setAwaitingVaultResult(true)
       const { recoveryCode } = await recoverPinWithCode(recoveryCodeInput, pin)
       showRecoveryCode(recoveryCode)
       setForgotPin(false)
@@ -205,6 +216,7 @@ export default function VaultUnlockGate({ children }) {
       // unlockError set in context
     } finally {
       setPendingAction(null)
+      setAwaitingVaultResult(false)
     }
   }
 
