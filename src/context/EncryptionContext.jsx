@@ -217,7 +217,7 @@ export function EncryptionProvider({ children }) {
     setUnlocking(true)
     setUnlockError('')
     try {
-      const key = await enrollPasskeyVault(userId, pin, user?.email || 'Arche vault', label)
+      const key = await enrollPasskeyVault(userId, pin, user?.email || 'ArcheSpace vault', label)
       await applyUnlockedKey(key)
       await refreshPasskeys()
       logAudit({ action: 'vault_passkey_enroll' })

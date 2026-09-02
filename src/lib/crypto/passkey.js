@@ -116,7 +116,7 @@ function webAuthnErrorMessage(err, fallback) {
 export async function enrollPasskeyCredential({ userId, userName, masterKey }) {
   const prfSalt = newPrfSalt()
   const challenge = crypto.getRandomValues(new Uint8Array(32))
-  const name = userName || 'Arche vault'
+  const name = userName || 'ArcheSpace vault'
 
   let credential
   try {
