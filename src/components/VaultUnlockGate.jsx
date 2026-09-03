@@ -10,6 +10,7 @@ import { VAULT_PIN_MIN_LENGTH } from '../lib/constants'
 import { validateVaultPin, getWeakPinWarning } from '../lib/crypto/vaultPin'
 import WeakPinWarning from './WeakPinWarning'
 import { ConfirmDialog } from './ui/UI'
+import RecoveryCodeDialog from './RecoveryCodeDialog'
 
 export default function VaultUnlockGate({ children }) {
   const { user, signOut, loading: authLoading } = useAuth()
@@ -267,30 +268,12 @@ export default function VaultUnlockGate({ children }) {
 
   if (oneTimeRecoveryCode) {
     return (
-      <div className="min-h-[100svh] bg-bg-base flex items-start sm:items-center justify-center px-4 pt-16 pb-6 sm:p-4 overflow-y-auto">
-        <div className="w-full max-w-sm">
-          <div className="bg-bg-surface border border-bg-border rounded-2xl p-6 space-y-4">
-            <div>
-              <h1 className="text-xl font-semibold text-text-primary">Save your recovery code</h1>
-              <p className="text-text-muted text-sm mt-1.5 leading-relaxed">
-                This code is shown once. Use it if you forget your vault PIN.
-              </p>
-            </div>
-
-            <div className="bg-bg-elevated border border-bg-border rounded-xl p-4">
-              <p className="font-mono text-2xl tracking-[0.24em] text-text-primary break-all">{oneTimeRecoveryCode}</p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAcknowledgeRecoveryCode}
-              disabled={unlocking}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-            >
-              I saved this code
-            </button>
-          </div>
-        </div>
+      <div className="min-h-[100svh] bg-bg-base">
+        <RecoveryCodeDialog
+          code={oneTimeRecoveryCode}
+          busy={unlocking}
+          onAcknowledge={handleAcknowledgeRecoveryCode}
+        />
       </div>
     )
   }

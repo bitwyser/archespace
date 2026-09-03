@@ -1,7 +1,7 @@
 /**
  * SettingsPage.jsx - Account, appearance, security, and backup settings.
  */
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, ShieldCheck, Lock } from 'lucide-react'
@@ -23,6 +23,7 @@ import { logAudit } from '../lib/auditLog'
 import { APP_VERSION, BUILD_HASH, COMMIT_URL } from '../lib/buildInfo'
 import ReauthCode from '../components/ReauthCode'
 import { Modal, ConfirmDialog } from '../components/ui/UI'
+import RecoveryCodeDialog from '../components/RecoveryCodeDialog'
 import { queryKeys } from '../lib/queryKeys'
 
 /**
@@ -109,16 +110,16 @@ export default function SettingsPage() {
   const [pinLoading, setPinLoading] = useState(false)
   const [recoverySetupLoading, setRecoverySetupLoading] = useState(false)
   const [pinRecoveryLoading, setPinRecoveryLoading] = useState(false)
-  const [activeSection, setActiveSection] = useState(
+  const [rawActiveSection, setActiveSection] = useState(
     () => (typeof navigator !== 'undefined' && !navigator.onLine ? 'appearance' : 'account')
   )
   const online = useOnlineStatus()
   // Offline: only Appearance is safe to use (it applies locally). Account,
-  // Backup, and Security all need the server, so keep them out of reach and
-  // snap back to Appearance if the connection drops while one is open.
-  useEffect(() => {
-    if (!online && activeSection !== 'appearance') setActiveSection('appearance')
-  }, [online, activeSection])
+  // Backup, and Security all need the server, so force Appearance while offline
+  // (derived, so a dropped connection snaps back without an extra render pass).
+  const activeSection = !online && rawActiveSection !== 'appearance'
+    ? 'appearance'
+    : rawActiveSection
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
   const [emailStep, setEmailStep] = useState('form')     // 'form' | 'code'
   const deleteConfirmationPhrase = `DELETE ${user?.email || ''}`
@@ -864,11 +865,11 @@ export default function SettingsPage() {
             </form>
 
             {oneTimeRecoveryCode && (
-              <div className="mt-4 bg-success/10 border border-success/30 rounded-xl p-3 space-y-2">
-                <p className="text-success text-xs font-semibold">New one-time recovery code</p>
-                <p className="font-mono text-lg tracking-[0.2em] text-text-primary break-all">{oneTimeRecoveryCode}</p>
-                <p className="text-text-muted text-xs">Save this code now. It replaces the previous recovery code.</p>
-              </div>
+              <RecoveryCodeDialog
+                code={oneTimeRecoveryCode}
+                description="Save this code now. It replaces your previous recovery code."
+                onAcknowledge={() => setOneTimeRecoveryCode('')}
+              />
             )}
 
             <Divider />
