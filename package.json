@@ -19,14 +19,14 @@
     "jszip": "^3.10.1",
     "lucide-react": "^1.16.0",
     "perfect-freehand": "^1.2.3",
-    "react": "^19.2.6",
+    "react": "^19.2.8",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.43.2",
     "@eslint/js": "^10.0.1",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.5.0",
