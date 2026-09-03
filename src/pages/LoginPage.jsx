@@ -77,14 +77,17 @@ export default function LoginPage() {
     setInfo('')
 
     if (isForgot) {
-      setLoading(true)
-      const { error: resetError } = await requestPasswordReset(email)
-      setLoading(false)
-      if (resetError) {
-        setError(resetError.message)
+      if (!email.trim()) {
+        setError('Enter your email address.')
         return
       }
-      setInfo('Password reset link sent. Check your email to set a new password.')
+      setLoading(true)
+      // Ignore the result on purpose: showing the same confirmation whether or
+      // not the address is registered prevents account enumeration. (Supabase
+      // also succeeds silently for unknown emails.)
+      await requestPasswordReset(email).catch(() => {})
+      setLoading(false)
+      setInfo("If an account exists for that email, we've sent a password reset link. Check your inbox and spam folder.")
       return
     }
 
