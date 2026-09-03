@@ -16,6 +16,7 @@ import {
   changeVaultPinWithRecoveryCode,
   recoverVaultWithRecoveryCode,
   getVaultStatus,
+  warmVaultMetaCache,
 } from '../lib/crypto/vault'
 import {
   saveVaultSession,
@@ -93,6 +94,12 @@ export function EncryptionProvider({ children }) {
     const timer = setTimeout(refreshVaultStatus, 0)
     return () => clearTimeout(timer)
   }, [refreshVaultStatus])
+
+  // Keep the cached vault meta fresh while online so a later offline PIN unlock
+  // works even if the user stayed unlocked via the restored session this time.
+  useEffect(() => {
+    if (userId) warmVaultMetaCache(userId)
+  }, [userId])
 
   // Detect platform-authenticator (biometric) support once on mount.
   useEffect(() => {

@@ -5,11 +5,13 @@
  * reorder RPC, and invalidate callback, keeping invalidation scope with the hook.
  */
 import { supabase } from '../lib/supabase'
+import { assertOnline } from '../lib/offlineQueue'
 
 /** Soft-delete a single row by id (sets deleted_at). */
 export function makeSoftDelete({ table, invalidate }) {
   return {
     mutationFn: async (id) => {
+      assertOnline()
       const { error } = await supabase
         .from(table)
         .update({ deleted_at: new Date().toISOString() })
@@ -25,6 +27,7 @@ export function makeBulkSoftDelete({ table, invalidate }) {
   return {
     mutationFn: async (ids) => {
       if (!ids?.length) return
+      assertOnline()
       const { error } = await supabase
         .from(table)
         .update({ deleted_at: new Date().toISOString() })
@@ -40,6 +43,7 @@ export function makeBulkSetPinned({ table, invalidate }) {
   return {
     mutationFn: async ({ ids, pinned }) => {
       if (!ids?.length) return
+      assertOnline()
       const { error } = await supabase
         .from(table)
         .update({ pinned })
@@ -54,6 +58,7 @@ export function makeBulkSetPinned({ table, invalidate }) {
 export function makeTogglePin({ table, qc, queryKey, invalidate }) {
   return {
     mutationFn: async ({ id, pinned }) => {
+      assertOnline()
       const { error } = await supabase
         .from(table)
         .update({ pinned: !pinned })
@@ -79,6 +84,7 @@ export function makeTogglePin({ table, qc, queryKey, invalidate }) {
 export function makeReorder({ qc, queryKey, rpc, invalidate }) {
   return {
     mutationFn: async (orderedRows) => {
+      assertOnline()
       const updates = orderedRows.map((row, index) => ({ id: row.id, position: index }))
       const { error } = await supabase.rpc(rpc, { updates })
       if (error) throw error

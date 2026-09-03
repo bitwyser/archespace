@@ -53,7 +53,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 - Passkey / biometric vault unlock using WebAuthn - unlock with Face ID, Touch ID, or Windows Hello alongside your PIN; the wrapped key is stored on-device (browser IndexedDB), never on the server (see [Security model](#security-model)).
 - Optional two-factor authentication (TOTP) for sign-in, with a one-time backup code, enabled per account from Settings (see [Security model](#security-model)).
 - Owner-only audit log of authentication and security events (see [Audit logging](#audit-logging)).
-- Offline queue for pending changes while the browser is offline.
+- Offline mode: your spaces and items stay readable from an encrypted on-device cache, the vault unlocks with your PIN, and item text edits are saved locally and synced when you reconnect. A banner indicates the offline state; actions that need the server (creating, deleting, moving, and the Account, Backup, and Security settings) are disabled until you are back online.
 - Single-user self-hosting mode by default, with an optional multi-user mode.
 - PWA support for installing as an app.
 - Verifiable build hash shown in Settings, linking to the exact source commit on GitHub.
@@ -103,6 +103,7 @@ ArcheSpace uses a browser-side vault model. You sign in with Supabase Auth using
 **Sessions and access**
 
 - The unlocked vault key is held as a non-extractable key in IndexedDB - usable for decryption within the tab but not readable or exportable by scripts - and auto-locks after a configurable period of inactivity (5 minutes, 15 minutes, 1 hour, 8 hours, 24 hours, or never), defaulting to 24 hours and adjustable in Settings.
+- The offline cache stores only the encrypted rows exactly as the server returns them (ciphertext plus non-secret metadata), never decrypted content, so nothing readable is written to disk; it is decrypted in memory with the vault key and cleared on sign-out. The cached vault meta used for offline PIN unlock is likewise non-secret (public salt plus the PIN-wrapped ciphertext and a verifier), useless without the PIN.
 - The login session has an absolute lifetime of 1 week.
 - Signing out ends only the current device's session by default; Settings also offers "Sign out of all devices" to revoke every session at once. The absolute session timeout is likewise per-device.
 - Password reset and password change flows globally sign out existing sessions.
@@ -316,9 +317,9 @@ Key areas:
 - `src/components/` contains reusable UI, item editors, layout shell, action menus, vault unlock gate, and space components.
 - `src/components/editors/` contains note, markdown, checklist, list, numbered list, and card editors, including drag-handle item reordering.
 - `src/context/` contains auth, encryption, appearance/theme, toast, shortcuts, command palette, and page action providers.
-- `src/hooks/` contains data hooks for spaces, items, archive, recycle bin, global search, offline sync, drag reordering, and session timeout.
+- `src/hooks/` contains data hooks for spaces, items, archive, recycle bin, global search, offline sync, online status, drag reordering, and session timeout.
 - `src/lib/crypto/` contains AES-GCM encryption, Argon2id and PBKDF2 key derivation, vault setup, vault unlock, non-extractable session key storage, PIN recovery code, WebAuthn PRF passkey wrapping/unlock with a local (IndexedDB) passkey store, and encoding helpers.
-- `src/lib/` contains Supabase client setup, data protection helpers, item type definitions, clipboard serialization, import/export, offline queue, rate limiting, audit logging, two-factor auth (TOTP) and backup-code helpers, password policy, build info, and shared utilities.
+- `src/lib/` contains Supabase client setup, data protection helpers, item type definitions, clipboard serialization, import/export, offline queue, encrypted offline cache, connectivity detection, rate limiting, audit logging, two-factor auth (TOTP) and backup-code helpers, password policy, build info, and shared utilities.
 - `.github/` contains the CI workflow and Dependabot configuration; `docs/` contains audit and planning notes.
 - `schema.sql` contains tables, indexes, RLS policies, triggers, RPC functions, realtime setup, vault recovery and PIN lockout functions, the `mfa_backup_codes` table with the backup-code redeem function and AAL2 enforcement policies for two-factor auth, the account-deletion email trigger, and the auth audit log. (Passkey unlock stores its wrapped key locally on each client, so there is no passkey table.)
 - `email-templates/` contains ready-to-paste Supabase auth email templates.

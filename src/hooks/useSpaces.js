@@ -5,7 +5,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useId } from 'react'
 import { supabase } from '../lib/supabase'
 import { parseTags } from '../lib/spaceColors'
+import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
+import { assertOnline } from '../lib/offlineQueue'
+import { saveRows, loadRows } from '../lib/offlineCache'
+import { setReachable, isNetworkError } from '../lib/connectivity'
 import { encryptSpace, decryptSpace, decryptSpaces } from '../lib/dataProtection'
 import { duplicateSpaceWithItems } from '../lib/spaceDuplicate'
 import { invalidateSpaceCollections, invalidateSpaceList } from '../lib/queryInvalidation'
@@ -20,7 +24,9 @@ import {
 
 export function useSpaces() {
   const qc = useQueryClient()
+  const { user } = useAuth()
   const { cryptoKey } = useEncryption()
+  const userId = user?.id
   // Unique per hook instance so multiple mounts (e.g. the app shell + the
   // dashboard) don't collide on one realtime channel name.
   const instanceId = useId()
@@ -28,18 +34,36 @@ export function useSpaces() {
   const query = useQuery({
     queryKey: queryKeys.spaces(),
     enabled: !!cryptoKey,
+    // 'always' so the queryFn still runs while offline and can fall back to the
+    // encrypted cache (the default 'online' mode would pause it with no data).
+    networkMode: 'always',
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('spaces')
-        .select('*')
-        .is('deleted_at', null)
-        .is('archived_at', null)
-        .order('pinned', { ascending: false })
-        .order('position', { ascending: true })
-        .order('created_at', { ascending: false })
+      try {
+        const { data, error } = await supabase
+          .from('spaces')
+          .select('*')
+          .is('deleted_at', null)
+          .is('archived_at', null)
+          .order('pinned', { ascending: false })
+          .order('position', { ascending: true })
+          .order('created_at', { ascending: false })
 
-      if (error) throw error
-      return decryptSpaces(data || [], cryptoKey)
+        if (error) throw error
+        const rows = data || []
+        setReachable(true)
+        saveRows(userId, 'spaces', rows) // cache ciphertext for offline reads
+        return decryptSpaces(rows, cryptoKey)
+      } catch (err) {
+        // Fall back to the encrypted cache on any network failure - navigator
+        // .onLine can wrongly report "online" (LAN with no internet, server
+        // down), so key off the actual failure, not just the interface state.
+        if (isNetworkError(err)) {
+          setReachable(false)
+          const cached = await loadRows(userId, 'spaces')
+          if (cached) return decryptSpaces(cached, cryptoKey)
+        }
+        throw err
+      }
     },
   })
 
@@ -66,6 +90,7 @@ export function useSpaces() {
 
   const create = useMutation({
     mutationFn: async ({ name, description, color, tags }) => {
+      assertOnline()
       const { data: { session } } = await supabase.auth.getSession()
       const userId = session?.user?.id
       if (!userId) throw new Error('Not authenticated')
@@ -99,6 +124,7 @@ export function useSpaces() {
 
   const update = useMutation({
     mutationFn: async ({ id, name, description, color, tags }) => {
+      assertOnline()
       const payload = { name, description }
       if (color !== undefined) payload.color = color
       if (tags !== undefined) payload.tags = parseTags(tags)
@@ -140,6 +166,7 @@ export function useSpaces() {
 
   const archive = useMutation({
     mutationFn: async (id) => {
+      assertOnline()
       const now = new Date().toISOString()
       const { error: spaceError } = await supabase
         .from('spaces')
@@ -158,6 +185,7 @@ export function useSpaces() {
 
   const duplicate = useMutation({
     mutationFn: async (id) => {
+      assertOnline()
       const source = query.data?.find(c => c.id === id)
       if (!source) throw new Error('Space not found')
       const newCol = await duplicateSpaceWithItems(source, cryptoKey, query.data?.length || 0)
@@ -174,6 +202,7 @@ export function useSpaces() {
   const bulkArchive = useMutation({
     mutationFn: async (ids) => {
       if (!ids?.length) return
+      assertOnline()
       const now = new Date().toISOString()
       const { error: spaceError } = await supabase
         .from('spaces')
@@ -198,6 +227,7 @@ export function useSpaces() {
 
   const bulkDuplicate = useMutation({
     mutationFn: async (cols) => {
+      assertOnline()
       for (const source of cols) {
         await duplicateSpaceWithItems(source, cryptoKey, query.data?.length || 0)
       }

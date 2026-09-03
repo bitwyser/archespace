@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabase'
 import {
   enrollTotp, verifyTotp, unenrollFactor, getVerifiedTotpFactorId,
   regenerateBackupCodes, countUnusedBackupCodes, verifyAccountPassword,
+  validateTotpCode, normalizeTotpCode, TOTP_CODE_LENGTH,
 } from '../lib/mfa'
 
 export default function MfaSettings() {
@@ -86,11 +87,15 @@ export default function MfaSettings() {
   }
 
   const confirmEnroll = async () => {
-    if (!code.trim()) return
+    const validationError = validateTotpCode(code)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
     setError('')
     setBusy(true)
     try {
-      await verifyTotp(enroll.factorId, code)
+      await verifyTotp(enroll.factorId, normalizeTotpCode(code))
       const codes = await regenerateBackupCodes(user.id)
       setEnroll(null)
       setBackupCodes(codes)
@@ -215,8 +220,9 @@ export default function MfaSettings() {
             <input
               autoFocus
               value={code}
-              onChange={e => { setCode(e.target.value); setError('') }}
+              onChange={e => { setCode(normalizeTotpCode(e.target.value)); setError('') }}
               inputMode="numeric"
+              maxLength={TOTP_CODE_LENGTH}
               autoComplete="one-time-code"
               placeholder="123456"
               className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-base text-text-primary text-center tracking-[0.3em] font-mono focus:outline-none focus:border-accent"

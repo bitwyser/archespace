@@ -21,6 +21,7 @@ import { BULK_ICONS } from '../components/BulkSelectionIcons'
 import { Modal } from '../components/ui/UI'
 import { SortMenu } from '../components/ui/SortMenu'
 import { usePersistedSort } from '../hooks/usePersistedSort'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useRouteMeta } from '../hooks/useRouteMeta'
 import { sortEntities } from '../lib/sortEntities'
 
@@ -85,6 +86,7 @@ export default function SpacePage() {
     [items, itemSort]
   )
   // Grid (masonry) and list share the same items; list is a single column.
+  const online = useOnlineStatus()
   const [viewMode, setViewMode] = useState(() => {
     try {
       const saved = localStorage.getItem('arche:items-view')
@@ -464,8 +466,9 @@ export default function SpacePage() {
             <button
               type="button"
               onClick={() => setAddModal(true)}
-              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20"
-              title="Add item"
+              disabled={!online}
+              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+              title={online ? 'Add item' : 'Unavailable offline'}
             >
               <Plus size={16} strokeWidth={2.5} />
               <span className="hidden sm:inline">Add item</span>
@@ -499,7 +502,9 @@ export default function SpacePage() {
             <p className="text-text-muted text-sm mt-1">Add your first item to this space</p>
             <button
               onClick={() => setAddModal(true)}
-              className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
+              disabled={!online}
+              title={online ? undefined : 'Unavailable offline'}
+              className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus size={16} /> Add first item
             </button>
@@ -624,7 +629,9 @@ export default function SpacePage() {
           <div className="mt-auto pt-4">
             <button
               onClick={() => setAddModal(true)}
-              className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-bg-border rounded-2xl text-text-muted hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-all text-sm font-medium"
+              disabled={!online}
+              title={online ? undefined : 'Unavailable offline'}
+              className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-bg-border rounded-2xl text-text-muted hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-all text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-text-muted disabled:hover:border-bg-border disabled:hover:bg-transparent"
             >
               <Plus size={16} /> Add another item
             </button>

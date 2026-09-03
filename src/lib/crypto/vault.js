@@ -5,6 +5,8 @@
  * A separate one-time recovery code can also wrap the same master key.
  */
 import { supabase } from '../supabase'
+import { isOnline } from '../offlineQueue'
+import { isNetworkError, setReachable } from '../connectivity'
 import { encryptString, decryptString } from './cipher'
 import {
   deriveVaultKey,
@@ -26,6 +28,30 @@ const RECOVERY_COLUMNS_MISSING_MESSAGE =
 function assertValidPin(pin) {
   const err = validateVaultPin(pin)
   if (err) throw new Error(err)
+}
+
+// Cache the vault meta so a PIN unlock works offline. The stored fields are
+// non-sensitive - public salts plus the PIN/recovery-wrapped ciphertext and a
+// verifier - all useless without the PIN itself, so localStorage is acceptable.
+const VAULT_META_CACHE_PREFIX = 'arche:vault-meta:'
+
+function cacheVaultMeta(userId, meta) {
+  try {
+    if (userId && meta) {
+      localStorage.setItem(VAULT_META_CACHE_PREFIX + userId, JSON.stringify(meta))
+    }
+  } catch {
+    // Storage unavailable - offline unlock just won't be possible.
+  }
+}
+
+function readCachedVaultMeta(userId) {
+  try {
+    const raw = localStorage.getItem(VAULT_META_CACHE_PREFIX + userId)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
 }
 
 export async function importRawAesKey(rawBytes) {
@@ -66,19 +92,48 @@ export async function getVaultStatus(userId) {
 }
 
 /**
+ * Best-effort: refresh the cached vault meta while online so a later offline
+ * PIN unlock works even if the user never re-entered their PIN online this
+ * session (they may have stayed unlocked via the restored session key).
+ * @param {string} userId
+ */
+export async function warmVaultMetaCache(userId) {
+  if (!userId || !isOnline()) return
+  try {
+    await fetchVaultMeta(userId)
+  } catch {
+    // Offline / unreachable - nothing to warm.
+  }
+}
+
+/**
  * @param {string} userId
  */
 async function fetchVaultMeta(userId) {
-  const { data, error } = await supabase
-    .from('user_encryption')
-    .select('user_id, salt, key_check, wrapped_key, vault_format, pin_locked_until, recovery_salt, recovery_wrapped_key')
-    .eq('user_id', userId)
-    .maybeSingle()
-  if (error) {
-    if (isOptionalVaultColumnError(error)) return fetchVaultMetaWithoutOptionalColumns(userId)
-    throw error
+  try {
+    const { data, error } = await supabase
+      .from('user_encryption')
+      .select('user_id, salt, key_check, wrapped_key, vault_format, pin_locked_until, recovery_salt, recovery_wrapped_key')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) {
+      if (isOptionalVaultColumnError(error)) return fetchVaultMetaWithoutOptionalColumns(userId)
+      throw error
+    }
+    setReachable(true)
+    cacheVaultMeta(userId, data) // enable offline PIN unlock next time
+    return data
+  } catch (err) {
+    // Unlock from the cached meta when the server is unreachable so the PIN
+    // still works locally. Key off the real failure, not navigator.onLine,
+    // which can wrongly report "online" (LAN with no internet, server down).
+    if (isNetworkError(err)) {
+      setReachable(false)
+      const cached = readCachedVaultMeta(userId)
+      if (cached) return cached
+    }
+    throw err
   }
-  return data
 }
 
 async function fetchVaultMetaWithoutOptionalColumns(userId) {
@@ -89,6 +144,7 @@ async function fetchVaultMetaWithoutOptionalColumns(userId) {
     .maybeSingle()
   if (error) throw error
   if (!data) return data
+  cacheVaultMeta(userId, data)
   return {
     ...data,
     pin_locked_until: null,
@@ -118,7 +174,16 @@ function isRecoverySchemaCacheError(error) {
 }
 
 async function assertVaultUnlockAllowed(userId) {
-  const { data, error } = await supabase.rpc('get_vault_pin_lock_status')
+  // Offline / unreachable: the server lockout check can't run; the client-side
+  // rate limiter in EncryptionContext still guards against brute force.
+  if (!isOnline()) return
+  let data, error
+  try {
+    ;({ data, error } = await supabase.rpc('get_vault_pin_lock_status'))
+  } catch (err) {
+    if (isNetworkError(err)) { setReachable(false); return }
+    throw err
+  }
   if (error) {
     // Fallback for projects that have not run the migration yet.
     try {
@@ -145,13 +210,26 @@ function formatPinLockoutMessage(retryAfterSeconds) {
 }
 
 async function recordVaultUnlockFailure() {
-  const { error } = await supabase.rpc('record_vault_pin_unlock_failure')
-  if (error) console.warn('Failed to record vault PIN failure:', error.message)
+  if (!isOnline()) return
+  try {
+    const { error } = await supabase.rpc('record_vault_pin_unlock_failure')
+    if (error) console.warn('Failed to record vault PIN failure:', error.message)
+  } catch (err) {
+    // Never let a bookkeeping RPC break unlock when the server is unreachable.
+    if (isNetworkError(err)) setReachable(false)
+    else console.warn('Failed to record vault PIN failure:', err?.message)
+  }
 }
 
 async function recordVaultUnlockSuccess() {
-  const { error } = await supabase.rpc('record_vault_pin_unlock_success')
-  if (error) console.warn('Failed to reset vault PIN attempts:', error.message)
+  if (!isOnline()) return
+  try {
+    const { error } = await supabase.rpc('record_vault_pin_unlock_success')
+    if (error) console.warn('Failed to reset vault PIN attempts:', error.message)
+  } catch (err) {
+    if (isNetworkError(err)) setReachable(false)
+    else console.warn('Failed to reset vault PIN attempts:', err?.message)
+  }
 }
 
 function isIncorrectPinError(err) {
@@ -330,10 +408,12 @@ async function persistPinWrappedVault(userId, pin, masterKey, { recoveryCode = '
 
       const { error: pinOnlyError } = await supabase.from('user_encryption').upsert(pinOnlyPayload)
       if (pinOnlyError) throw pinOnlyError
+      cacheVaultMeta(userId, pinOnlyPayload)
       return { recoverySaved: false }
     }
     throw error
   }
+  cacheVaultMeta(userId, payload) // so a freshly set PIN can unlock offline
   return { recoverySaved: true }
 }
 

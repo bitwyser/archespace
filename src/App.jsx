@@ -23,6 +23,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import ErrorScreen from './components/ErrorScreen'
 import AppChrome from './components/layout/AppChrome'
 import AppShell from './components/layout/AppShell'
+import OfflineBanner from './components/OfflineBanner'
 import { Spinner } from './components/ui/UI'
 
 /**
@@ -127,6 +128,7 @@ function HomeRoute() {
 function RootLayout() {
   return (
     <>
+      <OfflineBanner />
       <AppChrome />
       <Outlet />
     </>

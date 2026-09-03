@@ -4,8 +4,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { encryptItem, decryptItem, decryptItems } from '../lib/dataProtection'
+import { assertOnline } from '../lib/offlineQueue'
+import { saveRows, loadRows } from '../lib/offlineCache'
+import { setReachable, isNetworkError } from '../lib/connectivity'
 import { invalidateSpaceItems } from '../lib/queryInvalidation'
 import { queryKeys } from '../lib/queryKeys'
 import {
@@ -33,22 +37,43 @@ const defaultContent = {
 
 export function useSpaceItems(spaceId) {
   const qc = useQueryClient()
+  const { user } = useAuth()
   const { cryptoKey } = useEncryption()
+  const userId = user?.id
+  const cacheKey = `items:${spaceId}`
 
   const query = useQuery({
     queryKey: queryKeys.items(spaceId),
     enabled: !!spaceId && !!cryptoKey,
+    // 'always' so the queryFn still runs while offline and can fall back to the
+    // encrypted cache (the default 'online' mode would pause it with no data).
+    networkMode: 'always',
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('space_items')
-        .select('*')
-        .eq('space_id', spaceId)
-        .is('deleted_at', null)
-        .is('archived_at', null)
-        .order('pinned', { ascending: false })
-        .order('position', { ascending: true })
-      if (error) throw error
-      return decryptItems(data || [], cryptoKey)
+      try {
+        const { data, error } = await supabase
+          .from('space_items')
+          .select('*')
+          .eq('space_id', spaceId)
+          .is('deleted_at', null)
+          .is('archived_at', null)
+          .order('pinned', { ascending: false })
+          .order('position', { ascending: true })
+        if (error) throw error
+        const rows = data || []
+        setReachable(true)
+        saveRows(userId, cacheKey, rows) // cache ciphertext for offline reads
+        return decryptItems(rows, cryptoKey)
+      } catch (err) {
+        // Fall back to the encrypted cache on any network failure (navigator
+        // .onLine can wrongly report "online"), not just when the interface is
+        // reported down.
+        if (isNetworkError(err)) {
+          setReachable(false)
+          const cached = await loadRows(userId, cacheKey)
+          if (cached) return decryptItems(cached, cryptoKey)
+        }
+        throw err
+      }
     },
   })
 
@@ -81,6 +106,7 @@ export function useSpaceItems(spaceId) {
 
   const create = useMutation({
     mutationFn: async ({ type, title, content }) => {
+      assertOnline()
       const items = query.data || []
       const position = items.length
       const plain = {
@@ -138,6 +164,7 @@ export function useSpaceItems(spaceId) {
 
   const archive = useMutation({
     mutationFn: async (id) => {
+      assertOnline()
       const { error } = await supabase
         .from('space_items')
         .update({ archived_at: new Date().toISOString() })
@@ -151,6 +178,7 @@ export function useSpaceItems(spaceId) {
 
   const duplicate = useMutation({
     mutationFn: async (item) => {
+      assertOnline()
       const items = query.data || []
       const plain = {
         type: item.type,
@@ -193,6 +221,7 @@ export function useSpaceItems(spaceId) {
   const move = useMutation({
     mutationFn: async ({ ids, targetSpaceId }) => {
       if (!ids?.length || !targetSpaceId || targetSpaceId === spaceId) return
+      assertOnline()
 
       const { count, error: countError } = await supabase
         .from('space_items')
@@ -227,6 +256,7 @@ export function useSpaceItems(spaceId) {
   const bulkArchive = useMutation({
     mutationFn: async (ids) => {
       if (!ids?.length) return
+      assertOnline()
       const { error } = await supabase
         .from('space_items')
         .update({ archived_at: new Date().toISOString() })
@@ -244,6 +274,7 @@ export function useSpaceItems(spaceId) {
   const bulkDuplicate = useMutation({
     mutationFn: async (itemsToCopy) => {
       if (!itemsToCopy?.length) return
+      assertOnline()
       const basePos = query.data?.length || 0
       const rows = await Promise.all(
         itemsToCopy.map(async (item, i) => {

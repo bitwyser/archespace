@@ -16,6 +16,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { clearVaultSession } from '../lib/crypto/vaultSession'
+import { clearOfflineCache } from '../lib/offlineCache'
 import { logAudit } from '../lib/auditLog'
 import { AuthContext } from './AuthContextCore'
 
@@ -119,6 +120,7 @@ export function AuthProvider({ children }) {
     // Record the logout while the session (and auth.uid()) is still valid.
     await logAudit({ action: 'logout' })
     clearVaultSession()
+    clearOfflineCache() // fire-and-forget; ciphertext-only but no need to keep it
     setPasswordRecovery(false)
     return supabase.auth.signOut(options)
   }

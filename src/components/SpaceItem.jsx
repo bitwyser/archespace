@@ -33,6 +33,8 @@ import { CodeEditor } from './editors/CodeEditor'
 import { ActionMenu } from './ui/ActionMenu'
 import { getChecklistProgress } from '../lib/checklistProgress'
 import { isOnline, enqueueOffline } from '../lib/offlineQueue'
+import { isReachable, isNetworkError, setReachable } from '../lib/connectivity'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useEncryption } from '../context/EncryptionCore'
 import { encryptItem } from '../lib/dataProtection'
 import { itemToClipboardText } from '../lib/itemClipboard'
@@ -81,6 +83,7 @@ function SpaceItem({
   const secretEditorRef = useRef(null)
   // On mobile the header keeps only Collapse + Full screen direct; Copy moves
   // into the action menu to leave room for the title.
+  const online = useOnlineStatus()
   const [isSmallScreen, setIsSmallScreen] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
   )
@@ -176,7 +179,7 @@ function SpaceItem({
       content: overrideContent ?? latestState.current.content,
     }
 
-    if (!isOnline()) {
+    const queueEdit = async () => {
       const encrypted = await encryptItem(
         { title: payload.title, content: payload.content },
         cryptoKey
@@ -193,6 +196,12 @@ function SpaceItem({
       setPendingSync(true)
       setCollapseGuard(false)
       clearTimeout(autoSaveTimer.current)
+    }
+
+    // Queue when offline/unreachable. Use the reachability signal, not just
+    // navigator.onLine (which reads "online" on a LAN with no internet).
+    if (!isOnline() || !isReachable()) {
+      await queueEdit()
       return
     }
 
@@ -205,8 +214,13 @@ function SpaceItem({
       clearTimeout(autoSaveTimer.current)
       setSavedFlash(true)
       setTimeout(() => setSavedFlash(false), 2000)
-    } catch {
-      // Keep dirty state so the user can retry
+    } catch (err) {
+      // Lost the connection mid-save: queue the edit so nothing is lost.
+      if (isNetworkError(err)) {
+        setReachable(false)
+        await queueEdit()
+      }
+      // Other errors: keep dirty state so the user can retry.
     } finally {
       setSaving(false)
     }
@@ -284,15 +298,10 @@ function SpaceItem({
   const saveTitle = async () => {
     setEditingTitle(false)
     if (titleVal !== item.title) {
-      try {
-        await onUpdate({
-          id: item.id,
-          title: titleVal,
-          content: localContent,
-        })
-      } catch {
-        setTitleVal(item.title)
-      }
+      // Route through performSave so a rename is queued when offline, just like
+      // a content edit, instead of failing on a doomed network request.
+      latestState.current = { ...latestState.current, title: titleVal }
+      await performSave(titleVal, localContent)
     }
   }
 
@@ -362,7 +371,7 @@ function SpaceItem({
         {/* Dirty indicator badge */}
         {pendingSync && (
           <span className="shrink-0 text-xs text-blue-400 font-medium px-2 py-0.5 bg-blue-400/10 rounded-md border border-blue-400/20">
-            Pending sync
+            Saved offline
           </span>
         )}
         {savedFlash && !isDirty && !saving && (
@@ -488,6 +497,7 @@ function SpaceItem({
                         label: item.pinned ? 'Unpin' : 'Pin',
                         icon: item.pinned ? PinOff : Pin,
                         active: item.pinned,
+                        disabled: !online,
                         onClick: () => onTogglePin(item.id, item.pinned),
                       },
                       // Copy is a direct header button on larger screens; on
@@ -499,8 +509,8 @@ function SpaceItem({
                         onClick: handleCopy,
                       },
                       { id: 'rename', label: 'Rename', icon: Pencil, onClick: () => setEditingTitle(true) },
-                      onDuplicate && { id: 'duplicate', label: 'Duplicate', icon: Copy, onClick: () => onDuplicate(item) },
-                      onMove && { id: 'move', label: 'Move', icon: MoveRight, onClick: () => onMove(item.id) },
+                      onDuplicate && { id: 'duplicate', label: 'Duplicate', icon: Copy, disabled: !online, onClick: () => onDuplicate(item) },
+                      onMove && { id: 'move', label: 'Move', icon: MoveRight, disabled: !online, onClick: () => onMove(item.id) },
                       {
                         id: 'export-pdf',
                         label: 'Export PDF',
@@ -511,8 +521,8 @@ function SpaceItem({
                           content: latestState.current.content,
                         }),
                       },
-                      onArchive && { id: 'archive', label: 'Archive', icon: Archive, onClick: () => onArchive(item.id) },
-                      { id: 'delete', label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => onDelete(item.id) },
+                      onArchive && { id: 'archive', label: 'Archive', icon: Archive, disabled: !online, onClick: () => onArchive(item.id) },
+                      { id: 'delete', label: 'Delete', icon: Trash2, variant: 'danger', disabled: !online, onClick: () => onDelete(item.id) },
                     ]}
                   />
                 </>

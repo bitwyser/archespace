@@ -1,7 +1,7 @@
 /**
  * SettingsPage.jsx - Account, appearance, security, and backup settings.
  */
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, ShieldCheck, Lock } from 'lucide-react'
@@ -10,6 +10,7 @@ import { useEncryption } from '../context/EncryptionCore'
 import { useTheme } from '../context/ThemeCore'
 import { useToast } from '../context/ToastCore'
 import { useSpaces } from '../hooks/useSpaces'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { exportSpaces, importSpaces } from '../lib/exportImport'
 import PinInput from '../components/PinInput'
 import PasskeyManager from '../components/PasskeyManager'
@@ -108,7 +109,16 @@ export default function SettingsPage() {
   const [pinLoading, setPinLoading] = useState(false)
   const [recoverySetupLoading, setRecoverySetupLoading] = useState(false)
   const [pinRecoveryLoading, setPinRecoveryLoading] = useState(false)
-  const [activeSection, setActiveSection] = useState('account')
+  const [activeSection, setActiveSection] = useState(
+    () => (typeof navigator !== 'undefined' && !navigator.onLine ? 'appearance' : 'account')
+  )
+  const online = useOnlineStatus()
+  // Offline: only Appearance is safe to use (it applies locally). Account,
+  // Backup, and Security all need the server, so keep them out of reach and
+  // snap back to Appearance if the connection drops while one is open.
+  useEffect(() => {
+    if (!online && activeSection !== 'appearance') setActiveSection('appearance')
+  }, [online, activeSection])
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
   const [emailStep, setEmailStep] = useState('form')     // 'form' | 'code'
   const deleteConfirmationPhrase = `DELETE ${user?.email || ''}`
@@ -406,13 +416,16 @@ export default function SettingsPage() {
             <div className="flex gap-1 overflow-x-auto rounded-xl border border-bg-border bg-bg-elevated p-1 md:flex-col md:overflow-visible">
               {SECTIONS.map(({ id, title, icon: NavIcon }) => {
                 const on = activeSection === id
+                const disabled = !online && id !== 'appearance'
                 return (
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setActiveSection(id)}
+                    onClick={() => { if (!disabled) setActiveSection(id) }}
+                    disabled={disabled}
                     aria-current={on ? 'page' : undefined}
-                    className={`flex min-w-fit items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:w-full ${on ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+                    title={disabled ? 'Unavailable offline' : undefined}
+                    className={`flex min-w-fit items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:w-full ${on ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'} ${disabled ? 'cursor-not-allowed opacity-40 hover:text-text-secondary' : ''}`}
                   >
                     <NavIcon size={16} />
                     {title}

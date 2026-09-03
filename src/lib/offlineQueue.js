@@ -56,3 +56,20 @@ export async function flushOfflineQueue(processor) {
 export function isOnline() {
   return typeof navigator !== 'undefined' ? navigator.onLine : true
 }
+
+/** Thrown by assertOnline() so callers can show a consistent offline message. */
+export class OfflineError extends Error {
+  constructor(message = "You're offline - reconnect to make changes.") {
+    super(message)
+    this.name = 'OfflineError'
+  }
+}
+
+/**
+ * Guard a write that has no offline queue: throw a friendly OfflineError when
+ * offline so the mutation fails fast (and optimistic updates roll back) instead
+ * of hanging on a doomed network request.
+ */
+export function assertOnline() {
+  if (!isOnline()) throw new OfflineError()
+}

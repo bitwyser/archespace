@@ -31,6 +31,7 @@ import { SortMenu } from '../components/ui/SortMenu'
 import { SpaceModal } from '../components/space/SpaceModal'
 import { SpaceCard } from '../components/space/SpaceCard'
 import { usePersistedSort } from '../hooks/usePersistedSort'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { sortEntities } from '../lib/sortEntities'
 
 export default function DashboardPage() {
@@ -62,6 +63,7 @@ export default function DashboardPage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const online = useOnlineStatus()
   const [viewMode, setViewMode] = useState(() => {
     try {
       const saved = localStorage.getItem('arche:spaces-view')
@@ -535,8 +537,9 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => setModal({ type: 'create' })}
-              title="New space"
-              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20"
+              disabled={!online}
+              title={online ? 'New space' : 'Unavailable offline'}
+              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
             >
               <Plus size={16} strokeWidth={2.5} />
               <span className="hidden sm:inline">New space</span>
@@ -577,7 +580,9 @@ export default function DashboardPage() {
             {!search && (
               <button
                 onClick={() => setModal({ type: 'create' })}
-                className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
+                disabled={!online}
+                title={online ? undefined : 'Unavailable offline'}
+                className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus size={16} /> New space
               </button>

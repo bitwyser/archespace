@@ -17,6 +17,22 @@ import { generateRecoveryCode, normalizeRecoveryCode } from './crypto/recoveryCo
 // the moment the first is used.
 export const BACKUP_CODE_COUNT = 1
 
+// Authenticator codes are the standard 6 digits.
+export const TOTP_CODE_LENGTH = 6
+
+/** Strip everything except digits, so a code pasted with spaces still matches. */
+export function normalizeTotpCode(value) {
+  return (value || '').replace(/[^0-9]/g, '')
+}
+
+/** Returns an error message, or '' when the code is well-formed. */
+export function validateTotpCode(value) {
+  if (normalizeTotpCode(value).length !== TOTP_CODE_LENGTH) {
+    return `Enter the ${TOTP_CODE_LENGTH}-digit code from your authenticator app.`
+  }
+  return ''
+}
+
 /**
  * Check the account password without disturbing the active session. Signing in
  * on the shared client would drop a 2FA user below AAL2 (which unenroll needs),

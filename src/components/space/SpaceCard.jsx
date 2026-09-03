@@ -8,6 +8,7 @@
 import { ChevronRight, Check, Pin, PinOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square } from 'lucide-react'
 import { getColorPreset } from '../../lib/spaceColors'
 import { ActionMenu } from '../ui/ActionMenu'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 
 export function SpaceCard({
   col, index, search, dragIndex, dragOverIndex,
@@ -20,6 +21,7 @@ export function SpaceCard({
   onToggleSelect,
   reorderDisabled = false,
 }) {
+  const online = useOnlineStatus()
   const colorPreset = getColorPreset(col.color)
   const itemStats = stats?.[col.id]
   const itemLabel = itemStats
@@ -38,18 +40,20 @@ export function SpaceCard({
     }
   }
 
+  // Every space action writes to the server, so all are disabled offline.
   const menuActions = [
     {
       id: 'pin',
       label: col.pinned ? 'Unpin' : 'Pin',
       icon: col.pinned ? PinOff : Pin,
       active: col.pinned,
+      disabled: !online,
       onClick: () => togglePin.mutate({ id: col.id, pinned: col.pinned }),
     },
-    { id: 'edit', label: 'Edit', icon: Pencil, onClick: () => setModal({ type: 'edit', col }) },
-    { id: 'duplicate', label: 'Duplicate', icon: Copy, onClick: () => onDuplicate?.(col.id) },
-    { id: 'archive', label: 'Archive', icon: Archive, onClick: () => onArchive?.(col.id) },
-    { id: 'delete', label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setDeleteConfirm(col.id) },
+    { id: 'edit', label: 'Edit', icon: Pencil, disabled: !online, onClick: () => setModal({ type: 'edit', col }) },
+    { id: 'duplicate', label: 'Duplicate', icon: Copy, disabled: !online, onClick: () => onDuplicate?.(col.id) },
+    { id: 'archive', label: 'Archive', icon: Archive, disabled: !online, onClick: () => onArchive?.(col.id) },
+    { id: 'delete', label: 'Delete', icon: Trash2, variant: 'danger', disabled: !online, onClick: () => setDeleteConfirm(col.id) },
   ]
 
   const dragProps = {

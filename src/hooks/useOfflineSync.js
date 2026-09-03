@@ -30,7 +30,7 @@ export function useOfflineSync() {
       })
 
       if (flushed > 0) {
-        toast.info(`Synced ${flushed} offline change${flushed === 1 ? '' : 's'}`)
+        toast.success(`Back online - synced ${flushed} change${flushed === 1 ? '' : 's'}.`)
         qc.invalidateQueries({ queryKey: queryKeys.items() })
       }
     }

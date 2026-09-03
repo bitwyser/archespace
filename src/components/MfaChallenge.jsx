@@ -6,7 +6,8 @@
 import { useState } from 'react'
 import { ShieldCheck, KeyRound } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
-import { getVerifiedTotpFactorId, verifyTotp, redeemBackupCode } from '../lib/mfa'
+import { getVerifiedTotpFactorId, verifyTotp, redeemBackupCode, validateTotpCode, normalizeTotpCode, TOTP_CODE_LENGTH } from '../lib/mfa'
+import { validateRecoveryCode, normalizeRecoveryCode } from '../lib/crypto/recoveryCode'
 
 export default function MfaChallenge({ onVerified }) {
   const { signOut } = useAuth()
@@ -17,12 +18,19 @@ export default function MfaChallenge({ onVerified }) {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!code.trim()) return
+    // Validate format up front so obvious mistakes get a specific message
+    // instead of a generic rejection from the server.
+    const validationError = useBackup ? validateRecoveryCode(code) : validateTotpCode(code)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
+    const normalized = useBackup ? normalizeRecoveryCode(code) : normalizeTotpCode(code)
     setError('')
     setLoading(true)
     try {
       if (useBackup) {
-        const ok = await redeemBackupCode(code)
+        const ok = await redeemBackupCode(normalized)
         if (!ok) {
           setError('That backup code is not valid or has already been used.')
           setLoading(false)
@@ -36,7 +44,7 @@ export default function MfaChallenge({ onVerified }) {
         onVerified()
         return
       }
-      await verifyTotp(factorId, code)
+      await verifyTotp(factorId, normalized)
       onVerified()
     } catch (err) {
       setError(err?.message || 'Verification failed. Try again.')
@@ -63,8 +71,9 @@ export default function MfaChallenge({ onVerified }) {
           <input
             autoFocus
             value={code}
-            onChange={e => { setCode(e.target.value); setError('') }}
+            onChange={e => { setCode(useBackup ? e.target.value : normalizeTotpCode(e.target.value)); setError('') }}
             inputMode={useBackup ? 'text' : 'numeric'}
+            maxLength={useBackup ? 24 : TOTP_CODE_LENGTH}
             autoComplete="one-time-code"
             placeholder={useBackup ? 'Backup code' : '123456'}
             className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-base text-text-primary text-center tracking-[0.3em] font-mono focus:outline-none focus:border-accent"
