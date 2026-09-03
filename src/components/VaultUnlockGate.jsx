@@ -17,6 +17,7 @@ export default function VaultUnlockGate({ children }) {
     isUnlocked,
     unlock,
     setup,
+    commitVaultKey,
     recoverPinWithCode,
     unlocking,
     unlockError,
@@ -43,6 +44,11 @@ export default function VaultUnlockGate({ children }) {
   // before letting the unlocked app through.
   const [pendingEnrollPin, setPendingEnrollPin] = useState('')
   const [enrollError, setEnrollError] = useState('')
+  // Master key held between vault setup/recover and the user acknowledging the
+  // one-time recovery code. The vault is only unlocked (commitVaultKey) once the
+  // code is saved, so the recovery screen can never be skipped by an early
+  // "unlocked" render. Mirrors the mobile flow.
+  const [pendingUnlockKey, setPendingUnlockKey] = useState(null)
   // Held true while an unlock/setup/recover call is in flight and until we've
   // decided which post-action screen to show. unlock() flips isUnlocked to true
   // mid-call (before we can set the recovery-code or biometric prompt), so
@@ -169,15 +175,21 @@ export default function VaultUnlockGate({ children }) {
       setPendingAction('pin')
       setAwaitingVaultResult(true)
       const enteredPin = pin
-      const { recoveryCode, recoveryUnavailable } = await setup(enteredPin)
-      // Shown after the recovery-code screen (render priority handles ordering).
+      const { masterKey, recoveryCode, recoveryUnavailable } = await setup(enteredPin)
+      // Offer biometric enrollment after the recovery screen (render priority).
       if (canOfferBiometric) setPendingEnrollPin(enteredPin)
       if (recoveryCode) {
+        // Hold the key and show the code; unlock happens on "I saved this code".
+        setPendingUnlockKey(masterKey)
         showRecoveryCode(recoveryCode)
-      } else if (recoveryUnavailable) {
-        setRecoverySetupWarning(
-          'Your vault PIN was created, but recovery codes are not enabled in the database yet. Ask the app owner to run the recovery columns migration before relying on forgot-PIN recovery.'
-        )
+      } else {
+        // No recovery code to show - unlock straight away.
+        await commitVaultKey(masterKey)
+        if (recoveryUnavailable) {
+          setRecoverySetupWarning(
+            'Your vault PIN was created, but recovery codes are not enabled in the database yet. Ask the app owner to run the recovery columns migration before relying on forgot-PIN recovery.'
+          )
+        }
       }
       resetFields()
     } catch {
@@ -208,7 +220,9 @@ export default function VaultUnlockGate({ children }) {
     try {
       setPendingAction('pin')
       setAwaitingVaultResult(true)
-      const { recoveryCode } = await recoverPinWithCode(recoveryCodeInput, pin)
+      const { masterKey, recoveryCode } = await recoverPinWithCode(recoveryCodeInput, pin)
+      // Hold the key; unlock on "I saved this code" so the new code always shows.
+      setPendingUnlockKey(masterKey)
       showRecoveryCode(recoveryCode)
       setForgotPin(false)
       resetFields()
@@ -218,6 +232,16 @@ export default function VaultUnlockGate({ children }) {
       setPendingAction(null)
       setAwaitingVaultResult(false)
     }
+  }
+
+  // "I saved this code": unlock the vault (if setup/recover deferred it), then
+  // dismiss the recovery screen so the biometric prompt or the app shows next.
+  const handleAcknowledgeRecoveryCode = async () => {
+    if (pendingUnlockKey) {
+      await commitVaultKey(pendingUnlockKey)
+      setPendingUnlockKey(null)
+    }
+    setOneTimeRecoveryCode('')
   }
 
   const handleEnableBiometric = async () => {
@@ -259,8 +283,9 @@ export default function VaultUnlockGate({ children }) {
 
             <button
               type="button"
-              onClick={() => setOneTimeRecoveryCode('')}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold"
+              onClick={handleAcknowledgeRecoveryCode}
+              disabled={unlocking}
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
             >
               I saved this code
             </button>

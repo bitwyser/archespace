@@ -244,16 +244,17 @@ export function EncryptionProvider({ children }) {
     logAudit({ action: 'vault_passkey_remove' })
   }, [userId, refreshPasskeys])
 
+  // Create the vault but do NOT unlock yet - the caller shows the one-time
+  // recovery code first and calls commitVaultKey() once it is acknowledged.
+  // (Mirrors the mobile flow; unlocking here raced the recovery-code screen.)
   const setup = useCallback(async (pin) => {
     if (!userId) throw new Error('Not signed in')
     setUnlocking(true)
     setUnlockError('')
     try {
       const { masterKey, recoveryCode, recoveryUnavailable } = await setupUserVault(userId, pin)
-      await applyUnlockedKey(masterKey)
-      await refreshVaultStatus()
       logAudit({ action: 'vault_setup' })
-      return { recoveryCode, recoveryUnavailable }
+      return { masterKey, recoveryCode, recoveryUnavailable }
     } catch (err) {
       const msg = err?.message || "Couldn't set up vault."
       setUnlockError(msg)
@@ -261,7 +262,14 @@ export function EncryptionProvider({ children }) {
     } finally {
       setUnlocking(false)
     }
-  }, [userId, applyUnlockedKey, refreshVaultStatus])
+  }, [userId])
+
+  // Apply an unlocked master key and refresh status. Called after the recovery
+  // code is acknowledged (setup / recover) or directly when there is no code.
+  const commitVaultKey = useCallback(async (key) => {
+    await applyUnlockedKey(key)
+    await refreshVaultStatus()
+  }, [applyUnlockedKey, refreshVaultStatus])
 
   const updatePin = useCallback(async (currentPin, newPin) => {
     if (!userId) throw new Error('Not signed in')
@@ -324,9 +332,9 @@ export function EncryptionProvider({ children }) {
     try {
       const { masterKey, recoveryCode: nextRecoveryCode } =
         await recoverVaultWithRecoveryCode(userId, recoveryCode, newPin)
-      await applyUnlockedKey(masterKey)
       logAudit({ action: 'vault_pin_reset' })
-      return { recoveryCode: nextRecoveryCode }
+      // Unlock is deferred until the new recovery code is acknowledged.
+      return { masterKey, recoveryCode: nextRecoveryCode }
     } catch (err) {
       const msg = err?.message || "Couldn't recover vault PIN."
       setUnlockError(msg)
@@ -334,7 +342,7 @@ export function EncryptionProvider({ children }) {
     } finally {
       setUnlocking(false)
     }
-  }, [userId, applyUnlockedKey])
+  }, [userId])
 
   // Wait for auth hydration before clearing or restoring vault session.
   // Clearing while user is briefly null on refresh was wiping sessionStorage.
@@ -441,6 +449,7 @@ export function EncryptionProvider({ children }) {
         unlockError,
         vaultStatus,
         unlock,
+        commitVaultKey,
         verifyVaultPin,
         setup,
         updatePin,
