@@ -40,6 +40,7 @@ export default function SpacePage() {
     create,
     update,
     togglePin,
+    setTags,
     remove,
     reorder,
     archive,
@@ -81,9 +82,25 @@ export default function SpacePage() {
     { id: 'new-item', label: 'New item', hint: 'I', icon: Plus, run: () => { closePalette(); openAddItem() } },
   ]), [registerCommands, closePalette, openAddItem])
 
+  // ── Tag filter (within this space) ──
+  const [activeTags, setActiveTags] = useState([])
+  const allTags = useMemo(() => {
+    const set = new Set()
+    for (const it of items) for (const t of (it.tags || [])) set.add(t)
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [items])
+  const toggleTagFilter = useCallback((tag) => {
+    setActiveTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
+  }, [])
+  // An item matches when it carries any of the active tags (OR).
+  const visibleItems = useMemo(() => {
+    if (activeTags.length === 0) return items
+    return items.filter(it => (it.tags || []).some(t => activeTags.includes(t)))
+  }, [items, activeTags])
+
   const sortedItems = useMemo(
-    () => sortEntities(items, itemSort, i => i.title),
-    [items, itemSort]
+    () => sortEntities(visibleItems, itemSort, i => i.title),
+    [visibleItems, itemSort]
   )
   // Grid (masonry) and list share the same items; list is a single column.
   const online = useOnlineStatus()
@@ -127,7 +144,7 @@ export default function SpacePage() {
 
   // Manual drag order (in both list and grid views) only applies to the
   // default sort; other sorts and select mode disable it.
-  const reorderDisabled = selectMode || itemSort !== 'default'
+  const reorderDisabled = selectMode || itemSort !== 'default' || activeTags.length > 0
 
   const selectedCount = selectedIds.size
   const selectedItems = useMemo(
@@ -202,6 +219,7 @@ export default function SpacePage() {
   const archiveMutate = archive.mutate
 
   const handleItemUpdate = useCallback((payload) => updateAsync(payload), [updateAsync])
+  const handleSetTags = useCallback((itemId, tags) => setTags.mutate({ id: itemId, tags }), [setTags])
   const handleTogglePin = useCallback(
     (itemId, pinned) => togglePinMutate({ id: itemId, pinned }),
     [togglePinMutate]
@@ -348,6 +366,7 @@ export default function SpacePage() {
         collapsed={collapsedIds.has(item.id)}
         onCollapsedChange={setItemCollapsed}
         onUpdate={handleItemUpdate}
+        onSetTags={handleSetTags}
         onTogglePin={handleTogglePin}
         onDelete={setDeleteConfirm}
         onDuplicate={handleDuplicateItem}
@@ -512,6 +531,37 @@ export default function SpacePage() {
         ) : (
           /* Items in list (single column) or grid (round-robin masonry) view */
           <>
+            {allTags.length > 0 && (
+              <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                {allTags.map(tag => {
+                  const active = activeTags.includes(tag)
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTagFilter(tag)}
+                      aria-pressed={active}
+                      className={`text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors ${
+                        active
+                          ? 'bg-accent/15 border-accent/40 text-accent'
+                          : 'bg-bg-elevated border-bg-border text-text-muted hover:text-text-primary'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
+                {activeTags.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTags([])}
+                    className="text-[11px] font-medium px-2 py-0.5 rounded-md text-text-muted hover:text-text-primary"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            )}
             {viewMode === 'grid' ? (
               <div className="flex items-start gap-2 sm:gap-3">
                 {Array.from({ length: gridCols }, (_, col) => (

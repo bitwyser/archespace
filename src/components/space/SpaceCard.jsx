@@ -15,6 +15,8 @@ export function SpaceCard({
   handleDragStart, handleDragOver, handleDrop, handleDragEnd,
   navigate, togglePin, setModal, setDeleteConfirm, onDuplicate, onArchive,
   stats,
+  onTagClick,
+  activeTags = [],
   layout = 'grid',
   selectMode = false,
   selected = false,
@@ -105,12 +107,19 @@ export function SpaceCard({
         {Array.isArray(col.tags) && col.tags.length > 0 && (
           <div className="hidden md:flex items-center gap-1 shrink-0">
             {col.tags.slice(0, 3).map(tag => (
-              <span
+              <button
                 key={tag}
-                className="text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-bg-elevated text-text-muted border border-bg-border"
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onTagClick?.(tag) }}
+                aria-pressed={activeTags.includes(tag)}
+                className={`text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-md border transition-colors ${
+                  activeTags.includes(tag)
+                    ? 'bg-accent/15 border-accent/40 text-accent'
+                    : 'bg-bg-elevated text-text-muted border-bg-border hover:text-text-primary'
+                }`}
               >
                 {tag}
-              </span>
+              </button>
             ))}
           </div>
         )}
@@ -176,12 +185,19 @@ export function SpaceCard({
       {Array.isArray(col.tags) && col.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2.5">
           {col.tags.slice(0, 4).map(tag => (
-            <span
+            <button
               key={tag}
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-bg-elevated text-text-muted border border-bg-border"
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onTagClick?.(tag) }}
+              aria-pressed={activeTags.includes(tag)}
+              className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border transition-colors ${
+                activeTags.includes(tag)
+                  ? 'bg-accent/15 border-accent/40 text-accent'
+                  : 'bg-bg-elevated text-text-muted border-bg-border hover:text-text-primary'
+              }`}
             >
               {tag}
-            </span>
+            </button>
           ))}
         </div>
       )}

@@ -65,12 +65,19 @@ export async function decryptSpaces(rows, key) {
 
 // ── Space items ────────────────────────────────────────
 
+/** Encrypt just an item's tags (for a tags-only update). */
+export async function encryptTags(tags, key) {
+  const parsed = parseTags(tags)
+  return key ? encryptJson(parsed, key) : parsed
+}
+
 export async function encryptItem(row, key) {
   if (!key || !row) return row
   return {
     ...row,
     title: await encryptString(row.title ?? '', key),
     content: await encryptJson(row.content ?? {}, key),
+    tags: await encryptJson(parseTags(row.tags), key),
   }
 }
 
@@ -80,7 +87,7 @@ export async function decryptItem(row, key) {
     if (row.title && isEncrypted(row.title)) {
       throw new Error('Vault is locked - enter your PIN to view this data.')
     }
-    return row
+    return { ...row, tags: parseTags(row.tags) }
   }
 
   let content = row.content
@@ -94,10 +101,17 @@ export async function decryptItem(row, key) {
     }
   }
 
+  let tags = row.tags
+  if (typeof tags === 'string' && isEncrypted(tags)) {
+    tags = await decryptJson(tags, key)
+  }
+  tags = parseTags(tags)
+
   return {
     ...row,
     title: await decryptString(row.title ?? '', key),
     content: content ?? {},
+    tags,
   }
 }
 

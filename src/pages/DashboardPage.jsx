@@ -164,12 +164,27 @@ export default function DashboardPage() {
     return spaces.filter(c => matchedSpaceIds.has(c.id))
   }, [spaces, globalMatches, search])
 
+  // ── Tag filter ──
+  const [activeTags, setActiveTags] = useState([])
+  const allTags = useMemo(() => {
+    const set = new Set()
+    for (const s of spaces) for (const t of (s.tags || [])) set.add(t)
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [spaces])
+  const toggleTagFilter = useCallback((tag) => {
+    setActiveTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
+  }, [])
+  const tagFiltered = useMemo(() => {
+    if (activeTags.length === 0) return filtered
+    return filtered.filter(s => (s.tags || []).some(t => activeTags.includes(t)))
+  }, [filtered, activeTags])
+
   const sortedSpaces = useMemo(
-    () => sortEntities(filtered, spaceSort, s => s.name),
-    [filtered, spaceSort]
+    () => sortEntities(tagFiltered, spaceSort, s => s.name),
+    [tagFiltered, spaceSort]
   )
   // Manual drag order only applies to the default sort.
-  const reorderDisabled = !!search || selectMode || spaceSort !== 'default'
+  const reorderDisabled = !!search || selectMode || spaceSort !== 'default' || activeTags.length > 0
 
   const showSearchResults = search.trim().length > 0 && searchFocused
 
@@ -263,6 +278,8 @@ export default function DashboardPage() {
       handleDrop={handleDrop}
       handleDragEnd={handleDragEnd}
       navigate={navigate}
+      activeTags={activeTags}
+      onTagClick={toggleTagFilter}
       togglePin={togglePin}
       setModal={setModal}
       setDeleteConfirm={setDeleteConfirm}
@@ -546,6 +563,39 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Tag filter */}
+        {allTags.length > 0 && !selectMode && (
+          <div className="mb-4 flex flex-wrap items-center gap-1.5">
+            {allTags.map(tag => {
+              const active = activeTags.includes(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTagFilter(tag)}
+                  aria-pressed={active}
+                  className={`text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors ${
+                    active
+                      ? 'bg-accent/15 border-accent/40 text-accent'
+                      : 'bg-bg-elevated border-bg-border text-text-muted hover:text-text-primary'
+                  }`}
+                >
+                  {tag}
+                </button>
+              )
+            })}
+            {activeTags.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveTags([])}
+                className="text-[11px] font-medium px-2 py-0.5 rounded-md text-text-muted hover:text-text-primary"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Spaces grid */}
         {isLoading ? (

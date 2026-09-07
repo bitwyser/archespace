@@ -31,6 +31,7 @@ import { DrawEditor } from './editors/DrawEditor'
 import { TableEditor } from './editors/TableEditor'
 import { CodeEditor } from './editors/CodeEditor'
 import { AuthenticatorEditor } from './editors/AuthenticatorEditor'
+import { ItemTags } from './ItemTags'
 import { ActionMenu } from './ui/ActionMenu'
 import { getChecklistProgress } from '../lib/checklistProgress'
 import { isOnline, enqueueOffline } from '../lib/offlineQueue'
@@ -49,6 +50,7 @@ import { AUTO_SAVE_DELAY_MS } from '../lib/constants'
 function SpaceItem({
   item,
   onUpdate,
+  onSetTags,
   onTogglePin,
   onDelete,
   onDuplicate,
@@ -294,6 +296,9 @@ function SpaceItem({
   // In grid view on small screens the card is shown denser (smaller text and
   // padding) so its full content still fits in a narrow two-column cell.
   const denseView = dense && !isFullscreen && !selectMode
+  // Whether the tags row is shown (drives content top padding so the two don't
+  // stack into a large gap).
+  const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || online)
 
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
@@ -547,6 +552,17 @@ function SpaceItem({
         )}
       </div>
 
+      {/* ── Tags ──────────────────────────────────────── */}
+      {showTags && (
+        <div className={denseView ? 'px-2.5 py-2' : 'px-4 py-2.5'}>
+          <ItemTags
+            tags={item.tags || []}
+            onChange={(tags) => onSetTags?.(item.id, tags)}
+            disabled={!online}
+          />
+        </div>
+      )}
+
       {/* ── Unsaved collapse warning ─────────────────── */}
       {collapseGuard && (
         <div className="px-4 py-3 bg-amber-400/8 border-b border-amber-400/20 flex items-center gap-3 flex-wrap">
@@ -582,7 +598,11 @@ function SpaceItem({
       {!collapsed && (
         <div
           onClick={denseView ? () => setIsFullscreen(true) : undefined}
-          className={isFullscreen ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8' : denseView ? 'px-2.5 py-3 cursor-pointer' : 'px-4 py-4'}
+          className={isFullscreen
+            ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8'
+            : denseView
+              ? `px-2.5 ${showTags ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
+              : `px-4 ${showTags ? 'pt-0' : 'pt-4'} pb-4`}
         >
           {/* In dense grid the content is a non-interactive preview; tapping it
               opens full screen instead of editing inline in a narrow cell. */}

@@ -6,7 +6,8 @@ import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
-import { encryptItem, decryptItem, decryptItems } from '../lib/dataProtection'
+import { encryptItem, decryptItem, decryptItems, encryptTags } from '../lib/dataProtection'
+import { parseTags } from '../lib/spaceColors'
 import { assertOnline } from '../lib/offlineQueue'
 import { saveRows, loadRows } from '../lib/offlineCache'
 import { setReachable, isNetworkError } from '../lib/connectivity'
@@ -158,6 +159,33 @@ export function useSpaceItems(spaceId) {
     invalidate: () => invalidateSpaceItems(qc, spaceId),
   }))
 
+  // Tags-only update (encrypted like a space's tags). Optimistic so chips update
+  // instantly. Isolated from create/update so the tags-column migration can't
+  // break item creation or content saves.
+  const setTags = useMutation({
+    mutationFn: async ({ id, tags }) => {
+      assertOnline()
+      const encrypted = await encryptTags(tags, cryptoKey)
+      const { error } = await supabase
+        .from('space_items')
+        .update({ tags: encrypted })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onMutate: async ({ id, tags }) => {
+      await qc.cancelQueries({ queryKey: queryKeys.items(spaceId) })
+      const previous = qc.getQueryData(queryKeys.items(spaceId))
+      qc.setQueryData(queryKeys.items(spaceId), (old) =>
+        old?.map(it => (it.id === id ? { ...it, tags: parseTags(tags) } : it))
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(queryKeys.items(spaceId), context.previous)
+    },
+    onSettled: () => invalidateSpaceItems(qc, spaceId),
+  })
+
   const remove = useMutation(makeSoftDelete({
     table: 'space_items',
     invalidate: () => invalidateSpaceItems(qc, spaceId),
@@ -305,6 +333,7 @@ export function useSpaceItems(spaceId) {
     create,
     update,
     togglePin,
+    setTags,
     remove,
     reorder,
     archive,
