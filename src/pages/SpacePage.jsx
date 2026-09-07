@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate, useBlocker, useLocation } from 'react-router-dom'
-import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List } from 'lucide-react'
+import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List, FolderPlus } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useSpaces } from '../hooks/useSpaces'
@@ -15,12 +15,15 @@ import { useRegisterPageActions } from '../context/PageActionsCore'
 import { useCommandPalette } from '../context/CommandPaletteCore'
 import { useShortcut } from '../context/ShortcutsCore'
 import SpaceItem from '../components/SpaceItem'
+import { SpaceCard } from '../components/space/SpaceCard'
+import { SpaceModal } from '../components/space/SpaceModal'
 import { exportSpaceToPdf } from '../lib/pdfExport'
 import BulkSelectionBar from '../components/BulkSelectionBar'
 import { BULK_ICONS } from '../components/BulkSelectionIcons'
-import { Modal } from '../components/ui/UI'
+import { Modal, ConfirmDialog } from '../components/ui/UI'
 import { SortMenu } from '../components/ui/SortMenu'
 import { usePersistedSort } from '../hooks/usePersistedSort'
+import { useSpaceStats } from '../hooks/useSpaceStats'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useRouteMeta } from '../hooks/useRouteMeta'
 import { sortEntities } from '../lib/sortEntities'
@@ -32,7 +35,15 @@ export default function SpacePage() {
   const { toast } = useToast()
 
   // Single call to useSpaces (avoids duplicate subscriptions)
-  const { data: spaces = [] } = useSpaces()
+  const {
+    data: spaces = [],
+    create: createSpace,
+    update: updateSpace,
+    togglePin: toggleSpacePin,
+    remove: removeSpace,
+    archive: archiveSpace,
+    duplicate: duplicateSpace,
+  } = useSpaces()
 
   const {
     data: items = [],
@@ -54,6 +65,13 @@ export default function SpacePage() {
 
   /** The space object for this page */
   const space = spaces.find(c => c.id === id)
+  // One-level nesting: sub-spaces live under a top-level space only.
+  const isTopLevel = space ? !space.parent_id : false
+  const parentSpace = space?.parent_id ? spaces.find(s => s.id === space.parent_id) : null
+  const subSpaces = useMemo(() => spaces.filter(s => s.parent_id === id), [spaces, id])
+  const { data: spaceStats = {} } = useSpaceStats()
+  const [spaceModal, setSpaceModal] = useState(null) // { type:'create' } | { type:'edit', col }
+  const [spaceDeleteConfirm, setSpaceDeleteConfirm] = useState(null)
 
   // Private route: noindex, and a generic tab title - never the space name,
   // which would leak private data into the browser tab, history, and app
@@ -381,19 +399,57 @@ export default function SpacePage() {
     </div>
   )
 
+  // Sub-spaces render as space cards in the same layout as items, listed first.
+  const renderSubSpaceCard = (sub, i) => (
+    <SpaceCard
+      key={sub.id}
+      col={sub}
+      index={i}
+      search=""
+      layout={viewMode === 'grid' ? 'grid' : 'list'}
+      stats={spaceStats}
+      reorderDisabled
+      dragIndex={-1}
+      dragOverIndex={-1}
+      handleDragStart={() => {}}
+      handleDragOver={() => {}}
+      handleDrop={() => {}}
+      handleDragEnd={() => {}}
+      navigate={navigate}
+      togglePin={toggleSpacePin}
+      setModal={setSpaceModal}
+      setDeleteConfirm={setSpaceDeleteConfirm}
+      onDuplicate={(sid) => duplicateSpace.mutate(sid, {
+        onSuccess: () => toast.success('Space duplicated'),
+        onError: () => toast.error("Couldn't duplicate the space."),
+      })}
+      onArchive={(sid) => archiveSpace.mutate(sid, {
+        onSuccess: () => toast.success('Space archived'),
+        onError: () => toast.error("Couldn't archive the space."),
+      })}
+    />
+  )
+
+  // Sub-spaces first, then items, in one combined layout.
+  const contentNodes = [
+    ...(selectMode ? [] : subSpaces.map((sub, i) => renderSubSpaceCard(sub, i))),
+    ...sortedItems.map((item, index) => renderItemCard(item, index)),
+  ]
+
   return (
     <div className="min-h-screen bg-bg-base flex flex-col">
 
       {/* ── Sticky header ──────────────────────────────── */}
       <header className="sticky top-0 z-20 glass">
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
-          {/* Back button */}
+          {/* Back button - to the parent space for a sub-space, else the dashboard */}
           <button
-            onClick={() => navigate('/app')}
+            onClick={() => navigate(parentSpace ? `/space/${parentSpace.id}` : '/app')}
+            title={parentSpace ? `Back to ${parentSpace.name}` : 'Back'}
             className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
           >
             <ArrowLeft size={16} />
-            <span className="hidden sm:inline">Back</span>
+            <span className="hidden sm:inline max-w-[140px] truncate">{parentSpace ? parentSpace.name : 'Back'}</span>
           </button>
 
           {/* Space title & description */}
@@ -482,6 +538,18 @@ export default function SpacePage() {
                 <span className="hidden sm:inline">Export</span>
               </button>
             )}
+            {isTopLevel && !selectMode && (
+              <button
+                type="button"
+                onClick={() => setSpaceModal({ type: 'create' })}
+                disabled={!online}
+                title={online ? 'New sub-space' : 'Unavailable offline'}
+                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <FolderPlus size={16} />
+                <span className="hidden sm:inline">New space</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setAddModal(true)}
@@ -511,7 +579,7 @@ export default function SpacePage() {
               </div>
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : (items.length === 0 && subSpaces.length === 0) ? (
           /* Empty state */
           <div className="text-center py-20">
             <div className="w-14 h-14 rounded-2xl bg-bg-surface border border-bg-border flex items-center justify-center mx-auto mb-4">
@@ -566,16 +634,13 @@ export default function SpacePage() {
               <div className="flex items-start gap-2 sm:gap-3">
                 {Array.from({ length: gridCols }, (_, col) => (
                   <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
-                    {sortedItems
-                      .map((item, index) => ({ item, index }))
-                      .filter(({ index }) => index % gridCols === col)
-                      .map(({ item, index }) => renderItemCard(item, index))}
+                    {contentNodes.filter((_, i) => i % gridCols === col)}
                   </div>
                 ))}
               </div>
             ) : (
               <div className="space-y-3">
-                {sortedItems.map((item, index) => renderItemCard(item, index))}
+                {contentNodes}
               </div>
             )}
 
@@ -688,6 +753,47 @@ export default function SpacePage() {
           </div>
         )}
       </main>
+
+      {/* ── Sub-space create / edit modal ────────────── */}
+      {spaceModal?.type === 'create' && (
+        <SpaceModal
+          onSave={({ name, description, color, tags }) => {
+            createSpace.mutate({ name, description, color, tags, parentId: id }, {
+              onSuccess: () => toast.success('Space created'),
+              onError: () => toast.error("Couldn't create space."),
+            })
+          }}
+          onClose={() => setSpaceModal(null)}
+        />
+      )}
+      {spaceModal?.type === 'edit' && (
+        <SpaceModal
+          initial={spaceModal.col}
+          onSave={({ name, description, color, tags }) => {
+            updateSpace.mutate({ id: spaceModal.col.id, name, description, color, tags }, {
+              onSuccess: () => toast.success('Space updated'),
+              onError: () => toast.error("Couldn't update space."),
+            })
+          }}
+          onClose={() => setSpaceModal(null)}
+        />
+      )}
+      {spaceDeleteConfirm && (
+        <ConfirmDialog
+          title="Move space to recycle bin?"
+          message="This space and all its items will be moved to the recycle bin."
+          confirmLabel="Move to recycle bin"
+          destructive
+          onConfirm={() => {
+            removeSpace.mutate(spaceDeleteConfirm, {
+              onSuccess: () => toast.success('Space moved to recycle bin'),
+              onError: () => toast.error("Couldn't delete space."),
+            })
+            setSpaceDeleteConfirm(null)
+          }}
+          onClose={() => setSpaceDeleteConfirm(null)}
+        />
+      )}
 
       {/* ── Add item type picker modal ───────────────── */}
       {addModal && (

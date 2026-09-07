@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS spaces (
   color       text        DEFAULT NULL,
   theme       text        DEFAULT NULL,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,
+  parent_id   uuid        REFERENCES spaces(id) ON DELETE CASCADE DEFAULT NULL,  -- one-level nesting; NULL = top-level
   deleted_at  timestamptz DEFAULT NULL,          -- soft-delete; NULL = active
   archived_at timestamptz DEFAULT NULL,
   created_at  timestamptz NOT NULL DEFAULT now(),
@@ -59,6 +60,10 @@ ALTER TABLE space_items ADD CONSTRAINT space_items_type_check
 
 -- Item tags (added later; encrypted client-side like space tags). Safe to re-run.
 ALTER TABLE space_items ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+-- One-level space nesting (added later; NULL = top-level space). Safe to re-run.
+ALTER TABLE spaces ADD COLUMN IF NOT EXISTS parent_id uuid
+  REFERENCES spaces(id) ON DELETE CASCADE DEFAULT NULL;
 
 -- Audit log: auth events only, owner-only access (see section 4).
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -104,6 +109,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
 
 -- Spaces
 CREATE INDEX IF NOT EXISTS spaces_user_id_idx     ON spaces(user_id);
+CREATE INDEX IF NOT EXISTS spaces_parent_id_idx   ON spaces(parent_id) WHERE parent_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS spaces_position_idx    ON spaces(user_id, position);
 CREATE INDEX IF NOT EXISTS spaces_pinned_idx      ON spaces(pinned)      WHERE pinned = true;
 CREATE INDEX IF NOT EXISTS spaces_deleted_at_idx  ON spaces(deleted_at)  WHERE deleted_at IS NOT NULL;

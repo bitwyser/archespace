@@ -15,8 +15,6 @@ import { duplicateSpaceWithItems } from '../lib/spaceDuplicate'
 import { invalidateSpaceCollections, invalidateSpaceList } from '../lib/queryInvalidation'
 import { queryKeys } from '../lib/queryKeys'
 import {
-  makeSoftDelete,
-  makeBulkSoftDelete,
   makeBulkSetPinned,
   makeTogglePin,
   makeReorder,
@@ -89,13 +87,16 @@ export function useSpaces() {
   }, [qc, instanceId])
 
   const create = useMutation({
-    mutationFn: async ({ name, description, color, tags }) => {
+    mutationFn: async ({ name, description, color, tags, parentId = null }) => {
       assertOnline()
       const { data: { session } } = await supabase.auth.getSession()
       const userId = session?.user?.id
       if (!userId) throw new Error('Not authenticated')
 
-      const position = query.data?.length || 0
+      // Position among siblings (same parent).
+      const position = (query.data || []).filter(
+        s => (s.parent_id ?? null) === (parentId ?? null)
+      ).length
 
       const encrypted = await encryptSpace({
         name,
@@ -104,16 +105,21 @@ export function useSpaces() {
         tags: parseTags(tags),
       }, cryptoKey)
 
+      const insert = {
+        name: encrypted.name,
+        description: encrypted.description,
+        user_id: userId,
+        position,
+        color: color || null,
+        tags: encrypted.tags,
+      }
+      // Only send parent_id when nesting, so top-level creation still works on
+      // databases that have not run the parent_id migration yet.
+      if (parentId) insert.parent_id = parentId
+
       const { data, error } = await supabase
         .from('spaces')
-        .insert({
-          name: encrypted.name,
-          description: encrypted.description,
-          user_id: userId,
-          position,
-          color: color || null,
-          tags: encrypted.tags,
-        })
+        .insert(insert)
         .select()
         .single()
       if (error) throw error
@@ -159,24 +165,41 @@ export function useSpaces() {
     invalidate: () => qc.invalidateQueries({ queryKey: queryKeys.spaces() }),
   }))
 
-  const remove = useMutation(makeSoftDelete({
-    table: 'spaces',
-    invalidate: () => invalidateSpaceCollections(qc),
-  }))
+  // Child space ids derived from the loaded list (empty pre-migration), so
+  // cascades never reference parent_id in a query that could fail before the
+  // column exists.
+  const childIdsOf = (ids) => {
+    const set = new Set(ids)
+    return (query.data || []).filter(s => set.has(s.parent_id)).map(s => s.id)
+  }
+
+  const remove = useMutation({
+    mutationFn: async (id) => {
+      assertOnline()
+      const ids = [id, ...childIdsOf([id])]
+      const { error } = await supabase
+        .from('spaces')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', ids)
+      if (error) throw error
+    },
+    onSuccess: () => invalidateSpaceCollections(qc),
+  })
 
   const archive = useMutation({
     mutationFn: async (id) => {
       assertOnline()
       const now = new Date().toISOString()
+      const spaceIds = [id, ...childIdsOf([id])]
       const { error: spaceError } = await supabase
         .from('spaces')
         .update({ archived_at: now })
-        .eq('id', id)
+        .in('id', spaceIds)
       if (spaceError) throw spaceError
       const { error: itemError } = await supabase
         .from('space_items')
         .update({ archived_at: now })
-        .eq('space_id', id)
+        .in('space_id', spaceIds)
         .is('deleted_at', null)
       if (itemError) throw itemError
     },
@@ -194,26 +217,36 @@ export function useSpaces() {
     onSuccess: () => invalidateSpaceCollections(qc),
   })
 
-  const bulkRemove = useMutation(makeBulkSoftDelete({
-    table: 'spaces',
-    invalidate: () => invalidateSpaceCollections(qc),
-  }))
+  const bulkRemove = useMutation({
+    mutationFn: async (ids) => {
+      if (!ids?.length) return
+      assertOnline()
+      const allIds = [...new Set([...ids, ...childIdsOf(ids)])]
+      const { error } = await supabase
+        .from('spaces')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', allIds)
+      if (error) throw error
+    },
+    onSuccess: () => invalidateSpaceCollections(qc),
+  })
 
   const bulkArchive = useMutation({
     mutationFn: async (ids) => {
       if (!ids?.length) return
       assertOnline()
       const now = new Date().toISOString()
+      const spaceIds = [...new Set([...ids, ...childIdsOf(ids)])]
       const { error: spaceError } = await supabase
         .from('spaces')
         .update({ archived_at: now })
-        .in('id', ids)
+        .in('id', spaceIds)
       if (spaceError) throw spaceError
 
       const { error: itemError } = await supabase
         .from('space_items')
         .update({ archived_at: now })
-        .in('space_id', ids)
+        .in('space_id', spaceIds)
         .is('deleted_at', null)
       if (itemError) throw itemError
     },

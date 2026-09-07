@@ -153,24 +153,27 @@ export default function DashboardPage() {
     }, search)
   ), [globalSearchData, search])
 
+  // Only top-level spaces on the dashboard; sub-spaces live inside their parent.
+  const topLevelSpaces = useMemo(() => spaces.filter(s => !s.parent_id), [spaces])
+
   const filtered = useMemo(() => {
     const q = search.trim()
-    if (!q) return spaces
+    if (!q) return topLevelSpaces
 
     const matchedSpaceIds = new Set([
       ...globalMatches.spaces.map(c => c.id),
       ...globalMatches.items.map(i => i.space_id),
     ])
-    return spaces.filter(c => matchedSpaceIds.has(c.id))
-  }, [spaces, globalMatches, search])
+    return topLevelSpaces.filter(c => matchedSpaceIds.has(c.id))
+  }, [topLevelSpaces, globalMatches, search])
 
   // ── Tag filter ──
   const [activeTags, setActiveTags] = useState([])
   const allTags = useMemo(() => {
     const set = new Set()
-    for (const s of spaces) for (const t of (s.tags || [])) set.add(t)
+    for (const s of topLevelSpaces) for (const t of (s.tags || [])) set.add(t)
     return Array.from(set).sort((a, b) => a.localeCompare(b))
-  }, [spaces])
+  }, [topLevelSpaces])
   const toggleTagFilter = useCallback((tag) => {
     setActiveTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
   }, [])
@@ -489,7 +492,7 @@ export default function DashboardPage() {
           <div>
             <h2 className="text-xl font-semibold text-text-primary">Spaces</h2>
             <p className="text-text-muted text-sm mt-0.5">
-              {spaces.length} {spaces.length === 1 ? 'space' : 'spaces'}
+              {topLevelSpaces.length} {topLevelSpaces.length === 1 ? 'space' : 'spaces'}
             </p>
           </div>
           <div className="flex items-center gap-2">
