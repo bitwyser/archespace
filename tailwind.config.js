@@ -11,6 +11,7 @@ export default {
       colors: {
         bg: {
           base: 'var(--bg-base)',
+          sunken: 'var(--bg-sunken)',
           surface: 'var(--bg-surface)',
           elevated: 'var(--bg-elevated)',
           hover: 'var(--bg-hover)',
@@ -23,6 +24,7 @@ export default {
         },
         text: {
           primary: 'var(--text-primary)',
+          content: 'var(--text-content)',
           secondary: 'var(--text-secondary)',
           muted: 'var(--text-muted)',
         },
