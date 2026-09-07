@@ -19,6 +19,7 @@
 :root {
   color-scheme: dark;
   --bg-base:       #0f1117;
+  --bg-card:       #141a20;
   --bg-sunken:     #12171e;
   --bg-surface:    #151b21;
   --bg-elevated:   #1b2427;
@@ -39,6 +40,7 @@
 [data-theme-mode="dark"] {
   color-scheme: dark;
   --bg-base:       #0f1117;
+  --bg-card:       #141a20;
   --bg-sunken:     #12171e;
   --bg-surface:    #151b21;
   --bg-elevated:   #1b2427;
@@ -59,6 +61,7 @@
 [data-theme-mode="light"] {
   color-scheme: light;
   --bg-base:       #f5f7f2;
+  --bg-card:       #fdfefb;
   --bg-sunken:     #f3f5f1;
   --bg-surface:    #ffffff;
   --bg-elevated:   #edf1eb;
@@ -82,18 +85,24 @@
   --accent:        #32d3aa;
   --accent-hover:  #77ead0;
   --accent-muted:  rgba(50,211,170,0.14);
+  /* Pre-mixed softer accent for the pinned/selected border (Tailwind 3 can't
+     apply an /opacity modifier to a bare var() colour, so it needs its own
+     token). */
+  --accent-border: rgba(50,211,170,0.5);
 }
 
 [data-accent="lavender"] {
   --accent:        #7c6af7;
   --accent-hover:  #a59aff;
   --accent-muted:  rgba(124,106,247,0.14);
+  --accent-border: rgba(124,106,247,0.5);
 }
 
 [data-accent="amber"] {
   --accent:        #f6b84b;
   --accent-hover:  #ffd37c;
   --accent-muted:  rgba(246,184,75,0.15);
+  --accent-border: rgba(246,184,75,0.5);
 }
 
 /* ── Base body styles ───────────────────────────────────── */

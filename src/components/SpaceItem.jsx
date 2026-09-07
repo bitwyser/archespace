@@ -320,11 +320,11 @@ function SpaceItem({
     <div className={`${
       isFullscreen
         ? 'fixed inset-0 z-[80] flex flex-col rounded-none border-0 bg-bg-base'
-        : 'relative border rounded-2xl'
+        : 'relative rounded-2xl bg-bg-card'
     } transition-colors ${denseView ? 'text-[13px]' : ''} ${
-      selected && !isFullscreen ? 'ring-1 ring-accent border-accent bg-accent/5' :
-      item.pinned && !isFullscreen ? 'bg-accent/5 border-accent' :
-      !isFullscreen ? 'bg-bg-surface border-bg-border' : ''
+      isFullscreen ? '' :
+      selected || item.pinned ? 'border-2 border-accent-border' :
+      'border border-bg-border'
     }`}>
       {/* ── Header ────────────────────────────────────── */}
       <div className={`flex items-center gap-2 flex-wrap gap-y-2 ${

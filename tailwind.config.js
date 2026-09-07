@@ -13,6 +13,7 @@ export default {
           base: 'var(--bg-base)',
           sunken: 'var(--bg-sunken)',
           surface: 'var(--bg-surface)',
+          card: 'var(--bg-card)',
           elevated: 'var(--bg-elevated)',
           hover: 'var(--bg-hover)',
           border: 'var(--bg-border)',
@@ -21,6 +22,8 @@ export default {
           DEFAULT: 'var(--accent)',
           hover: 'var(--accent-hover)',
           muted: 'var(--accent-muted)',
+          // Pre-mixed softer accent (rgba) for pinned/selected borders.
+          border: 'var(--accent-border)',
         },
         text: {
           primary: 'var(--text-primary)',

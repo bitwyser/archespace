@@ -6,7 +6,7 @@
  * Both share the same navigate / select / drag / action-menu behaviour.
  */
 import { ChevronRight, Check, Pin, PinOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square } from 'lucide-react'
-import { getColorPreset } from '../../lib/spaceColors'
+import { getColorPreset, softColorValue } from '../../lib/spaceColors'
 import { ActionMenu } from '../ui/ActionMenu'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 
@@ -25,6 +25,7 @@ export function SpaceCard({
 }) {
   const online = useOnlineStatus()
   const colorPreset = getColorPreset(col.color)
+  const softColor = softColorValue(col.color)
   const itemStats = stats?.[col.id]
   const itemLabel = itemStats
     ? `${itemStats.total} ${itemStats.total === 1 ? 'item' : 'items'}`
@@ -81,14 +82,13 @@ export function SpaceCard({
         tabIndex={0}
         aria-pressed={selectMode ? selected : undefined}
         aria-label={ariaLabel}
-        className={`group relative flex items-center gap-3 sm:gap-4 border rounded-xl pl-4 pr-3 py-3 cursor-pointer transition-colors animate-fade-in-up ${
-          selected ? 'ring-1 ring-accent border-accent bg-accent/5' :
-          col.pinned ? 'bg-accent/5 border-accent hover:border-accent/80' : 'bg-bg-surface border-bg-border hover:border-accent/40'
+        className={`group relative flex items-center gap-3 sm:gap-4 rounded-xl pl-4 pr-3 py-3 cursor-pointer transition-colors animate-fade-in-up bg-bg-card ${
+          selected || col.pinned ? 'border-2 border-accent-border' : 'border border-bg-border hover:border-accent/40'
         } ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
         style={{
           animationDelay: `${index * 30}ms`,
           borderLeftWidth: colorPreset ? '3px' : undefined,
-          borderLeftColor: colorPreset?.value,
+          borderLeftColor: softColor,
         }}
       >
         {selectMode && (
@@ -148,22 +148,21 @@ export function SpaceCard({
       tabIndex={0}
       aria-pressed={selectMode ? selected : undefined}
       aria-label={ariaLabel}
-      className={`group relative border rounded-2xl p-3.5 cursor-pointer hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up ${
-        selected ? 'ring-1 ring-accent border-accent bg-accent/5' :
-        col.pinned ? 'bg-accent/5 border-accent hover:border-accent/80' : 'bg-bg-surface border-bg-border hover:border-accent/40'
+      className={`group relative rounded-2xl p-3.5 cursor-pointer hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up bg-bg-card ${
+        selected || col.pinned ? 'border-2 border-accent-border' : 'border border-bg-border hover:border-accent/40'
       } ${
         !selectMode && dragOverIndex === index && dragIndex !== index ? 'border-l-4 border-l-accent pl-3' : ''
       } ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
       style={{
         animationDelay: `${index * 50}ms`,
         borderTopWidth: colorPreset ? '3px' : undefined,
-        borderTopColor: colorPreset?.value,
+        borderTopColor: softColor,
       }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            {col.pinned && <Pin size={14} className="text-accent shrink-0 fill-accent" />}
+            {col.pinned && <Pin size={14} className="shrink-0 text-accent fill-accent" />}
             <h3 className="font-semibold text-text-primary truncate">{col.name}</h3>
           </div>
           {col.description && (
