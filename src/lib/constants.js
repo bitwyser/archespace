@@ -61,7 +61,7 @@ export const MAX_IMPORT_ITEMS_PER_SPACE = 1000
 
 // ── Item Types ─────────────────────────────────────────────
 /** Allowed item type values (must match DB CHECK constraint) */
-export const ITEM_TYPES = ['textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'code', 'secret', 'draw', 'table', 'authenticator']
+export const ITEM_TYPES = ['textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'markdown', 'code', 'secret', 'draw', 'table', 'authenticator']
 
 // ── UI ─────────────────────────────────────────────────────
 /** Auto-save debounce delay (ms) */

@@ -30,6 +30,7 @@ const defaultContent = {
   numbered_list: { items: [] },
   card_list: { items: [] },
   markdown: { text: '' },
+  richtext: { html: '' },
   code: { code: '' },
   secret: { secret: true, cipher: '' },
   draw: { strokes: [] },

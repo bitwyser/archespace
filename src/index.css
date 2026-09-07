@@ -134,7 +134,8 @@ body {
    the ring on top of them (that reads as a double outline). */
 input:focus-visible,
 textarea:focus-visible,
-select:focus-visible {
+select:focus-visible,
+[contenteditable]:focus-visible {
   outline: none !important;
 }
 
@@ -335,6 +336,14 @@ body.bulk-bar-active .toast-stack {
 .prose-custom pre { background: var(--bg-base); padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; border: 1px solid var(--bg-border); font-family: monospace; font-size: 0.875rem; }
 .prose-custom code { background: var(--bg-base); padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; color: var(--accent); border: 1px solid var(--bg-border); }
 .prose-custom pre code { background: transparent; padding: 0; border: none; color: inherit; }
+
+/* ── Rich Text item: contenteditable placeholder ──────────────
+   Shown only when the editor is empty and not focused. */
+.rich-text-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+}
 
 /* ── Code item: highlight.js token colours ──────────────────
    A single mid-tone palette (One-Dark/Light-ish) chosen to stay legible on

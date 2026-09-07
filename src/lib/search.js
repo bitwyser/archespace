@@ -2,6 +2,8 @@
  * search.js - Client-side global search helpers.
  */
 
+import { richHtmlToPlainText } from './sanitizeHtml'
+
 /** How many item matches the search dropdown renders (shared with keyboard nav). */
 export const SEARCH_ITEM_DISPLAY_LIMIT = 30
 
@@ -18,6 +20,7 @@ function itemSearchText(item) {
   const parts = [item.title]
   const c = item.content || {}
   if (item.type === 'textbox' || item.type === 'markdown') parts.push(c.text)
+  if (item.type === 'richtext') parts.push(richHtmlToPlainText(c.html))
   if (c.items && Array.isArray(c.items)) {
     for (const row of c.items) {
       parts.push(row.text, row.title, row.description)

@@ -99,6 +99,8 @@ function validateItemContent(type, content) {
     case 'textbox':
     case 'markdown':
       return typeof content.text === 'string'
+    case 'richtext':
+      return typeof content.html === 'string'
     case 'code':
       return typeof content.code === 'string'
     case 'checkbox_list':

@@ -7,6 +7,7 @@
  * title becomes the suggested file name.
  */
 import { markdownToHtml } from '../components/editors/MarkdownPreview'
+import { sanitizeRichHtml } from './sanitizeHtml'
 import { TYPE_LABELS } from './itemTypes'
 import { strokeToSvgPath, drawDims } from './drawing'
 
@@ -56,6 +57,8 @@ function itemBodyHtml({ type, content }) {
       return c.text ? `<p class="plain">${escapeHtml(c.text)}</p>` : ''
     case 'markdown':
       return c.text ? `<div class="md">${markdownToHtml(c.text)}</div>` : ''
+    case 'richtext':
+      return c.html ? `<div class="rich">${sanitizeRichHtml(c.html)}</div>` : ''
     case 'code':
       return c.code ? `<pre class="code">${escapeHtml(c.code)}</pre>` : ''
     case 'menu_list':

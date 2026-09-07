@@ -26,6 +26,7 @@ import {
   ClipboardCopy, ClipboardCheck, FileDown, Eye, EyeOff,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, MenuListEditor, NumberedListEditor, CardListEditor } from './editors/ItemEditors'
+import RichTextEditor, { RichTextToolbar } from './editors/RichTextEditor'
 import { SecretEditor } from './editors/SecretEditor'
 import { DrawEditor } from './editors/DrawEditor'
 import { TableEditor } from './editors/TableEditor'
@@ -84,6 +85,7 @@ function SpaceItem({
   const [copied, setCopied] = useState(false)
   const [secretState, setSecretState] = useState({ revealed: false, prompting: false })
   const secretEditorRef = useRef(null)
+  const richTextRef = useRef(null)
   // On mobile the header keeps only Collapse + Full screen direct; Copy moves
   // into the action menu to leave room for the title.
   const online = useOnlineStatus()
@@ -299,6 +301,9 @@ function SpaceItem({
   // Whether the tags row is shown (drives content top padding so the two don't
   // stack into a large gap).
   const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || online)
+  // The Rich Text formatting toolbar shares the tags row (right-aligned). Shown
+  // whenever the editor is live - not in the dense grid preview or when collapsed.
+  const showRichToolbar = item.type === 'richtext' && !collapsed && !selectMode && !denseView
 
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
@@ -552,14 +557,23 @@ function SpaceItem({
         )}
       </div>
 
-      {/* ── Tags ──────────────────────────────────────── */}
-      {showTags && (
-        <div className={denseView ? 'px-2.5 py-2' : 'px-4 py-2.5'}>
-          <ItemTags
-            tags={item.tags || []}
-            onChange={(tags) => onSetTags?.(item.id, tags)}
-            disabled={!online}
-          />
+      {/* ── Tags (+ Rich Text toolbar, right-aligned) ──── */}
+      {(showTags || showRichToolbar) && (
+        <div className={`flex items-start gap-2 ${denseView ? 'px-2.5 py-2' : 'px-4 py-2.5'}`}>
+          <div className="flex-1 min-w-0">
+            {showTags && (
+              <ItemTags
+                tags={item.tags || []}
+                onChange={(tags) => onSetTags?.(item.id, tags)}
+                disabled={!online}
+              />
+            )}
+          </div>
+          {showRichToolbar && (
+            <div className="shrink-0">
+              <RichTextToolbar editorRef={richTextRef} />
+            </div>
+          )}
         </div>
       )}
 
@@ -602,7 +616,7 @@ function SpaceItem({
             ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8'
             : denseView
               ? `px-2.5 ${showTags ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
-              : `px-4 ${showTags ? 'pt-0' : 'pt-4'} pb-4`}
+              : `px-4 ${showTags || showRichToolbar ? 'pt-0' : 'pt-4'} pb-4`}
         >
           {/* In dense grid the content is a non-interactive preview; tapping it
               opens full screen instead of editing inline in a narrow cell. */}
@@ -610,6 +624,7 @@ function SpaceItem({
           {/* Render only the editor for this item's type (not all four) */}
           {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+          {item.type === 'richtext'      && <RichTextEditor   key={`${item.id}:${editorVersion}`} ref={richTextRef} content={localContent} onChange={handleContentChange} />}
           {item.type === 'code'          && <CodeEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'checkbox_list' && <ChecklistEditor  key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
           {item.type === 'menu_list'     && <MenuListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}

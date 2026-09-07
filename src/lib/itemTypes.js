@@ -1,8 +1,9 @@
-import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, FileCode, Code, KeyRound, Brush, Table, ShieldCheck } from 'lucide-react'
+import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, FileCode, Type, Code, KeyRound, Brush, Table, ShieldCheck } from 'lucide-react'
 
 /** Human-readable labels for each item type */
 export const TYPE_LABELS = {
   textbox: 'Note',
+  richtext: 'Rich Text',
   markdown: 'Markdown',
   menu_list: 'List',
   numbered_list: 'Numbered List',
@@ -18,6 +19,7 @@ export const TYPE_LABELS = {
 /** Colour scheme per item type (text, background, border) */
 export const TYPE_STYLES = {
   textbox: { text: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/20' },
+  richtext: { text: 'text-rose-400', bg: 'bg-rose-400/10', border: 'border-rose-400/20' },
   markdown: { text: 'text-teal-400', bg: 'bg-teal-400/10', border: 'border-teal-400/20' },
   menu_list: { text: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/20' },
   numbered_list: { text: 'text-pink-400', bg: 'bg-pink-400/10', border: 'border-pink-400/20' },
@@ -33,6 +35,7 @@ export const TYPE_STYLES = {
 /** Item type definitions for the "Add item" modal */
 export const ITEM_TYPE_OPTIONS = [
   { type: 'textbox', label: 'Note', desc: 'Free-form plain text', icon: AlignLeft, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+  { type: 'richtext', label: 'Rich Text', desc: 'Formatted text - bold, italic, underline, font size', icon: Type, color: 'text-rose-400', bg: 'bg-rose-400/10' },
   { type: 'markdown', label: 'Markdown', desc: 'Rich text with markdown formatting', icon: FileCode, color: 'text-teal-400', bg: 'bg-teal-400/10' },
   { type: 'menu_list', label: 'List', desc: 'Simple bullet list', icon: List, color: 'text-purple-400', bg: 'bg-purple-400/10' },
   { type: 'numbered_list', label: 'Numbered List', desc: 'Ordered list with numbering', icon: ListOrdered, color: 'text-pink-400', bg: 'bg-pink-400/10' },
