@@ -30,7 +30,9 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 ## Features
 
 - Multiple spaces for separating ideas, projects, plans, references, and personal systems.
+- Nested spaces: group related spaces one level deep as sub-spaces inside a top-level space, with archive and delete cascading to the children.
 - Multiple item types for different kinds of content, including PIN-protected secrets and a built-in authenticator for two-factor (TOTP) codes (see [Item types](#item-types)).
+- Tags for spaces and items, editable in place, with click-a-tag to filter within a space (item tags) and on the dashboard (space tags).
 - Pinning for important spaces and items.
 - Drag-and-drop reordering for spaces and page items, plus keyboard reordering inside lists.
 - Sort spaces and page items by default order, name, or newest, with the choice remembered per view.
@@ -64,6 +66,7 @@ It follows a zero-knowledge architecture: your content is encrypted in the brows
 | Type | Description |
 |------|-------------|
 | Note | Free-form plain text. |
+| Rich Text | Formatted text with a toolbar for bold, italic, underline, font-size increase/decrease, and clear formatting (plus `Ctrl/Cmd+B` / `I` / `U`). Stored as sanitised HTML. |
 | Markdown | Rich text with markdown formatting and click-to-edit preview. |
 | List | Simple bullet list. |
 | Numbered List | Ordered list with automatic numbering that updates as rows are added, removed, or reordered. |
