@@ -1,15 +1,17 @@
 /**
  * AppSidebar.jsx - Persistent desktop left navigation (app-wide).
  *
- * Collapsible (icon-only ↔ icon+label). In icon-only mode the logo shows "AS"
- * and the account shows just the avatar letter. Shown on sm+ screens only; the
- * mobile top bars remain the navigation on phones. `active` marks the current
- * section ('spaces' | 'archive' | 'bin' | 'settings').
+ * Collapsible (icon-only ↔ icon+label). In icon-only mode the logo shows the
+ * brand mark and the account shows just the avatar letter. Shown on sm+ screens
+ * only; the mobile top bars remain the navigation on phones. `active` marks the
+ * current section ('spaces' | 'archive' | 'bin' | 'settings').
  */
 import {
   LayoutGrid, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
   ChevronsLeft, ChevronsRight,
 } from 'lucide-react'
+import { BrandGlyph } from '../BrandGlyph'
+import { WordmarkLogo } from '../WordmarkLogo'
 
 function SectionLabel({ children, collapsed }) {
   if (collapsed) return <div className="h-3" />
@@ -70,7 +72,7 @@ export default function AppSidebar({
   return (
     <aside
       className={`hidden sm:flex flex-col shrink-0 h-screen sticky top-0 border-r border-bg-border bg-bg-surface/40 transition-[width] duration-200 ${
-        collapsed ? 'w-16' : 'w-64'
+        collapsed ? 'w-16' : 'w-56'
       }`}
     >
       {/* Logo */}
@@ -78,17 +80,20 @@ export default function AppSidebar({
         type="button"
         onClick={() => navigate('/app')}
         aria-label="ArcheSpace"
-        className={`flex items-center gap-2.5 h-16 shrink-0 ${collapsed ? 'justify-center px-0' : 'px-4'}`}
+        className={`flex items-center h-16 shrink-0 ${collapsed ? 'justify-center px-0' : 'px-4'}`}
       >
-        <div className="h-9 w-9 shrink-0 rounded-lg bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white font-bold text-xs tracking-wide">
-          AS
+        {/* Same accent box: the A mark when collapsed, the full logo when not. */}
+        <div
+          className={`h-9 rounded-lg bg-gradient-to-br from-accent to-accent-hover flex items-center text-[#0b1512] ${
+            collapsed ? 'w-9 shrink-0 justify-center' : 'w-full px-3 justify-start'
+          }`}
+        >
+          {collapsed ? (
+            <BrandGlyph className="h-[72%] w-[72%]" />
+          ) : (
+            <WordmarkLogo className="h-[60%] w-auto" />
+          )}
         </div>
-        {!collapsed && (
-          <div className="leading-tight text-left">
-            <div className="text-sm font-bold tracking-wide text-text-primary">ARCHE</div>
-            <div className="text-[11px] font-medium tracking-wide text-text-muted">SPACE</div>
-          </div>
-        )}
       </button>
 
       {/* Account */}

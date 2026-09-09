@@ -25,6 +25,7 @@ import {
   WifiOff,
 } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
+import { BrandGlyph } from '../components/BrandGlyph'
 import { APP_VERSION, BUILD_HASH, COMMIT_URL, MOBILE_REPO_URL, REPO_URL } from '../lib/buildInfo'
 
 function GithubMark({ size = 16, className = '' }) {
@@ -186,11 +187,8 @@ export default function HomePage() {
         </div>
 
         <header className="absolute left-0 right-0 top-0 z-50 flex items-center justify-between px-4 py-4 sm:px-8 sm:py-5">
-          <a href="#" className="flex items-center gap-2.5" aria-label="ArcheSpace home">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-300 to-cyan-300 text-sm font-bold text-[#10201c]">
-              AS
-            </span>
-            <span className="hidden text-sm font-semibold text-white sm:inline">ArcheSpace</span>
+          <a href="#" className="flex items-center" aria-label="ArcheSpace home">
+            <img src="/archespace-logo.svg" alt="ArcheSpace" className="h-7 w-auto sm:h-8" />
           </a>
           <nav className="flex items-center gap-2">
             <a href="#features" className={`${navButtonClass} hidden md:inline-flex`}>
@@ -521,8 +519,8 @@ export default function HomePage() {
               <div className="w-full max-w-[248px] rounded-[2rem] border border-white/12 bg-[#141824] p-3 shadow-2xl">
                 <div className="rounded-[1.5rem] border border-white/8 bg-[#0f1117] p-4">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-300 to-cyan-300 text-[11px] font-bold text-[#10201c]">
-                      AS
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-300 to-cyan-300 text-[#10201c]">
+                      <BrandGlyph className="h-[72%] w-[72%]" />
                     </span>
                     <span className="text-sm font-semibold text-white">ArcheSpace</span>
                     <LockKeyhole size={13} className="ml-auto text-emerald-200/70" />
@@ -585,7 +583,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
-              <p className="text-sm font-semibold text-white">ArcheSpace</p>
+              <img src="/archespace-logo.svg" alt="ArcheSpace" className="h-7 w-auto" />
               <p className="mt-3 max-w-xs text-sm leading-6 text-white/50">
                 An open source, private space for everything you're working on.
               </p>
