@@ -83,7 +83,7 @@ export function SpaceCard({
         aria-pressed={selectMode ? selected : undefined}
         aria-label={ariaLabel}
         className={`group relative flex items-center gap-3 sm:gap-4 rounded-xl pl-4 pr-3 py-3 cursor-pointer transition-colors animate-fade-in-up bg-bg-card ${
-          selected || col.pinned ? 'border-2 border-accent-border' : 'border border-bg-border hover:border-accent/40'
+          selected || (col.pinned && !selectMode) ? 'border-2 border-accent-border' : 'border border-bg-border hover:border-accent/40'
         } ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
         style={{
           animationDelay: `${index * 30}ms`,
@@ -128,7 +128,7 @@ export function SpaceCard({
 
         {!selectMode && (
           <div className="shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-            <ActionMenu label="Space actions" actions={menuActions} />
+            <ActionMenu label="Space actions" actions={menuActions} bordered={false} />
           </div>
         )}
         {!selectMode && (
@@ -149,7 +149,7 @@ export function SpaceCard({
       aria-pressed={selectMode ? selected : undefined}
       aria-label={ariaLabel}
       className={`group relative rounded-2xl p-3.5 cursor-pointer hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up bg-bg-card ${
-        selected || col.pinned ? 'border-2 border-accent-border' : 'border border-bg-border hover:border-accent/40'
+        selected || (col.pinned && !selectMode) ? 'border-2 border-accent-border' : 'border border-bg-border hover:border-accent/40'
       } ${
         !selectMode && dragOverIndex === index && dragIndex !== index ? 'border-l-4 border-l-accent pl-3' : ''
       } ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
@@ -202,7 +202,7 @@ export function SpaceCard({
       )}
       <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-bg-border gap-2">
         <p className="text-text-muted text-xs truncate">{itemLabel}</p>
-        {!selectMode && <ActionMenu label="Space actions" actions={menuActions} />}
+        {!selectMode && <ActionMenu label="Space actions" actions={menuActions} bordered={false} />}
       </div>
     </div>
   )

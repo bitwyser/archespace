@@ -323,7 +323,7 @@ function SpaceItem({
         : 'relative rounded-2xl bg-bg-card'
     } transition-colors ${denseView ? 'text-[13px]' : ''} ${
       isFullscreen ? '' :
-      selected || item.pinned ? 'border-2 border-accent-border' :
+      selected || (item.pinned && !selectMode) ? 'border-2 border-accent-border' :
       'border border-bg-border'
     }`}>
       {/* ── Header ────────────────────────────────────── */}

@@ -416,8 +416,10 @@ export default function DashboardPage() {
 
       {/* ── Main content ──────────────────────────────── */}
       <main className="px-4 sm:px-6 py-6">
-        {/* Search - desktop */}
-        <div className="hidden sm:block max-w-xl mb-6">
+        {/* Search - desktop (stays fixed at the top; the header, tag filter and
+            grid scroll beneath it). */}
+        <div className="hidden sm:block sticky top-0 z-30 bg-bg-base -mx-4 sm:-mx-6 px-4 sm:px-6 pt-6 pb-3 mb-3 -mt-6">
+          <div className="max-w-xl">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             <input
@@ -449,6 +451,7 @@ export default function DashboardPage() {
                 className="absolute top-full mt-2 left-0 right-0 z-40 max-h-[60vh] overflow-y-auto rounded-2xl border border-bg-border bg-bg-surface shadow-2xl p-3 space-y-3"
               />
             )}
+          </div>
           </div>
         </div>
 
