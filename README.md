@@ -1,4 +1,9 @@
-# ArcheSpace
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/archespace-logo.svg">
+    <img alt="ArcheSpace" src="public/archespace-logo-light.svg" width="360">
+  </picture>
+</p>
 
 [![CI](https://github.com/bitwyser/archespace/actions/workflows/ci.yml/badge.svg)](https://github.com/bitwyser/archespace/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/release/bitwyser/archespace)](https://github.com/bitwyser/archespace/releases)
