@@ -162,6 +162,7 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorBoundary />,
     children: [
       { path: '/login', element: <PublicRoute title="Sign in"><LoginPage /></PublicRoute> },
+      { path: '/signup', element: <PublicRoute title="Create account"><LoginPage /></PublicRoute> },
       { path: '/reset-password', element: <Suspense fallback={<PageLoader />}><PasswordResetPage /></Suspense> },
       { path: '/', element: <HomeRoute /> },
       {

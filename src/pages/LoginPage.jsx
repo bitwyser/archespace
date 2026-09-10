@@ -2,11 +2,12 @@
  * LoginPage.jsx - Sign in and (optional) sign up.
  */
 import { useState, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContextCore'
 import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Home } from 'lucide-react'
 import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '../lib/constants'
 import { MULTI_USER_ENABLED } from '../lib/appConfig'
+import { APP_VERSION } from '../lib/buildInfo'
 import { BrandGlyph } from '../components/BrandGlyph'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
@@ -35,7 +36,12 @@ function getInitialInfo(searchParams) {
 export default function LoginPage() {
   const { signIn, signUp, requestPasswordReset } = useAuth()
   const [searchParams] = useSearchParams()
-  const [mode, setMode] = useState('signin')
+  const location = useLocation()
+  const navigate = useNavigate()
+  // The route decides the page: /signup is create-account, everything else is
+  // sign in. "Forgot password" is a sub-state of the sign-in page.
+  const pathMode = location.pathname === '/signup' ? 'signup' : 'signin'
+  const [forgot, setForgot] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -58,8 +64,16 @@ export default function LoginPage() {
     return () => clearInterval(timer)
   }, [isCoolingDown, loginRateKey])
 
-  const isSignUp = mode === 'signup' && MULTI_USER_ENABLED
-  const isForgot = mode === 'forgot'
+  const isSignUp = pathMode === 'signup' && MULTI_USER_ENABLED
+  const isForgot = forgot && pathMode === 'signin'
+
+  // Sign-up is only reachable when multi-user mode is on; otherwise send the
+  // /signup route back to sign in.
+  useEffect(() => {
+    if (pathMode === 'signup' && !MULTI_USER_ENABLED) {
+      navigate('/login', { replace: true })
+    }
+  }, [pathMode, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -116,7 +130,6 @@ export default function LoginPage() {
       // Shown identically whether the email is new or already registered, so it
       // never reveals which - preventing account enumeration.
       setInfo('Check your email to confirm your address and finish signing up. Already have an account? Sign in instead.')
-      setMode('signin')
       setPassword('')
       setConfirmPassword('')
       return
@@ -165,40 +178,19 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-6 sm:mb-10">
-          <BrandGlyph className="h-16 sm:h-20 w-auto mx-auto mb-4 sm:mb-5 text-accent" />
+          <div className="mx-auto mb-4 sm:mb-5 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-hover text-[#0c1a16] shadow-lg shadow-black/20">
+            <BrandGlyph className="h-[80%] w-[80%]" />
+          </div>
           <p className="text-text-secondary text-sm">
-            {MULTI_USER_ENABLED ? 'Sign in or create an account' : 'Sign in to your account'}
+            {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </p>
         </div>
 
         <div className="bg-bg-surface border border-bg-border rounded-2xl p-6 shadow-xl shadow-black/10">
-          {MULTI_USER_ENABLED && (
-            <div className="flex gap-1 p-1 bg-bg-elevated rounded-xl mb-4">
-              <button
-                type="button"
-                onClick={() => { setMode('signin'); setError(''); setInfo('') }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  mode === 'signin' ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                Sign in
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode('signup'); setError(''); setInfo('') }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  mode === 'signup' ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-muted hover:text-text-secondary'
-                }`}
-              >
-                Create account
-              </button>
-            </div>
-          )}
-
           {isForgot && (
             <button
               type="button"
-              onClick={() => { setMode('signin'); setError(''); setInfo('') }}
+              onClick={() => { setForgot(false); setError(''); setInfo('') }}
               className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-accent transition-colors mb-4"
             >
               <ArrowLeft size={14} /> Back to sign in
@@ -307,7 +299,7 @@ export default function LoginPage() {
             {!isSignUp && !isForgot && (
               <button
                 type="button"
-                onClick={() => { setMode('forgot'); setError(''); setInfo('') }}
+                onClick={() => { setForgot(true); setError(''); setInfo('') }}
                 className="w-full text-center text-xs text-text-muted hover:text-accent transition-colors pt-1"
               >
                 Forgot password?
@@ -316,8 +308,28 @@ export default function LoginPage() {
           </form>
         </div>
 
+        {!isForgot && (isSignUp || MULTI_USER_ENABLED) && (
+          <p className="text-center text-text-secondary text-sm mt-5">
+            {isSignUp ? (
+              <>
+                Already have an account?{' '}
+                <Link to="/login" className="text-accent hover:underline font-medium">
+                  Sign in
+                </Link>
+              </>
+            ) : (
+              <>
+                New to ArcheSpace?{' '}
+                <Link to="/signup" className="text-accent hover:underline font-medium">
+                  Create an account
+                </Link>
+              </>
+            )}
+          </p>
+        )}
+
         <p className="text-center text-text-muted text-xs mt-4 sm:mt-6">
-          {MULTI_USER_ENABLED ? 'Multi-user · Private · Encrypted' : 'Single-user · Private · Encrypted'}
+          Everything in Encrypted Space · v{APP_VERSION}
         </p>
       </div>
     </div>
