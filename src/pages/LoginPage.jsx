@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContextCore'
 import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Home } from 'lucide-react'
 import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '../lib/constants'
 import { MULTI_USER_ENABLED } from '../lib/appConfig'
-import { WordmarkLogo } from '../components/WordmarkLogo'
+import { BrandGlyph } from '../components/BrandGlyph'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
 import {
@@ -165,7 +165,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-6 sm:mb-10">
-          <WordmarkLogo className="h-11 sm:h-12 w-auto mx-auto mb-4 sm:mb-5 text-accent" />
+          <BrandGlyph className="h-16 sm:h-20 w-auto mx-auto mb-4 sm:mb-5 text-accent" />
           <p className="text-text-secondary text-sm">
             {MULTI_USER_ENABLED ? 'Sign in or create an account' : 'Sign in to your account'}
           </p>
