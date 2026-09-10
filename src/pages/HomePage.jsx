@@ -14,6 +14,7 @@ import {
   Layers,
   LockKeyhole,
   Mail,
+  Menu,
   Palette,
   Pin,
   RefreshCw,
@@ -25,10 +26,11 @@ import {
   Tag,
   Users,
   WifiOff,
+  X,
 } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { BrandGlyph } from '../components/BrandGlyph'
-import { APP_VERSION, BUILD_HASH, COMMIT_URL, MOBILE_REPO_URL, REPO_URL } from '../lib/buildInfo'
+import { APP_VERSION, COMMIT_URL, MOBILE_REPO_URL, REPO_URL } from '../lib/buildInfo'
 
 function GithubMark({ size = 16, className = '' }) {
   return (
@@ -49,13 +51,22 @@ function GithubMark({ size = 16, className = '' }) {
 // identical (Law of Similarity) and the primary path always stands out
 // (Von Restorff). Generous padding keeps every target easy to hit (Fitts).
 const btnPrimary =
-  'home-link-lift inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-6 py-3.5 text-sm font-semibold text-[#0c1a16] shadow-lg shadow-emerald-950/40 hover:bg-emerald-200 transition-colors'
+  'home-link-lift inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-5 py-2.5 text-sm font-semibold text-[#0c1a16] shadow-lg shadow-emerald-950/40 hover:bg-emerald-200 transition-colors'
 const btnGhost =
-  'home-link-lift inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors'
+  'home-link-lift inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors'
 const navLink =
   'rounded-lg px-3 py-2 text-sm text-white/70 hover:text-white transition-colors'
 
 const heroWords = ['Private', 'Organised', 'Yours']
+
+// Section links shown in the header (desktop) and the mobile menu.
+const navSections = [
+  { id: 'top', href: '#top', label: 'Home' },
+  { id: 'features', href: '#features', label: 'Features' },
+  { id: 'how-it-works', href: '#how-it-works', label: 'How it works' },
+  { id: 'open-source', href: '#open-source', label: 'Open source' },
+  { id: 'mobile', href: '#mobile', label: 'Mobile' },
+]
 
 // Twenty capabilities split evenly into four labelled chunks (five each) so the
 // section reads as a few ideas, not a wall of items (Miller's Law + Proximity).
@@ -152,7 +163,9 @@ export default function HomePage() {
   const [heroSlotWidth, setHeroSlotWidth] = useState(null)
   const [activeSection, setActiveSection] = useState(null)
   const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const heroSizerRef = useRef(null)
+  const isActive = id => (id === 'top' ? !activeSection : activeSection === id)
   const year = new Date().getFullYear()
 
   useEffect(() => {
@@ -193,8 +206,18 @@ export default function HomePage() {
   // it works everywhere; under reduced motion everything is shown up front.
   useEffect(() => {
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+
+    // Smooth-scroll anchor jumps while the landing page is mounted (restored on
+    // unmount so in-app routing is unaffected); skipped under reduced motion.
+    const root = document.documentElement
+    const prevScrollBehavior = root.style.scrollBehavior
+    if (!reduce) root.style.scrollBehavior = 'smooth'
+
     let pending = Array.from(document.querySelectorAll('.reveal, .reveal-stagger'))
-    const sections = ['features', 'how-it-works', 'mobile']
+    // Formats has no nav item of its own - it counts as part of Features, so
+    // the Features underline stays lit while scrolling through it.
+    const spyAlias = { formats: 'features' }
+    const sections = ['features', 'formats', 'how-it-works', 'open-source', 'mobile']
       .map(id => document.getElementById(id))
       .filter(Boolean)
     const hero = document.getElementById('top')
@@ -224,7 +247,7 @@ export default function HomePage() {
       for (const section of sections) {
         const rect = section.getBoundingClientRect()
         if (rect.top <= line && rect.bottom >= line) {
-          active = section.id
+          active = spyAlias[section.id] || section.id
           break
         }
       }
@@ -249,6 +272,7 @@ export default function HomePage() {
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
+      root.style.scrollBehavior = prevScrollBehavior
     }
   }, [])
 
@@ -268,6 +292,13 @@ export default function HomePage() {
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
+      <a
+        href="#top"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-emerald-300 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-[#0c1a16]"
+      >
+        Skip to content
+      </a>
+
       {/* ── Sticky header: familiar layout, one dominant action ──────── */}
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
@@ -282,48 +313,88 @@ export default function HomePage() {
               <BrandGlyph className="h-[80%] w-[80%]" />
             </span>
           </a>
-          <nav className="flex items-center gap-1 sm:gap-2">
-            <a
-              href="#top"
-              className={`${navLink} home-nav-link hidden md:inline-flex ${!activeSection ? 'is-active' : ''}`}
-            >
-              Home
-            </a>
-            <a
-              href="#features"
-              className={`${navLink} home-nav-link hidden md:inline-flex ${activeSection === 'features' ? 'is-active' : ''}`}
-            >
-              Features
-            </a>
-            <a
-              href="#how-it-works"
-              className={`${navLink} home-nav-link hidden md:inline-flex ${activeSection === 'how-it-works' ? 'is-active' : ''}`}
-            >
-              How it works
-            </a>
-            <a
-              href="#mobile"
-              className={`${navLink} home-nav-link hidden lg:inline-flex ${activeSection === 'mobile' ? 'is-active' : ''}`}
-            >
-              Mobile
-            </a>
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-1 lg:flex">
+            {navSections.map(section => (
+              <a
+                key={section.id}
+                href={section.href}
+                className={`${navLink} home-nav-link ${isActive(section.id) ? 'is-active' : ''}`}
+              >
+                {section.label}
+              </a>
+            ))}
             <a
               href={REPO_URL}
               target="_blank"
               rel="noreferrer"
-              className={`${navLink} home-nav-link hidden sm:inline-flex`}
+              className={`${navLink} home-nav-link`}
             >
               GitHub
             </a>
             <Link
-              to="/login"
+              to="/signup"
               className="home-link-lift inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-[#0c1a16] hover:bg-emerald-200 transition-colors"
             >
-              Open the app
+              Get started
               <ArrowRight size={16} />
             </Link>
           </nav>
+
+          {/* Mobile: primary action + menu toggle */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <Link
+              to="/signup"
+              className="home-link-lift inline-flex items-center rounded-lg bg-emerald-300 px-3.5 py-2 text-sm font-semibold text-[#0c1a16] hover:bg-emerald-200 transition-colors"
+            >
+              Get started
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(open => !open)}
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              aria-controls="home-mobile-menu"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white transition-colors hover:bg-white/10"
+            >
+              {menuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {menuOpen && (
+          <div
+            id="home-mobile-menu"
+            className="border-t border-white/10 bg-[#0f1117]/95 backdrop-blur-md lg:hidden"
+          >
+            <nav className="mx-auto flex max-w-6xl flex-col px-4 py-2 sm:px-6">
+              {navSections.map(section => (
+                <a
+                  key={section.id}
+                  href={section.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`rounded-lg px-2 py-3 text-sm transition-colors ${
+                    isActive(section.id)
+                      ? 'font-medium text-white'
+                      : 'text-white/70 hover:text-white'
+                  }`}
+                >
+                  {section.label}
+                </a>
+              ))}
+              <a
+                href={REPO_URL}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="rounded-lg px-2 py-3 text-sm text-white/70 transition-colors hover:text-white"
+              >
+                GitHub
+              </a>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* ── Hero: one message, one primary path ─────────────────────── */}
@@ -335,7 +406,10 @@ export default function HomePage() {
 
         <div className="hero-enter relative z-10 mx-auto flex max-w-3xl flex-col items-center py-16 text-center sm:py-20">
           <div className="hero-headline">
-            <h1 className="whitespace-normal sm:whitespace-nowrap text-[clamp(1.9rem,8vw,4.5rem)] font-semibold leading-[1.03] tracking-normal">
+            <h1
+              aria-label="ArcheSpace - Everything in One Encrypted Space"
+              className="whitespace-normal sm:whitespace-nowrap text-[clamp(1.9rem,8vw,4.5rem)] font-semibold leading-[1.03] tracking-normal"
+            >
               It&apos;s{' '}
               <span
                 className="home-word-slot text-cyan-200 drop-shadow-[0_0_22px_rgba(103,232,249,0.3)]"
@@ -364,13 +438,13 @@ export default function HomePage() {
           </p>
 
           <div className="mt-9 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
-            <Link to="/login" className={`${btnPrimary} w-full sm:w-auto`}>
-              Open the app
+            <Link to="/signup" className={`${btnPrimary} w-full sm:w-auto`}>
+              Get started
               <ArrowRight size={16} />
             </Link>
-            <a href="#how-it-works" className={`${btnGhost} w-full sm:w-auto`}>
-              See how it works
-            </a>
+            <Link to="/login" className={`${btnGhost} w-full sm:w-auto`}>
+              Sign in
+            </Link>
           </div>
         </div>
       </section>
@@ -404,7 +478,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Formats ─────────────────────────────────────────────────── */}
-      <section className="bg-[#0f1117] px-4 py-20 sm:px-6">
+      <section id="formats" className="scroll-mt-20 bg-[#0f1117] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <SectionHeading center eyebrow="One space, many formats" title="Every shape a thought takes">
             Pick whichever fits the moment, and switch as the work changes. More arrive over time.
@@ -421,7 +495,7 @@ export default function HomePage() {
                 </span>
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-white">{label}</h3>
-                  <p className="mt-0.5 text-xs leading-5 text-white/55">{desc}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-white/65">{desc}</p>
                 </div>
               </div>
             ))}
@@ -468,7 +542,7 @@ export default function HomePage() {
                     <p className="text-xs leading-5 text-white/60">
                       Pricing review, then the migration checklist
                     </p>
-                    <div className="flex items-center gap-2 pt-1 text-xs text-white/50">
+                    <div className="flex items-center gap-2 pt-1 text-xs text-white/60">
                       <CheckCircle2 size={13} className="text-emerald-300" />
                       Draft announcement
                     </div>
@@ -476,7 +550,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
-                  <p className="flex items-center gap-2 text-xs font-semibold text-white/50">
+                  <p className="flex items-center gap-2 text-xs font-semibold text-white/60">
                     <LockKeyhole size={14} />
                     What we store
                   </p>
@@ -485,7 +559,7 @@ export default function HomePage() {
                     <p>arc1:Wq7hB3n.Yc6sT2eJ9uXa</p>
                     <p>arc1:Kd4mV8r.Pz5nQ1wE7bHt</p>
                   </div>
-                  <p className="mt-4 text-[11px] leading-5 text-white/55">The same three items.</p>
+                  <p className="mt-4 text-[11px] leading-5 text-white/65">The same three items.</p>
                 </div>
               </div>
 
@@ -503,7 +577,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Built in the open ───────────────────────────────────────── */}
-      <section className="bg-[#0f1117] px-4 py-20 sm:px-6">
+      <section id="open-source" className="scroll-mt-20 bg-[#0f1117] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <SectionHeading eyebrow="Built in the open" title="Use ours, or run your own" />
 
@@ -650,8 +724,8 @@ export default function HomePage() {
             you must not forget, all kept in one space.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to="/login" className={btnPrimary}>
-              Open the app
+            <Link to="/signup" className={btnPrimary}>
+              Get started
               <ArrowRight size={16} />
             </Link>
             <a href={MOBILE_REPO_URL} target="_blank" rel="noreferrer" className={btnGhost}>
@@ -668,13 +742,13 @@ export default function HomePage() {
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
               <img src="/archespace-logo.svg" alt="ArcheSpace" className="h-7 w-auto" />
-              <p className="mt-3 max-w-xs text-sm leading-6 text-white/50">
+              <p className="mt-3 max-w-xs text-sm leading-6 text-white/60">
                 An open-source, encrypted space.
               </p>
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/55">Product</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/65">Product</p>
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li><a href="#features" className="text-white/60 hover:text-white transition-colors">Features</a></li>
                 <li><a href="#how-it-works" className="text-white/60 hover:text-white transition-colors">How it works</a></li>
@@ -682,11 +756,11 @@ export default function HomePage() {
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/55">Project</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/65">Project</p>
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li>
                   <a href={REPO_URL} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
-                    Source code
+                    Web source
                   </a>
                 </li>
                 <li>
@@ -698,7 +772,7 @@ export default function HomePage() {
             </div>
 
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/55">Contact</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/65">Contact</p>
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li>
                   <a href="mailto:help@archespace.app" className="text-white/60 hover:text-white transition-colors">
@@ -715,7 +789,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
-            <p className="text-xs text-white/55">
+            <p className="text-xs text-white/65">
               © {year} · Created and maintained by{' '}
               <a
                 href="https://github.com/bitwyser"
@@ -727,15 +801,14 @@ export default function HomePage() {
               </a>
               .
             </p>
-            <p className="text-xs text-white/55">
-              v{APP_VERSION} · build{' '}
+            <p className="text-xs text-white/65">
               <a
                 href={COMMIT_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="font-mono underline hover:text-white/70 transition-colors"
+                className="no-underline hover:text-white/80 transition-colors"
               >
-                {BUILD_HASH}
+                v{APP_VERSION}
               </a>
             </p>
           </div>
