@@ -8,6 +8,7 @@ import {
   Download,
   FileDown,
   Fingerprint,
+  FolderTree,
   GitFork,
   Keyboard,
   Layers,
@@ -21,6 +22,7 @@ import {
   Server,
   ShieldCheck,
   Smartphone,
+  Tag,
   Users,
   WifiOff,
 } from 'lucide-react'
@@ -43,59 +45,106 @@ function GithubMark({ size = 16, className = '' }) {
   )
 }
 
-/** Shared nav button styles so every control in the header matches. */
-const navButtonClass =
-  'home-link-lift inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/80 hover:bg-white/15 hover:text-white transition-colors'
-const navPrimaryClass =
-  'home-link-lift inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-[#10201c] hover:bg-emerald-200 transition-colors'
+// One primary and one quiet style, reused everywhere so identical actions look
+// identical (Law of Similarity) and the primary path always stands out
+// (Von Restorff). Generous padding keeps every target easy to hit (Fitts).
+const btnPrimary =
+  'home-link-lift inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-6 py-3.5 text-sm font-semibold text-[#0c1a16] shadow-lg shadow-emerald-950/40 hover:bg-emerald-200 transition-colors'
+const btnGhost =
+  'home-link-lift inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors'
+const navLink =
+  'rounded-lg px-3 py-2 text-sm text-white/70 hover:text-white transition-colors'
 
-const heroWords = ['Encrypted', 'Private', 'Own']
+const heroWords = ['Private', 'Organised', 'Yours']
 
-const trustPoints = ['Open source', 'Zero-knowledge', 'No trackers', 'Self-hostable']
-
-const features = [
-  { icon: Layers, label: 'A space for every project' },
-  { icon: Boxes, label: 'Multiple formats' },
-  { icon: ShieldCheck, label: 'Built-in authenticator for 2FA codes' },
-  { icon: Pin, label: 'Pin important spaces and items' },
-  { icon: Search, label: 'Search across everything' },
-  { icon: Save, label: 'Saves as you type' },
-  { icon: Keyboard, label: 'Command palette and keyboard shortcuts' },
-  { icon: FileDown, label: 'Export items and spaces to PDF' },
-  { icon: RefreshCw, label: 'Syncs across devices' },
-  { icon: WifiOff, label: 'Works offline' },
-  { icon: ArchiveRestore, label: 'Archive and recycle bin' },
-  { icon: Download, label: 'Backup and restore' },
-  { icon: LockKeyhole, label: 'Lockable encrypted vault' },
-  { icon: Fingerprint, label: 'On-device passkey and biometric unlock' },
-  { icon: Palette, label: 'Dark and light themes with accent colors' },
-  { icon: Users, label: 'Single or multi-user mode' },
+// Twenty capabilities split evenly into four labelled chunks (five each) so the
+// section reads as a few ideas, not a wall of items (Miller's Law + Proximity).
+const featureGroups = [
+  {
+    title: 'Capture and organize',
+    icon: Layers,
+    items: [
+      { icon: Layers, label: 'A space for every project' },
+      { icon: FolderTree, label: 'Nested spaces (sub-spaces)' },
+      { icon: Boxes, label: 'Many item formats' },
+      { icon: Tag, label: 'Tags and quick filtering' },
+      { icon: Search, label: 'Search across everything' },
+    ],
+  },
+  {
+    title: 'Security and privacy',
+    icon: ShieldCheck,
+    items: [
+      { icon: LockKeyhole, label: 'Lockable encrypted vault' },
+      { icon: Server, label: 'Zero-knowledge, self-hostable' },
+      { icon: ShieldCheck, label: 'Built-in 2FA authenticator' },
+      { icon: Fingerprint, label: 'Passkey and biometric unlock' },
+      { icon: Users, label: 'Single or multi-user mode' },
+    ],
+  },
+  {
+    title: 'Sync and access',
+    icon: RefreshCw,
+    items: [
+      { icon: RefreshCw, label: 'Syncs across devices' },
+      { icon: WifiOff, label: 'Works offline' },
+      { icon: Smartphone, label: 'Native Android app, iOS soon' },
+      { icon: Save, label: 'Saves as you type' },
+      { icon: Download, label: 'Backup and restore' },
+    ],
+  },
+  {
+    title: 'Make it yours',
+    icon: Palette,
+    items: [
+      { icon: Palette, label: 'Dark and light themes with accents' },
+      { icon: Keyboard, label: 'Command palette and shortcuts' },
+      { icon: Pin, label: 'Pin what matters' },
+      { icon: FileDown, label: 'Export to PDF' },
+      { icon: ArchiveRestore, label: 'Archive and recycle bin' },
+    ],
+  },
 ]
 
 const steps = [
   {
     step: '01',
-    title: 'Sign in',
-    body: 'Email and password get you into the account. That is all this step does.',
+    title: 'Create your account',
+    body: 'Sign up with an email and password. This only gets you into the app - it does not unlock any of your content yet.',
   },
   {
     step: '02',
-    title: 'Unlock your vault',
-    body: 'A separate PIN or passphrase becomes your key, on your device. It is never sent anywhere.',
+    title: 'Set your vault key',
+    body: 'Choose a PIN or passphrase. It becomes your encryption key on your device and is never sent to the server - not even we can see it.',
   },
   {
     step: '03',
-    title: 'Start writing',
-    body: 'Everything is locked before it leaves the tab. Unlock on any device and it reads back plainly.',
+    title: 'Start capturing',
+    body: 'Add notes, lists, code, secrets, and more. Everything is encrypted on your device before it syncs, and reads back plainly on any device you unlock.',
   },
 ]
 
 const serverFacts = [
-  'Two secrets: one proves who you are, the other unlocks your content.',
-  'Your key is built on your device, never on the server.',
-  'The database holds unreadable content plus plain metadata like ids, timestamps, and order.',
-  'No reset link and no override. Lose both the PIN and the recovery code, and your data can never be unlocked again.',
+  'Two separate secrets: your login proves who you are, your vault key unlocks your content.',
+  'Your vault key is created on your device and never leaves it.',
+  'We store only unreadable ciphertext plus plain metadata - ids, timestamps, and order.',
+  'There is no reset link and no backdoor. Lose both your PIN and recovery code, and the data can never be unlocked again.',
 ]
+
+/** A labelled section heading with an eyebrow, kept consistent across sections. */
+function SectionHeading({ eyebrow, title, children, center = false }) {
+  return (
+    <div className={center ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}>
+      <p className="text-sm font-semibold text-emerald-200">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">{title}</h2>
+      {children ? (
+        <p className={`mt-4 text-sm leading-6 text-white/62 ${center ? 'mx-auto max-w-xl' : 'max-w-xl'}`}>
+          {children}
+        </p>
+      ) : null}
+    </div>
+  )
+}
 
 export default function HomePage() {
   const [heroWordIndex, setHeroWordIndex] = useState(0)
@@ -105,6 +154,10 @@ export default function HomePage() {
   const year = new Date().getFullYear()
 
   useEffect(() => {
+    // Respect reduced-motion: keep a single static word instead of cycling.
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    if (reduce?.matches) return
+
     const interval = window.setInterval(() => {
       setHeroWordIndex(index => {
         setHeroPrevIndex(index)
@@ -122,9 +175,8 @@ export default function HomePage() {
     return () => window.clearTimeout(timer)
   }, [heroPrevIndex, heroWordIndex])
 
-  // Measure the active word so the slot can animate its width, keeping the
-  // surrounding "Your"/"Space" words from snapping when the word changes.
-  // Re-measure on resize since the headline font size is responsive.
+  // Measure the active word so the slot animates its width, keeping the
+  // surrounding "Your"/"Space" from snapping when the word changes.
   useLayoutEffect(() => {
     const measure = () => {
       if (heroSizerRef.current) setHeroSlotWidth(heroSizerRef.current.offsetWidth)
@@ -146,80 +198,60 @@ export default function HomePage() {
 
   return (
     <main
-      className="home-page min-h-screen bg-[#0f1117] text-white overflow-hidden"
+      className="home-page min-h-screen bg-[#0f1117] text-white"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="relative h-[100svh] overflow-hidden px-4 sm:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(50,211,170,0.18),transparent_28%),radial-gradient(circle_at_80%_16%,rgba(124,106,247,0.18),transparent_30%),linear-gradient(135deg,#0f1117_0%,#171923_46%,#11221f_100%)]" />
-        <div className="absolute inset-0 opacity-[0.18] bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:44px_44px]" />
-
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="home-float absolute top-[16%] left-[5%] hidden md:block w-56 rounded-xl border border-white/10 bg-white/[0.07] backdrop-blur-md p-4 shadow-2xl">
-            <div className="flex items-center gap-2 text-xs text-emerald-200">
-              <CheckCircle2 size={14} />
-              Draft ideas
-            </div>
-            <div className="mt-4 space-y-2">
-              <div className="h-2.5 w-5/6 rounded-full bg-white/30" />
-              <div className="h-2.5 w-2/3 rounded-full bg-white/15" />
-              <div className="h-2.5 w-3/4 rounded-full bg-emerald-300/30" />
-            </div>
-          </div>
-
-          <div className="home-float-delayed absolute top-[24%] right-[6%] hidden lg:block w-64 rounded-xl border border-white/10 bg-[#171923]/80 backdrop-blur-md p-4 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-white/60">Launch plan</span>
-              <span className="h-2 w-2 rounded-full bg-emerald-300" />
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="rounded-lg bg-cyan-300/15 border border-cyan-200/20 p-3">
-                <div className="h-2 w-12 rounded-full bg-cyan-200/50" />
-                <div className="mt-2 h-8 rounded bg-white/10" />
-              </div>
-              <div className="rounded-lg bg-violet-300/15 border border-violet-200/20 p-3">
-                <div className="h-2 w-10 rounded-full bg-violet-200/50" />
-                <div className="mt-2 h-8 rounded bg-white/10" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <header className="absolute left-0 right-0 top-0 z-50 flex items-center justify-between px-4 py-4 sm:px-8 sm:py-5">
-          <a href="#" className="flex items-center" aria-label="ArcheSpace home">
-            <img src="/archespace-logo.svg" alt="ArcheSpace" className="h-7 w-auto sm:h-8" />
+      {/* ── Sticky header: familiar layout, one dominant action ──────── */}
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0f1117]/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+          <a href="#top" className="flex items-center" aria-label="ArcheSpace home">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-400 text-[#0c1a16] shadow-lg shadow-emerald-950/30">
+              <BrandGlyph className="h-[80%] w-[80%]" />
+            </span>
           </a>
-          <nav className="flex items-center gap-2">
-            <a href="#features" className={`${navButtonClass} hidden md:inline-flex`}>
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <a href="#features" className={`${navLink} hidden md:inline-flex`}>
               Features
             </a>
-            <a href="#how-it-works" className={`${navButtonClass} hidden md:inline-flex`}>
+            <a href="#how-it-works" className={`${navLink} hidden md:inline-flex`}>
               How it works
             </a>
-            <a href="#mobile" className={`${navButtonClass} hidden lg:inline-flex`}>
-              Android
+            <a href="#mobile" className={`${navLink} hidden lg:inline-flex`}>
+              Mobile
             </a>
             <a
               href={REPO_URL}
               target="_blank"
               rel="noreferrer"
-              className={`${navButtonClass} hidden sm:inline-flex`}
+              aria-label="GitHub repository"
+              className={`${navLink} hidden sm:inline-flex items-center gap-2`}
             >
               <GithubMark size={16} />
-              GitHub
+              <span className="hidden lg:inline">GitHub</span>
             </a>
-            <Link to="/login" className={navPrimaryClass}>
-              Sign in
+            <Link
+              to="/login"
+              className="home-link-lift inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-[#0c1a16] hover:bg-emerald-200 transition-colors"
+            >
+              Open the app
               <ArrowRight size={16} />
             </Link>
           </nav>
-        </header>
+        </div>
+      </header>
 
-        <div className="relative z-10 mx-auto flex h-full max-w-4xl flex-col items-center justify-center px-1 pt-20 pb-10 text-center sm:pt-24 sm:pb-12">
+      {/* ── Hero: one message, one primary path ─────────────────────── */}
+      <section
+        id="top"
+        className="relative flex min-h-[calc(100svh-3.75rem)] items-center overflow-hidden px-4 sm:px-6"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(50,211,170,0.14),transparent_55%),linear-gradient(180deg,#0f1117_0%,#12151d_100%)]" />
+
+        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center py-16 text-center sm:py-20">
           <div className="hero-headline">
-            <h1 className="max-w-4xl whitespace-nowrap text-[clamp(1.5rem,8vw,4.5rem)] font-semibold leading-[1.02] tracking-normal">
-              Your{' '}
+            <h1 className="whitespace-normal sm:whitespace-nowrap text-[clamp(1.9rem,8vw,4.5rem)] font-semibold leading-[1.03] tracking-normal">
+              It&apos;s{' '}
               <span
                 className="home-word-slot text-cyan-200 drop-shadow-[0_0_22px_rgba(103,232,249,0.3)]"
                 style={heroSlotWidth != null ? { width: heroSlotWidth } : undefined}
@@ -235,64 +267,65 @@ export default function HomePage() {
                 <span key={`in-${heroWordIndex}`} className="home-word home-word-in">
                   {heroWords[heroWordIndex]}
                 </span>
-              </span>{' '}
-              Space
+              </span>
+              .
             </h1>
-            <div
-              aria-hidden="true"
-              className="hero-reflection whitespace-nowrap text-[clamp(1.5rem,8vw,4.5rem)] font-semibold leading-[1.02] tracking-normal"
-            >
-              Your <span className="text-cyan-200">{heroWords[heroWordIndex]}</span> Space
-            </div>
           </div>
-          <p className="mt-6 max-w-2xl text-base leading-7 text-white/72 sm:text-lg">
-            An open-source space to capture, organise, and come back to everything you are
-            working on. Yours alone, on every device.
+
+          <p className="mt-6 max-w-3xl text-base leading-7 text-white/72 sm:text-lg">
+            Capture and organise all your information, knowledge, projects, notes, secrets, code,{' '}
+            <br className="hidden sm:inline" />
+            checklists, ideas, and everything else you're working on in an open-source, encrypted space.
           </p>
-          <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-            <Link
-              to="/login"
-              className="home-link-lift inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-5 py-3 text-sm font-semibold text-[#10201c] shadow-lg shadow-emerald-950/40 hover:bg-emerald-200 transition-colors"
-            >
+
+          <div className="mt-9 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
+            <Link to="/login" className={`${btnPrimary} w-full sm:w-auto`}>
               Open the app
               <ArrowRight size={16} />
             </Link>
-            <a
-              href="#how-it-works"
-              className="home-link-lift inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15 transition-colors"
-            >
+            <a href="#how-it-works" className={`${btnGhost} w-full sm:w-auto`}>
               See how it works
             </a>
           </div>
-          <ul className="mt-8 flex flex-wrap items-center justify-center gap-2">
-            {trustPoints.map(point => (
-              <li
-                key={point}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-medium text-white/70"
-              >
-                <CheckCircle2 size={12} className="text-emerald-300" />
-                {point}
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 
-      {/* ── Formats ──────────────────────────────────────── */}
-      <section className="border-t border-white/5 bg-[#101820] px-4 py-16 sm:px-6">
+      {/* ── Features, grouped into four chunks ──────────────────────── */}
+      <section id="features" className="scroll-mt-20 border-t border-white/5 bg-[#101820] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="text-center">
-            <p className="text-sm font-semibold text-emerald-200">One space, multiple formats</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-normal sm:text-3xl">
-              Every shape a thought takes
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/60">
-              Pick whichever fits the moment, and switch as the work changes. More arrive
-              over time.
-            </p>
-          </div>
+          <SectionHeading eyebrow="Why ArcheSpace" title="Made for the way you actually work" />
 
-          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+            {featureGroups.map(({ title, icon: GroupIcon, items }) => (
+              <article key={title} className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200/20 bg-emerald-200/10">
+                    <GroupIcon size={17} className="text-emerald-200" />
+                  </span>
+                  <h3 className="text-base font-semibold text-white">{title}</h3>
+                </div>
+                <ul className="mt-5 grid gap-2.5 sm:grid-cols-1">
+                  {items.map(({ icon: Icon, label }) => (
+                    <li key={label} className="flex items-center gap-2.5 text-sm text-white/78">
+                      <Icon size={15} className="shrink-0 text-emerald-200/80" />
+                      {label}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Formats ─────────────────────────────────────────────────── */}
+      <section className="bg-[#0f1117] px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading center eyebrow="One space, many formats" title="Every shape a thought takes">
+            Pick whichever fits the moment, and switch as the work changes. More arrive over time.
+          </SectionHeading>
+
+          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {ITEM_TYPE_OPTIONS.map(({ type, label, desc, icon: Icon, color, bg }) => (
               <div
                 key={type}
@@ -311,59 +344,32 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────── */}
-      <section id="features" className="scroll-mt-20 bg-[#0f1117] px-4 py-20 sm:px-6">
-        <div className="mx-auto max-w-6xl">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold text-emerald-200">Why ArcheSpace</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">
-              Made for the way you actually work
-            </h2>
-          </div>
-
-          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, label }) => (
-              <div
-                key={label}
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3.5 transition-colors hover:border-emerald-200/25"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200/20 bg-emerald-200/10">
-                  <Icon size={17} className="text-emerald-200" />
-                </span>
-                <span className="text-sm font-medium text-white/85">{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works (incl. what the server stores) ──── */}
+      {/* ── How it works: a short, visible progression ──────────────── */}
       <section id="how-it-works" className="scroll-mt-20 border-y border-white/5 bg-[#101820] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold text-emerald-200">How it works</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">
-              Three steps, then it gets out of the way
-            </h2>
-          </div>
+          <SectionHeading eyebrow="How it works" title="Set up once, then just work" />
 
-          <div className="mt-12 grid gap-4 md:grid-cols-3">
-            {steps.map(({ step, title, body }) => (
-              <article key={step} className="rounded-xl border border-white/10 bg-white/[0.05] p-6">
-                <span className="font-mono text-xs font-semibold text-emerald-200/70">{step}</span>
-                <h3 className="mt-3 text-lg font-semibold text-white">{title}</h3>
+          <ol className="mt-12 grid gap-4 md:grid-cols-3">
+            {steps.map(({ step, title, body }, i) => (
+              <li key={step} className="relative rounded-2xl border border-white/10 bg-white/[0.05] p-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-300 font-mono text-xs font-bold text-[#0c1a16]">
+                    {i + 1}
+                  </span>
+                  <span className="font-mono text-xs font-semibold text-white/40">{step}</span>
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-white/62">{body}</p>
-              </article>
+              </li>
             ))}
-          </div>
+          </ol>
 
-          <div className="mt-14 border-t border-white/10 pt-12">
-            <div className="max-w-xl">
-              <h3 className="text-2xl font-semibold tracking-normal">What the server stores</h3>
-              <p className="mt-3 text-sm leading-6 text-white/62">
-                Your key never reaches us, so there is nothing on our side to unlock.
-              </p>
-            </div>
+          {/* What the server stores: the trust payoff of the flow above. */}
+          <div className="mt-16 border-t border-white/10 pt-12">
+            <SectionHeading eyebrow="What the server stores" title="Nothing on our side can unlock it">
+              Your vault key never reaches us, so there is nothing on our servers that we - or
+              anyone else - could ever read.
+            </SectionHeading>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -394,9 +400,7 @@ export default function HomePage() {
                     <p>arc1:Wq7hB3n.Yc6sT2eJ9uXa</p>
                     <p>arc1:Kd4mV8r.Pz5nQ1wE7bHt</p>
                   </div>
-                  <p className="mt-4 text-[11px] leading-5 text-white/55">
-                    The same three items.
-                  </p>
+                  <p className="mt-4 text-[11px] leading-5 text-white/55">The same three items.</p>
                 </div>
               </div>
 
@@ -413,18 +417,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Built in the open ────────────────────────────── */}
+      {/* ── Built in the open ───────────────────────────────────────── */}
       <section className="bg-[#0f1117] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold text-emerald-200">Built in the open</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">
-              Use ours, or run your own
-            </h2>
-          </div>
+          <SectionHeading eyebrow="Built in the open" title="Use ours, or run your own" />
 
           <div className="mt-12 grid gap-4 md:grid-cols-3">
-            <article className="rounded-xl border border-white/10 bg-white/[0.05] p-6">
+            <article className="rounded-2xl border border-white/10 bg-white/[0.05] p-6">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-200/20 bg-emerald-200/10">
                 <Server size={19} className="text-emerald-200" />
               </span>
@@ -445,27 +444,39 @@ export default function HomePage() {
               </a>
             </article>
 
-            <article className="rounded-xl border border-white/10 bg-white/[0.05] p-6">
+            <article className="rounded-2xl border border-white/10 bg-white/[0.05] p-6">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-200/20 bg-emerald-200/10">
                 <GitFork size={19} className="text-emerald-200" />
               </span>
               <h3 className="mt-4 text-base font-semibold text-white">Auditable by anyone</h3>
               <p className="mt-2 text-sm leading-6 text-white/62">
-                Every line is public, and Settings shows the exact commit your browser is
-                running. You can check that what ships matches what is published.
+                Every line of the web and mobile apps is public. Settings shows the exact
+                commit your browser is running, so you can confirm that what ships is what's 
+                published.
               </p>
-              <a
-                href={REPO_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-200 hover:underline"
-              >
-                Browse the source
-                <ArrowRight size={14} />
-              </a>
+              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+                <a
+                  href={REPO_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-200 hover:underline"
+                >
+                  Web source
+                  <ArrowRight size={14} />
+                </a>
+                <a
+                  href={MOBILE_REPO_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-200 hover:underline"
+                >
+                  Mobile source
+                  <ArrowRight size={14} />
+                </a>
+              </div>
             </article>
 
-            <article className="rounded-xl border border-white/10 bg-white/[0.05] p-6">
+            <article className="rounded-2xl border border-white/10 bg-white/[0.05] p-6">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-200/20 bg-emerald-200/10">
                 <Mail size={19} className="text-emerald-200" />
               </span>
@@ -486,30 +497,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Mobile app ───────────────────────────────────── */}
+      {/* ── Mobile app ──────────────────────────────────────────────── */}
       <section id="mobile" className="scroll-mt-20 border-t border-white/5 bg-[#101820] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div>
-              <p className="text-sm font-semibold text-emerald-200">Also on Android</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">
-                Your space, in your pocket
-              </h2>
-              <p className="mt-4 max-w-xl text-sm leading-6 text-white/62">
-                A native Android app, built with Flutter and open source like the web
-                app. It uses the same zero-knowledge vault - unlock with your PIN or
-                biometrics and your spaces sync across every device. In active
-                development: follow along or build it yourself on GitHub.
-              </p>
+              <SectionHeading eyebrow="Also on Android" title="Your space, in your pocket">
+                A native Android app, built with Flutter and open source like the web - iOS
+                coming soon. It's the same zero-knowledge vault: unlock with your PIN or
+                biometrics, and your spaces sync across every device. In active development, so
+                follow along or build it yourself on GitHub.
+              </SectionHeading>
               <div className="mt-8">
                 <a
                   href={MOBILE_REPO_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="home-link-lift inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-5 py-3 text-sm font-semibold text-[#10201c] hover:bg-emerald-200 transition-colors"
+                  className={btnGhost}
                 >
                   <GithubMark size={16} />
-                  View the Android app on GitHub
+                  View the mobile app on GitHub
                 </a>
               </div>
             </div>
@@ -546,46 +553,38 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Final CTA ────────────────────────────────────── */}
-      <section className="relative overflow-hidden border-t border-white/5 bg-[#12141b] px-4 py-20 text-center sm:px-6">
+      {/* ── Final CTA: a strong, clear close ────────────────────────── */}
+      <section className="relative overflow-hidden border-t border-white/5 bg-[#12141b] px-4 py-24 text-center sm:px-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(50,211,170,0.12),transparent_55%)]" />
         <div className="relative mx-auto max-w-3xl">
           <h2 className="text-3xl font-semibold tracking-normal sm:text-4xl">
             A quiet place for everything you are shaping
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-white/60">
-            The half-formed idea, the running list, the plan you keep revising, and the
-            thing you must not forget, all kept in one space.
+            The half-formed idea, the running list, the plan you keep revising, and the thing
+            you must not forget, all kept in one space.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              to="/login"
-              className="home-link-lift inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-5 py-3 text-sm font-semibold text-[#10201c] hover:bg-emerald-200 transition-colors"
-            >
+          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link to="/login" className={btnPrimary}>
               Open the app
               <ArrowRight size={16} />
             </Link>
-            <a
-              href={MOBILE_REPO_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="home-link-lift inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/15 transition-colors"
-            >
+            <a href={MOBILE_REPO_URL} target="_blank" rel="noreferrer" className={btnGhost}>
               <Smartphone size={16} />
-              See the Android app
+              See the mobile app
             </a>
           </div>
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────── */}
+      {/* ── Footer ──────────────────────────────────────────────────── */}
       <footer className="border-t border-white/10 bg-[#0d0f14] px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
               <img src="/archespace-logo.svg" alt="ArcheSpace" className="h-7 w-auto" />
               <p className="mt-3 max-w-xs text-sm leading-6 text-white/50">
-                An open source, private space for everything you're working on.
+                An open-source, encrypted space.
               </p>
             </div>
 
@@ -594,7 +593,6 @@ export default function HomePage() {
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li><a href="#features" className="text-white/60 hover:text-white transition-colors">Features</a></li>
                 <li><a href="#how-it-works" className="text-white/60 hover:text-white transition-colors">How it works</a></li>
-                <li><Link to="/login" className="text-white/60 hover:text-white transition-colors">Sign in</Link></li>
               </ul>
             </div>
 
@@ -609,11 +607,6 @@ export default function HomePage() {
                 <li>
                   <a href={MOBILE_REPO_URL} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
                     Mobile source
-                  </a>
-                </li>
-                <li>
-                  <a href={`${REPO_URL}/blob/main/LICENSE`} target="_blank" rel="noreferrer" className="text-white/60 hover:text-white transition-colors">
-                    License
                   </a>
                 </li>
               </ul>
