@@ -47,7 +47,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [capsLock, setCapsLock] = useState(false)
   const [remember, setRemember] = useState(true)
+
+  // Warn if Caps Lock is on while typing a password (a common cause of a
+  // rejected sign-in that the masked field hides). Postel's Law: prevent errors.
+  const onPasswordKey = e => {
+    if (typeof e.getModifierState === 'function') {
+      setCapsLock(e.getModifierState('CapsLock'))
+    }
+  }
   const [resetSent, setResetSent] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState(() => getInitialInfo(searchParams))
@@ -303,6 +312,9 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={e => { setPassword(e.target.value); if (error) setError('') }}
+                  onKeyUp={onPasswordKey}
+                  onKeyDown={onPasswordKey}
+                  onBlur={() => setCapsLock(false)}
                   required
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
                   disabled={isCoolingDown}
@@ -318,6 +330,9 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {capsLock && (
+                <p className="mt-1.5 text-[11px] text-amber-400">Caps Lock is on</p>
+              )}
               {isSignUp && (
                 <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
                   {passwordChecks.map(check => (

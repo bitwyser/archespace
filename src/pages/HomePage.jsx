@@ -165,8 +165,36 @@ export default function HomePage() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const heroSizerRef = useRef(null)
+  const menuToggleRef = useRef(null)
+  const headerRef = useRef(null)
   const isActive = id => (id === 'top' ? !activeSection : activeSection === id)
   const year = new Date().getFullYear()
+
+  // Mobile menu: close on Escape (returning focus to the toggle) or an outside
+  // click, and lock body scroll while it is open (expected menu behaviour).
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKeyDown = event => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        menuToggleRef.current?.focus()
+      }
+    }
+    const onPointerDown = event => {
+      if (headerRef.current && !headerRef.current.contains(event.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    document.addEventListener('pointerdown', onPointerDown)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [menuOpen])
 
   useEffect(() => {
     // Respect reduced-motion: keep a single static word instead of cycling.
@@ -301,6 +329,7 @@ export default function HomePage() {
 
       {/* ── Sticky header: familiar layout, one dominant action ──────── */}
       <header
+        ref={headerRef}
         className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
           scrolled
             ? 'border-b border-white/5 bg-[#0f1117]/70 backdrop-blur-md'
@@ -350,6 +379,7 @@ export default function HomePage() {
               Get started
             </Link>
             <button
+              ref={menuToggleRef}
               type="button"
               onClick={() => setMenuOpen(open => !open)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}

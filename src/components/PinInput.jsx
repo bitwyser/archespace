@@ -38,7 +38,7 @@ export default function PinInput({
           autoFocus={autoFocus}
           autoComplete={autoComplete}
           disabled={disabled}
-          className={`w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 pr-11 text-sm font-mono focus:outline-none focus:border-accent disabled:opacity-50 ${className}`}
+          className={`password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 pr-11 text-sm font-mono focus:outline-none focus:border-accent disabled:opacity-50 ${className}`}
         />
         <button
           type="button"
