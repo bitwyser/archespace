@@ -78,18 +78,18 @@ export default function MfaChallenge({ onVerified }) {
             placeholder={useBackup ? 'Backup code' : '123456'}
             className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-base text-text-primary text-center tracking-[0.3em] font-mono focus:outline-none focus:border-accent"
           />
-          {error && <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{error}</p>}
+          {error && <p role="alert" className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{error}</p>}
           <button
             type="submit"
             disabled={loading || !code.trim()}
-            className="w-full px-4 py-3 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-semibold transition-colors disabled:opacity-50"
+            className="w-full px-4 py-3 rounded-xl bg-accent hover:bg-accent-hover text-[#0c1a16] text-sm font-semibold transition-colors disabled:opacity-50"
           >
             {loading ? 'Verifying…' : 'Verify'}
           </button>
           <button
             type="button"
             onClick={() => { setUseBackup(v => !v); setCode(''); setError('') }}
-            className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+            className="w-full text-center text-xs text-text-muted hover:text-accent transition-colors pt-1"
           >
             {useBackup ? 'Use authenticator code' : 'Use a backup code'}
           </button>

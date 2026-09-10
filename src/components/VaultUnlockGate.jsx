@@ -2,14 +2,14 @@
  * VaultUnlockGate.jsx - Post-login vault PIN unlock or setup.
  */
 import { useState } from 'react'
-import { Shield, Lock, Fingerprint } from 'lucide-react'
+import { Shield, Lock, Fingerprint, Check } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import PinInput from './PinInput'
 import { VAULT_PIN_MIN_LENGTH } from '../lib/constants'
 import { validateVaultPin, getWeakPinWarning } from '../lib/crypto/vaultPin'
 import WeakPinWarning from './WeakPinWarning'
-import { ConfirmDialog } from './ui/UI'
+import { ConfirmDialog, Spinner } from './ui/UI'
 import RecoveryCodeDialog from './RecoveryCodeDialog'
 
 export default function VaultUnlockGate({ children }) {
@@ -60,7 +60,8 @@ export default function VaultUnlockGate({ children }) {
   if (!user) return children
   if (authLoading || vaultStatus.loading || sessionRestoring) {
     return (
-      <div className="min-h-screen bg-bg-base flex items-center justify-center">
+      <div className="min-h-[100svh] bg-bg-base flex flex-col items-center justify-center gap-3">
+        <Spinner size={22} />
         <p className="text-text-muted text-sm">Loading vault…</p>
       </div>
     )
@@ -228,6 +229,15 @@ export default function VaultUnlockGate({ children }) {
   const weakPinWarning = isNewPinMode && !validateVaultPin(pin) ? getWeakPinWarning(pin) : null
   const showPasskeyUnlock = !needsSetup && !forgotPin && passkeySupported && passkeys.length > 0
 
+  // Keep the submit button disabled until the required fields are filled
+  // (Postel's Law: disable actions that cannot yet succeed).
+  const pinsMatch = confirmPin.length > 0 && pin === confirmPin
+  const canSubmit = needsSetup
+    ? Boolean(pin && confirmPin)
+    : forgotPin
+      ? Boolean(recoveryCodeInput.trim() && pin && confirmPin)
+      : Boolean(pin)
+
   if (oneTimeRecoveryCode) {
     return (
       <div className="min-h-[100svh] bg-bg-base">
@@ -255,7 +265,7 @@ export default function VaultUnlockGate({ children }) {
             <button
               type="button"
               onClick={() => setRecoverySetupWarning('')}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold"
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold"
             >
               Continue
             </button>
@@ -281,7 +291,7 @@ export default function VaultUnlockGate({ children }) {
             </div>
 
             {enrollError && (
-              <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">
+              <p role="alert" className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">
                 {enrollError}
               </p>
             )}
@@ -290,7 +300,7 @@ export default function VaultUnlockGate({ children }) {
               type="button"
               onClick={handleEnableBiometric}
               disabled={unlocking}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
             >
               <Fingerprint size={14} />
               {unlocking ? 'Waiting for device…' : 'Enable biometric unlock'}
@@ -299,7 +309,7 @@ export default function VaultUnlockGate({ children }) {
               type="button"
               onClick={handleSkipBiometric}
               disabled={unlocking}
-              className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+              className="w-full text-center text-xs text-text-muted hover:text-text-primary transition-colors pt-1 disabled:opacity-50"
             >
               Not now
             </button>
@@ -338,7 +348,7 @@ export default function VaultUnlockGate({ children }) {
                 type="button"
                 onClick={handlePasskeyUnlock}
                 disabled={unlocking}
-                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 <Fingerprint size={16} />
                 {pendingAction === 'passkey' ? 'Waiting…' : 'Unlock with passkey'}
@@ -362,6 +372,7 @@ export default function VaultUnlockGate({ children }) {
                 value={recoveryCodeInput}
                 onChange={e => { setRecoveryCodeInput(e.target.value); setFormError('') }}
                 required
+                autoFocus
                 autoComplete="off"
                 inputMode="text"
                 disabled={unlocking}
@@ -376,36 +387,49 @@ export default function VaultUnlockGate({ children }) {
             value={pin}
             onChange={v => { setPin(v); setFormError('') }}
             autoComplete={needsSetup || forgotPin ? 'new-password' : 'off'}
+            autoFocus={!forgotPin}
             disabled={unlocking}
           />
 
           {(needsSetup || forgotPin) && (
-            <PinInput
-              id="vault-pin-confirm"
-              label="Confirm vault PIN"
-              value={confirmPin}
-              onChange={v => { setConfirmPin(v); setFormError('') }}
-              autoComplete="new-password"
-              disabled={unlocking}
-            />
+            <div>
+              <PinInput
+                id="vault-pin-confirm"
+                label="Confirm vault PIN"
+                value={confirmPin}
+                onChange={v => { setConfirmPin(v); setFormError('') }}
+                autoComplete="new-password"
+                disabled={unlocking}
+              />
+              {confirmPin.length > 0 && (
+                <p
+                  className={`mt-1.5 flex items-center gap-1.5 text-[11px] ${
+                    pinsMatch ? 'text-success' : 'text-danger'
+                  }`}
+                >
+                  {pinsMatch ? <Check size={12} /> : null}
+                  {pinsMatch ? 'PINs match' : 'PINs do not match'}
+                </p>
+              )}
+            </div>
           )}
 
           <WeakPinWarning message={weakPinWarning} />
 
           {formError && (
-            <p className="text-danger text-xs">{formError}</p>
+            <p role="alert" className="text-danger text-xs">{formError}</p>
           )}
 
           {unlockError && (
-            <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">
+            <p role="alert" className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">
               {unlockError}
             </p>
           )}
 
           <button
             type="submit"
-            disabled={unlocking}
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+            disabled={unlocking || !canSubmit}
+            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
           >
             <Lock size={14} />
             {pendingAction === 'pin'
@@ -421,7 +445,7 @@ export default function VaultUnlockGate({ children }) {
             <button
               type="button"
               onClick={() => { setForgotPin(true); resetFields(); clearUnlockError() }}
-              className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+              className="w-full text-center text-xs text-text-muted hover:text-accent transition-colors pt-1"
             >
               Forgot PIN?
             </button>
@@ -431,20 +455,20 @@ export default function VaultUnlockGate({ children }) {
             <button
               type="button"
               onClick={() => { setForgotPin(false); resetFields(); clearUnlockError() }}
-              className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+              className="w-full text-center text-xs text-text-muted hover:text-accent transition-colors pt-1"
             >
               Back to PIN unlock
             </button>
           )}
-
-          <button
-            type="button"
-            onClick={() => setConfirmSignOut(true)}
-            className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 text-sm font-semibold text-text-secondary hover:text-danger transition-colors"
-          >
-            Sign out
-          </button>
         </form>
+
+        <button
+          type="button"
+          onClick={() => setConfirmSignOut(true)}
+          className="w-full text-center text-xs text-text-muted hover:text-danger transition-colors mt-4"
+        >
+          Sign out
+        </button>
 
         <p className="text-center text-text-muted text-[10px] mt-4 sm:mt-6 leading-relaxed">
           Vault PIN is separate from your login password.

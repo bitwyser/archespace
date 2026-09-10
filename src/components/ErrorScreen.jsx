@@ -13,7 +13,7 @@ export default function ErrorScreen({ variant = 'error', title, message, errorMe
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-bg-base text-text-primary">
-      <div className="max-w-md text-center space-y-4">
+      <div role="alert" className="max-w-md text-center space-y-4">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto bg-bg-surface border border-bg-border">
           {isChunk
             ? <RefreshCw size={24} className="text-accent" />
@@ -40,7 +40,7 @@ export default function ErrorScreen({ variant = 'error', title, message, errorMe
         <div className="flex gap-3 justify-center pt-2">
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors bg-accent text-white"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors bg-accent text-[#0c1a16]"
           >
             Reload page
           </button>
