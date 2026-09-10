@@ -11,9 +11,9 @@ import {
   LayoutGrid, List,
 } from 'lucide-react'
 import GlobalSearchResults from '../components/GlobalSearchResults'
+import { WordmarkLogo } from '../components/WordmarkLogo'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useCommandPalette } from '../context/CommandPaletteCore'
-import { MULTI_USER_ENABLED } from '../lib/appConfig'
 import BulkSelectionBar from '../components/BulkSelectionBar'
 import { BULK_ICONS } from '../components/BulkSelectionIcons'
 import { useAuth } from '../context/AuthContextCore'
@@ -35,7 +35,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { sortEntities } from '../lib/sortEntities'
 
 export default function DashboardPage() {
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
   const { lock, isUnlocked } = useEncryption()
   const { toast } = useToast()
   const { openPalette } = useCommandPalette()
@@ -302,13 +302,16 @@ export default function DashboardPage() {
       {/* ── Header (mobile only) ──────────────────────── */}
       <header ref={headerRef} className="sm:hidden sticky top-0 z-20 glass">
         <div className="w-full px-4 h-14 flex items-center justify-between gap-3">
-          {/* Logo */}
-          <div className="shrink-0">
-            <span className="text-lg font-semibold tracking-widest text-text-primary">ArcheSpace</span>
-            {MULTI_USER_ENABLED && user?.email && (
-              <p className="text-[10px] text-text-muted truncate max-w-[140px]">{user.email}</p>
-            )}
-          </div>
+          {/* Logo - the app wordmark, matching the desktop sidebar; tapping it
+              returns to the spaces home (Jakob's Law). */}
+          <button
+            type="button"
+            onClick={() => navigate('/app')}
+            aria-label="ArcheSpace - go to spaces"
+            className="shrink-0 flex items-center -ml-1 p-1 rounded-lg"
+          >
+            <WordmarkLogo className="h-5 w-auto text-accent" />
+          </button>
 
           {/* Actions - mobile: lock + ordered menu (search is the bar below) */}
           <div className="flex sm:hidden items-center gap-2">
@@ -341,22 +344,7 @@ export default function DashboardPage() {
 
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-bg-border bg-bg-surface px-4 py-3 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => { openPalette(); setMobileMenuOpen(false) }}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-            >
-              <Command size={16} />
-              Commands
-            </button>
-            <button
-              type="button"
-              onClick={() => { window.dispatchEvent(new CustomEvent('arche:open-shortcuts')); setMobileMenuOpen(false) }}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-            >
-              <Keyboard size={16} />
-              Keyboard shortcuts
-            </button>
+            {/* Navigation first (Serial Position: most-used destinations lead). */}
             <button
               type="button"
               onClick={() => { navigate('/archive'); setMobileMenuOpen(false) }}
@@ -385,20 +373,43 @@ export default function DashboardPage() {
             </button>
             <button
               type="button"
-              onClick={() => { setMobileMenuOpen(false); setConfirmSignOut(true) }}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-danger/10 hover:border-danger/30 text-text-secondary hover:text-danger transition-all text-sm font-medium"
-            >
-              <LogOut size={16} />
-              Sign out
-            </button>
-            <button
-              type="button"
               onClick={() => { navigate('/settings'); setMobileMenuOpen(false) }}
               className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
             >
               <Settings size={16} />
               Settings
             </button>
+
+            {/* Tools (Proximity: related utilities grouped together). */}
+            <button
+              type="button"
+              onClick={() => { openPalette(); setMobileMenuOpen(false) }}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+            >
+              <Command size={16} />
+              Commands
+            </button>
+            <button
+              type="button"
+              onClick={() => { window.dispatchEvent(new CustomEvent('arche:open-shortcuts')); setMobileMenuOpen(false) }}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+            >
+              <Keyboard size={16} />
+              Keyboard shortcuts
+            </button>
+
+            {/* Sign out isolated at the bottom so the destructive action isn't
+                mis-tapped next to a benign one (Error Prevention). */}
+            <div className="border-t border-bg-border mt-1 pt-2">
+              <button
+                type="button"
+                onClick={() => { setMobileMenuOpen(false); setConfirmSignOut(true) }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-danger/10 hover:border-danger/30 text-text-secondary hover:text-danger transition-all text-sm font-medium"
+              >
+                <LogOut size={16} />
+                Sign out
+              </button>
+            </div>
           </div>
         )}
       </header>
@@ -562,7 +573,7 @@ export default function DashboardPage() {
               onClick={() => setModal({ type: 'create' })}
               disabled={!online}
               title={online ? 'New space' : 'Unavailable offline'}
-              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
             >
               <Plus size={16} strokeWidth={2.5} />
               <span className="hidden sm:inline">New space</span>
@@ -605,40 +616,59 @@ export default function DashboardPage() {
 
         {/* Spaces grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="border border-bg-border rounded-2xl p-4 bg-bg-surface animate-pulse">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="h-5 bg-bg-elevated rounded w-2/3"></div>
-                    <div className="h-3 bg-bg-elevated rounded w-full"></div>
-                    <div className="h-3 bg-bg-elevated rounded w-4/5"></div>
-                  </div>
-                  <div className="w-4 h-4 bg-bg-elevated rounded shrink-0"></div>
+          viewMode === 'list' ? (
+            <div className="grid grid-cols-1 gap-2 max-w-[52rem] mx-auto">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 border border-bg-border rounded-xl pl-4 pr-3 py-3 bg-bg-surface animate-pulse">
+                  <div className="h-4 bg-bg-elevated rounded w-32 sm:w-44 shrink-0"></div>
+                  <div className="h-3 bg-bg-elevated rounded flex-1"></div>
+                  <div className="h-3 bg-bg-elevated rounded w-12 shrink-0"></div>
                 </div>
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-bg-border">
-                  <div className="w-16 h-3 bg-bg-elevated rounded"></div>
-                  <div className="flex gap-1">
-                    <div className="w-12 h-6 bg-bg-elevated rounded"></div>
-                    <div className="w-12 h-6 bg-bg-elevated rounded"></div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="border border-bg-border rounded-2xl p-4 bg-bg-surface animate-pulse">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="h-5 bg-bg-elevated rounded w-2/3"></div>
+                      <div className="h-3 bg-bg-elevated rounded w-full"></div>
+                      <div className="h-3 bg-bg-elevated rounded w-4/5"></div>
+                    </div>
+                    <div className="w-4 h-4 bg-bg-elevated rounded shrink-0"></div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-bg-border">
+                    <div className="w-16 h-3 bg-bg-elevated rounded"></div>
+                    <div className="flex gap-1">
+                      <div className="w-12 h-6 bg-bg-elevated rounded"></div>
+                      <div className="w-12 h-6 bg-bg-elevated rounded"></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-14 h-14 rounded-2xl bg-bg-surface border border-bg-border flex items-center justify-center mx-auto mb-4">
               <Folder size={24} className="text-text-muted" />
             </div>
             <p className="text-text-secondary font-medium">{search ? 'No spaces match your search' : 'No spaces yet'}</p>
-            <p className="text-text-muted text-sm mt-1">{search ? 'Try a different search term' : 'Create your first space to get started'}</p>
-            {!search && (
+            <p className="text-text-muted text-sm mt-1">{search ? `Nothing found for "${search.trim()}"` : 'Create your first space to get started'}</p>
+            {search ? (
+              <button
+                onClick={closeSearch}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-bg-border bg-bg-surface px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
+              >
+                Clear search
+              </button>
+            ) : (
               <button
                 onClick={() => setModal({ type: 'create' })}
                 disabled={!online}
                 title={online ? undefined : 'Unavailable offline'}
-                className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus size={16} /> New space
               </button>
