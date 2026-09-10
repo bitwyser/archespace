@@ -1,16 +1,17 @@
 /**
  * LoginPage.jsx - Sign in and (optional) sign up.
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContextCore'
-import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Home } from 'lucide-react'
+import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Home, Check } from 'lucide-react'
 import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '../lib/constants'
 import { MULTI_USER_ENABLED } from '../lib/appConfig'
 import { APP_VERSION } from '../lib/buildInfo'
 import { BrandGlyph } from '../components/BrandGlyph'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
+import { setRememberMe } from '../lib/supabase'
 import {
   recordClientRateLimitFailure,
   clearClientRateLimit,
@@ -46,6 +47,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [remember, setRemember] = useState(true)
+  const [resetSent, setResetSent] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState(() => getInitialInfo(searchParams))
   const [loading, setLoading] = useState(false)
@@ -67,6 +70,24 @@ export default function LoginPage() {
   const isSignUp = pathMode === 'signup' && MULTI_USER_ENABLED
   const isForgot = forgot && pathMode === 'signin'
 
+  // Live password requirements + match, shown on sign-up so the rules are
+  // visible before submitting (Postel's Law) with immediate feedback (Doherty).
+  const passwordChecks = [
+    { label: `At least ${PASSWORD_RULES.minLength} characters`, ok: password.length >= PASSWORD_RULES.minLength },
+    { label: 'An uppercase letter', ok: /[A-Z]/.test(password) },
+    { label: 'A lowercase letter', ok: /[a-z]/.test(password) },
+    { label: 'A number', ok: /\d/.test(password) },
+  ]
+  const confirmMatches = confirmPassword.length > 0 && password === confirmPassword
+
+  // Keep the submit button disabled until the required fields are filled: email
+  // for the reset flow, email + password (+ confirm on sign-up) otherwise.
+  const canSubmit = isForgot
+    ? Boolean(email.trim())
+    : isSignUp
+      ? Boolean(email.trim() && password && confirmPassword)
+      : Boolean(email.trim() && password)
+
   // Sign-up is only reachable when multi-user mode is on; otherwise send the
   // /signup route back to sign in.
   useEffect(() => {
@@ -74,6 +95,25 @@ export default function LoginPage() {
       navigate('/login', { replace: true })
     }
   }, [pathMode, navigate])
+
+  // Reset the form when switching between sign in and create account, so fields
+  // and messages don't carry over. Skip the first render to keep any initial
+  // info message (e.g. after a password reset redirect).
+  const modeInitialized = useRef(false)
+  useEffect(() => {
+    if (!modeInitialized.current) {
+      modeInitialized.current = true
+      return
+    }
+    setEmail('')
+    setPassword('')
+    setConfirmPassword('')
+    setShowPassword(false)
+    setForgot(false)
+    setResetSent(false)
+    setError('')
+    setInfo('')
+  }, [pathMode])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -102,7 +142,7 @@ export default function LoginPage() {
       // also succeeds silently for unknown emails.)
       await requestPasswordReset(email).catch(() => {})
       setLoading(false)
-      setInfo("If an account exists for that email, we've sent a password reset link. Check your inbox and spam folder.")
+      setResetSent(true)
       return
     }
 
@@ -136,6 +176,8 @@ export default function LoginPage() {
     }
 
     setLoading(true)
+    // Choose persistent vs session-only storage before the session is written.
+    setRememberMe(remember)
     const { error: signInError } = await signIn(email, password)
     if (signInError) {
       recordClientRateLimitFailure(loginRateKey, MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS)
@@ -178,23 +220,59 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-6 sm:mb-10">
-          <div className="mx-auto mb-4 sm:mb-5 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-hover text-[#0c1a16] shadow-lg shadow-black/20">
+          <div className="mx-auto mb-4 sm:mb-5 flex h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-hover text-[#0c1a16] shadow-lg shadow-black/20">
             <BrandGlyph className="h-[80%] w-[80%]" />
           </div>
           <p className="text-text-secondary text-sm">
-            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            {isForgot
+              ? 'Reset your password'
+              : isSignUp
+                ? 'Create your account'
+                : 'Sign in to your account'}
           </p>
         </div>
 
         <div className="bg-bg-surface border border-bg-border rounded-2xl p-6 shadow-xl shadow-black/10">
+          {isForgot && resetSent ? (
+            <div className="space-y-4 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-success/20 bg-success/10">
+                <Mail size={20} className="text-success" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-text-primary">Check your email</p>
+                <p className="mt-1.5 text-xs leading-5 text-text-muted">
+                  If an account exists for{' '}
+                  {email.trim() ? (
+                    <span className="text-text-secondary">{email.trim()}</span>
+                  ) : (
+                    'that email'
+                  )}
+                  , we've sent a password reset link. Check your inbox and spam folder.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setForgot(false); setResetSent(false); setError(''); setInfo('') }}
+                className="w-full bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                <ArrowLeft size={14} /> Back to sign in
+              </button>
+            </div>
+          ) : (
+          <>
           {isForgot && (
-            <button
-              type="button"
-              onClick={() => { setForgot(false); setError(''); setInfo('') }}
-              className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-accent transition-colors mb-4"
-            >
-              <ArrowLeft size={14} /> Back to sign in
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => { setForgot(false); setResetSent(false); setError(''); setInfo('') }}
+                className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-accent transition-colors mb-4"
+              >
+                <ArrowLeft size={14} /> Back to sign in
+              </button>
+              <p className="text-xs leading-5 text-text-muted mb-4">
+                Enter your account email and we'll send a link to reset your password.
+              </p>
+            </>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -206,8 +284,9 @@ export default function LoginPage() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => { setEmail(e.target.value); if (error) setError('') }}
                 required
+                autoFocus
                 autoComplete="username"
                 disabled={!isForgot && isCoolingDown}
                 className="w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm disabled:opacity-50"
@@ -223,7 +302,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => { setPassword(e.target.value); if (error) setError('') }}
                   required
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
                   disabled={isCoolingDown}
@@ -239,6 +318,25 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {isSignUp && (
+                <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
+                  {passwordChecks.map(check => (
+                    <li
+                      key={check.label}
+                      className={`flex items-center gap-1.5 text-[11px] transition-colors ${
+                        check.ok ? 'text-success' : 'text-text-muted'
+                      }`}
+                    >
+                      {check.ok ? (
+                        <Check size={12} className="shrink-0" />
+                      ) : (
+                        <span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-60" />
+                      )}
+                      {check.label}
+                    </li>
+                  ))}
+                </ul>
+              )}
               </div>
             )}
 
@@ -251,22 +349,32 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
+                  onChange={e => { setConfirmPassword(e.target.value); if (error) setError('') }}
                   required
                   autoComplete="new-password"
                   className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"
                 />
+                {confirmPassword.length > 0 && (
+                  <p
+                    className={`mt-1.5 flex items-center gap-1.5 text-[11px] ${
+                      confirmMatches ? 'text-success' : 'text-danger'
+                    }`}
+                  >
+                    {confirmMatches ? <Check size={12} /> : null}
+                    {confirmMatches ? 'Passwords match' : 'Passwords do not match'}
+                  </p>
+                )}
               </div>
             )}
 
             {error && (
-              <div className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2 animate-shake">
+              <div role="alert" className="bg-danger/10 border border-danger/20 rounded-lg px-3 py-2 animate-shake">
                 <p className="text-danger text-xs">{error}</p>
               </div>
             )}
 
             {info && (
-              <div className="bg-success/10 border border-success/30 rounded-lg px-3 py-2">
+              <div role="status" aria-live="polite" className="bg-success/10 border border-success/30 rounded-lg px-3 py-2">
                 <p className="text-success text-xs">{info}</p>
               </div>
             )}
@@ -279,10 +387,31 @@ export default function LoginPage() {
               </div>
             )}
 
+            {!isSignUp && !isForgot && (
+              <div className="flex items-center justify-between pt-0.5">
+                <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={e => setRemember(e.target.checked)}
+                    className="h-4 w-4 rounded border-bg-border bg-bg-elevated accent-accent"
+                  />
+                  Remember me
+                </label>
+                <button
+                  type="button"
+                  onClick={() => { setForgot(true); setResetSent(false); setError(''); setInfo('') }}
+                  className="text-xs text-text-muted hover:text-accent transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading || (isCoolingDown && !isSignUp && !isForgot)}
-              className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-1 active:scale-[0.98] shadow-lg shadow-accent/20"
+              disabled={loading || !canSubmit || (isCoolingDown && !isSignUp && !isForgot)}
+              className="w-full bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-1 active:scale-[0.98] shadow-lg shadow-accent/20"
             >
               {isForgot ? <Mail size={14} /> : isSignUp ? <UserPlus size={14} /> : <Lock size={14} />}
               {loading
@@ -296,16 +425,9 @@ export default function LoginPage() {
                     : 'Sign in'}
             </button>
 
-            {!isSignUp && !isForgot && (
-              <button
-                type="button"
-                onClick={() => { setForgot(true); setError(''); setInfo('') }}
-                className="w-full text-center text-xs text-text-muted hover:text-accent transition-colors pt-1"
-              >
-                Forgot password?
-              </button>
-            )}
           </form>
+          </>
+          )}
         </div>
 
         {!isForgot && (isSignUp || MULTI_USER_ENABLED) && (
