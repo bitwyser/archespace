@@ -134,7 +134,7 @@ const serverFacts = [
 /** A labelled section heading with an eyebrow, kept consistent across sections. */
 function SectionHeading({ eyebrow, title, children, center = false }) {
   return (
-    <div className={center ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}>
+    <div className={`reveal ${center ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}`}>
       <p className="text-sm font-semibold text-emerald-200">{eyebrow}</p>
       <h2 className="mt-3 text-3xl font-semibold tracking-normal sm:text-4xl">{title}</h2>
       {children ? (
@@ -150,6 +150,8 @@ export default function HomePage() {
   const [heroWordIndex, setHeroWordIndex] = useState(0)
   const [heroPrevIndex, setHeroPrevIndex] = useState(null)
   const [heroSlotWidth, setHeroSlotWidth] = useState(null)
+  const [activeSection, setActiveSection] = useState(null)
+  const [scrolled, setScrolled] = useState(false)
   const heroSizerRef = useRef(null)
   const year = new Date().getFullYear()
 
@@ -186,6 +188,70 @@ export default function HomePage() {
     return () => window.removeEventListener('resize', measure)
   }, [heroWordIndex])
 
+  // Scroll-reveal animations for sections/cards, plus nav scroll-spy for the
+  // active-section underline. Uses scroll position (getBoundingClientRect) so
+  // it works everywhere; under reduced motion everything is shown up front.
+  useEffect(() => {
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    let pending = Array.from(document.querySelectorAll('.reveal, .reveal-stagger'))
+    const sections = ['features', 'how-it-works', 'mobile']
+      .map(id => document.getElementById(id))
+      .filter(Boolean)
+    const hero = document.getElementById('top')
+
+    if (reduce) {
+      pending.forEach(el => el.classList.add('is-visible'))
+      pending = []
+    }
+
+    let ticking = false
+    const update = () => {
+      ticking = false
+      const vh = window.innerHeight || document.documentElement.clientHeight
+
+      // Reveal any element once its top rises past 88% of the viewport.
+      for (let i = pending.length - 1; i >= 0; i--) {
+        const rect = pending[i].getBoundingClientRect()
+        if (rect.top < vh * 0.88 && rect.bottom > 0) {
+          pending[i].classList.add('is-visible')
+          pending.splice(i, 1)
+        }
+      }
+
+      // Active section: the one crossing ~35% down the viewport.
+      const line = vh * 0.35
+      let active = null
+      for (const section of sections) {
+        const rect = section.getBoundingClientRect()
+        if (rect.top <= line && rect.bottom >= line) {
+          active = section.id
+          break
+        }
+      }
+      setActiveSection(prev => (prev === active ? prev : active))
+
+      // Header stays transparent over the hero, then turns to blurred glass
+      // once the hero has scrolled up behind it.
+      const glass = hero ? hero.getBoundingClientRect().bottom <= 72 : false
+      setScrolled(prev => (prev === glass ? prev : glass))
+    }
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true
+        window.requestAnimationFrame(update)
+      }
+    }
+
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [])
+
   const handlePointerMove = (event) => {
     event.currentTarget.style.setProperty('--home-cursor-x', `${event.clientX}px`)
     event.currentTarget.style.setProperty('--home-cursor-y', `${event.clientY}px`)
@@ -203,7 +269,13 @@ export default function HomePage() {
       onPointerLeave={handlePointerLeave}
     >
       {/* ── Sticky header: familiar layout, one dominant action ──────── */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0f1117]/80 backdrop-blur-md">
+      <header
+        className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
+          scrolled
+            ? 'border-b border-white/5 bg-[#0f1117]/70 backdrop-blur-md'
+            : 'border-b border-transparent bg-transparent'
+        }`}
+      >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <a href="#top" className="flex items-center" aria-label="ArcheSpace home">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-400 text-[#0c1a16] shadow-lg shadow-emerald-950/30">
@@ -211,24 +283,37 @@ export default function HomePage() {
             </span>
           </a>
           <nav className="flex items-center gap-1 sm:gap-2">
-            <a href="#features" className={`${navLink} hidden md:inline-flex`}>
+            <a
+              href="#top"
+              className={`${navLink} home-nav-link hidden md:inline-flex ${!activeSection ? 'is-active' : ''}`}
+            >
+              Home
+            </a>
+            <a
+              href="#features"
+              className={`${navLink} home-nav-link hidden md:inline-flex ${activeSection === 'features' ? 'is-active' : ''}`}
+            >
               Features
             </a>
-            <a href="#how-it-works" className={`${navLink} hidden md:inline-flex`}>
+            <a
+              href="#how-it-works"
+              className={`${navLink} home-nav-link hidden md:inline-flex ${activeSection === 'how-it-works' ? 'is-active' : ''}`}
+            >
               How it works
             </a>
-            <a href="#mobile" className={`${navLink} hidden lg:inline-flex`}>
+            <a
+              href="#mobile"
+              className={`${navLink} home-nav-link hidden lg:inline-flex ${activeSection === 'mobile' ? 'is-active' : ''}`}
+            >
               Mobile
             </a>
             <a
               href={REPO_URL}
               target="_blank"
               rel="noreferrer"
-              aria-label="GitHub repository"
-              className={`${navLink} hidden sm:inline-flex items-center gap-2`}
+              className={`${navLink} home-nav-link hidden sm:inline-flex`}
             >
-              <GithubMark size={16} />
-              <span className="hidden lg:inline">GitHub</span>
+              GitHub
             </a>
             <Link
               to="/login"
@@ -244,11 +329,11 @@ export default function HomePage() {
       {/* ── Hero: one message, one primary path ─────────────────────── */}
       <section
         id="top"
-        className="relative flex min-h-[calc(100svh-3.75rem)] items-center overflow-hidden px-4 sm:px-6"
+        className="relative flex min-h-[100svh] items-center overflow-hidden px-4 sm:px-6"
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(50,211,170,0.14),transparent_55%),linear-gradient(180deg,#0f1117_0%,#12151d_100%)]" />
 
-        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center py-16 text-center sm:py-20">
+        <div className="hero-enter relative z-10 mx-auto flex max-w-3xl flex-col items-center py-16 text-center sm:py-20">
           <div className="hero-headline">
             <h1 className="whitespace-normal sm:whitespace-nowrap text-[clamp(1.9rem,8vw,4.5rem)] font-semibold leading-[1.03] tracking-normal">
               It&apos;s{' '}
@@ -295,7 +380,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <SectionHeading eyebrow="Why ArcheSpace" title="Made for the way you actually work" />
 
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+          <div className="reveal-stagger mt-12 grid gap-4 sm:grid-cols-2">
             {featureGroups.map(({ title, icon: GroupIcon, items }) => (
               <article key={title} className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
                 <div className="flex items-center gap-3">
@@ -325,7 +410,7 @@ export default function HomePage() {
             Pick whichever fits the moment, and switch as the work changes. More arrive over time.
           </SectionHeading>
 
-          <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="reveal-stagger mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {ITEM_TYPE_OPTIONS.map(({ type, label, desc, icon: Icon, color, bg }) => (
               <div
                 key={type}
@@ -349,7 +434,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <SectionHeading eyebrow="How it works" title="Set up once, then just work" />
 
-          <ol className="mt-12 grid gap-4 md:grid-cols-3">
+          <ol className="reveal-stagger mt-12 grid gap-4 md:grid-cols-3">
             {steps.map(({ step, title, body }, i) => (
               <li key={step} className="relative rounded-2xl border border-white/10 bg-white/[0.05] p-6">
                 <div className="flex items-center gap-3">
@@ -422,7 +507,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <SectionHeading eyebrow="Built in the open" title="Use ours, or run your own" />
 
-          <div className="mt-12 grid gap-4 md:grid-cols-3">
+          <div className="reveal-stagger mt-12 grid gap-4 md:grid-cols-3">
             <article className="rounded-2xl border border-white/10 bg-white/[0.05] p-6">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-200/20 bg-emerald-200/10">
                 <Server size={19} className="text-emerald-200" />
