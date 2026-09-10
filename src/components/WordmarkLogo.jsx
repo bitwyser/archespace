@@ -1,7 +1,7 @@
 /**
- * WordmarkLogo.jsx - The horizontal ArcheSpace logo (mark + wordmark), matching
- * the home page top-left. "Arche" (with the mark) uses fill="currentColor" so it
- * follows the theme accent via a text-* class; "Space" is always white.
+ * WordmarkLogo.jsx - The horizontal ArcheSpace logo (mark + wordmark). "Arche"
+ * (with the mark) uses fill="currentColor" so it follows the accent via a text-*
+ * class; "Space" is always white (it sits on a dark box).
  */
 export function WordmarkLogo({ className = '' }) {
   return (

@@ -58,21 +58,13 @@ function NavItem({ icon: Icon, label, active, count, badge, badgeColor = 'bg-acc
 
 export default function AppSidebar({
   collapsed, onToggleCollapsed, active,
-  user, isUnlocked, spacesCount, archiveTotal, binTotal,
+  isUnlocked, spacesCount, archiveTotal, binTotal,
   onLock, onSignOut, onCommands, onShortcuts, navigate,
 }) {
-  const email = user?.email || ''
-  const avatarLetter = (email || '?')[0].toUpperCase()
-  const prefix = email.split('@')[0]
-  const displayName =
-    user?.user_metadata?.name ||
-    user?.user_metadata?.full_name ||
-    (prefix ? prefix[0].toUpperCase() + prefix.slice(1) : 'Account')
-
   return (
     <aside
       className={`hidden sm:flex flex-col shrink-0 h-screen sticky top-0 border-r border-bg-border bg-bg-surface/40 transition-[width] duration-200 ${
-        collapsed ? 'w-16' : 'w-56'
+        collapsed ? 'w-16' : 'w-44'
       }`}
     >
       {/* Logo */}
@@ -94,27 +86,6 @@ export default function AppSidebar({
             <WordmarkLogo className="h-[60%] w-auto" />
           )}
         </div>
-      </button>
-
-      {/* Account */}
-      <button
-        type="button"
-        onClick={() => navigate('/settings')}
-        title={collapsed ? email : 'Account'}
-        aria-label="Account settings"
-        className={`mx-2 mb-2 flex items-center gap-2.5 rounded-xl bg-bg-surface hover:bg-bg-elevated transition-colors ${
-          collapsed ? 'justify-center p-2' : 'px-3 py-2.5'
-        }`}
-      >
-        <span className="h-8 w-8 shrink-0 rounded-full bg-bg-elevated border border-bg-border flex items-center justify-center text-sm font-semibold text-text-secondary">
-          {avatarLetter}
-        </span>
-        {!collapsed && (
-          <span className="min-w-0 text-left">
-            <span className="block text-sm font-semibold text-text-primary truncate">{displayName}</span>
-            <span className="block text-[11px] text-text-muted truncate">{email}</span>
-          </span>
-        )}
       </button>
 
       {/* Nav */}
