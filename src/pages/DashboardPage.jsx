@@ -310,7 +310,7 @@ export default function DashboardPage() {
             aria-label="ArcheSpace - go to spaces"
             className="shrink-0 flex items-center -ml-1 p-1 rounded-lg"
           >
-            <WordmarkLogo className="h-5 w-auto text-accent" />
+            <WordmarkLogo className="h-6 w-auto text-accent" />
           </button>
 
           {/* Actions - mobile: lock + ordered menu (search is the bar below) */}

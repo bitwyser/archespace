@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { BrandGlyph } from '../components/BrandGlyph'
+import { WordmarkLogo } from '../components/WordmarkLogo'
 import { APP_VERSION, COMMIT_URL, MOBILE_REPO_URL, REPO_URL } from '../lib/buildInfo'
 
 function GithubMark({ size = 16, className = '' }) {
@@ -338,9 +339,7 @@ export default function HomePage() {
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <a href="#top" className="flex items-center" aria-label="ArcheSpace home">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-400 text-[#0c1a16] shadow-lg shadow-emerald-950/30">
-              <BrandGlyph className="h-[80%] w-[80%]" />
-            </span>
+            <WordmarkLogo className="h-6 w-auto text-emerald-400" />
           </a>
           {/* Desktop nav */}
           <nav className="hidden items-center gap-1 lg:flex">
@@ -771,7 +770,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
-              <img src="/archespace-logo.svg" alt="ArcheSpace" className="h-7 w-auto" />
+              <WordmarkLogo className="h-7 w-auto text-emerald-400" />
               <p className="mt-3 max-w-xs text-sm leading-6 text-white/60">
                 An open-source, encrypted space.
               </p>

@@ -64,7 +64,7 @@ export default function AppSidebar({
   return (
     <aside
       className={`hidden sm:flex flex-col shrink-0 h-screen sticky top-0 border-r border-bg-border bg-bg-surface/40 transition-[width] duration-200 ${
-        collapsed ? 'w-16' : 'w-44'
+        collapsed ? 'w-16' : 'w-52'
       }`}
     >
       {/* Logo */}
@@ -74,18 +74,13 @@ export default function AppSidebar({
         aria-label="ArcheSpace"
         className={`flex items-center h-16 shrink-0 ${collapsed ? 'justify-center px-0' : 'px-4'}`}
       >
-        {/* Same accent box: the A mark when collapsed, the full logo when not. */}
-        <div
-          className={`h-9 rounded-lg bg-gradient-to-br from-accent to-accent-hover flex items-center text-[#0b1512] ${
-            collapsed ? 'w-9 shrink-0 justify-center' : 'w-full px-3 justify-start'
-          }`}
-        >
-          {collapsed ? (
-            <BrandGlyph className="h-[72%] w-[72%]" />
-          ) : (
-            <WordmarkLogo className="h-[60%] w-auto" />
-          )}
-        </div>
+        {/* The bare "A" mark when collapsed, the full wordmark when expanded.
+            No badge - only the mobile app icon keeps the box. */}
+        {collapsed ? (
+          <BrandGlyph className="h-8 w-8 shrink-0 text-accent" />
+        ) : (
+          <WordmarkLogo className="h-6 w-auto text-accent" />
+        )}
       </button>
 
       {/* Nav */}

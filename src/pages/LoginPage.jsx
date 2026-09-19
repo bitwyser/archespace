@@ -8,7 +8,7 @@ import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Home, Check } from 'lucid
 import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '../lib/constants'
 import { MULTI_USER_ENABLED } from '../lib/appConfig'
 import { APP_VERSION } from '../lib/buildInfo'
-import { BrandGlyph } from '../components/BrandGlyph'
+import { WordmarkLogo } from '../components/WordmarkLogo'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
 import { setRememberMe } from '../lib/supabase'
@@ -229,8 +229,8 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-6 sm:mb-10">
-          <div className="mx-auto mb-4 sm:mb-5 flex h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-hover text-[#0c1a16] shadow-lg shadow-black/20">
-            <BrandGlyph className="h-[80%] w-[80%]" />
+          <div className="mx-auto mb-5 flex items-center justify-center text-accent">
+            <WordmarkLogo className="h-10 w-auto" />
           </div>
           <p className="text-text-secondary text-sm">
             {isForgot
