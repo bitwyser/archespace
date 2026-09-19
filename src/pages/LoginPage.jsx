@@ -34,6 +34,24 @@ function getInitialInfo(searchParams) {
   return ''
 }
 
+/**
+ * Ask the browser's password manager to save the credential. SPA logins submit
+ * over fetch with no navigation, so the native "save password?" prompt usually
+ * never fires on its own; storing it explicitly lets future autofill work.
+ * Best-effort and Chromium-only (guarded); other browsers ignore it.
+ */
+async function saveBrowserCredential(id, password) {
+  try {
+    if (id && password && window.PasswordCredential && navigator.credentials?.store) {
+      await navigator.credentials.store(
+        new window.PasswordCredential({ id, password, name: id })
+      )
+    }
+  } catch {
+    // Saving is a convenience; never block sign-in on it.
+  }
+}
+
 export default function LoginPage() {
   const { signIn, signUp, requestPasswordReset } = useAuth()
   const [searchParams] = useSearchParams()
@@ -49,6 +67,21 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [capsLock, setCapsLock] = useState(false)
   const [remember, setRemember] = useState(true)
+
+  const emailRef = useRef(null)
+  const passwordRef = useRef(null)
+  const confirmRef = useRef(null)
+
+  // When the browser autofills a field it sets the DOM value but React's
+  // onChange may not fire, leaving state empty (so the gated submit button stays
+  // disabled and submit sees nothing). The onAutoFillStart animation (index.css)
+  // fires on autofill; sync the DOM values into state here.
+  const syncAutofill = (e) => {
+    if (e?.animationName && e.animationName !== 'onAutoFillStart') return
+    if (emailRef.current && emailRef.current.value !== email) setEmail(emailRef.current.value)
+    if (passwordRef.current && passwordRef.current.value !== password) setPassword(passwordRef.current.value)
+    if (confirmRef.current && confirmRef.current.value !== confirmPassword) setConfirmPassword(confirmRef.current.value)
+  }
 
   // Warn if Caps Lock is on while typing a password (a common cause of a
   // rejected sign-in that the masked field hides). Postel's Law: prevent errors.
@@ -173,6 +206,7 @@ export default function LoginPage() {
         return
       }
       if (data.session) {
+        await saveBrowserCredential(email, password)
         setInfo('Account created. Set your vault PIN on the next screen.')
         return
       }
@@ -203,6 +237,7 @@ export default function LoginPage() {
     logAudit({ action: 'login' })
     clearClientRateLimit(loginRateKey)
     setCooldownTick(tick => tick + 1)
+    await saveBrowserCredential(email, password)
 
     setLoading(false)
   }
@@ -288,12 +323,14 @@ export default function LoginPage() {
             <div>
               <label htmlFor="login-email" className="block text-xs font-medium text-text-secondary mb-1.5">Email</label>
               <input
+                ref={emailRef}
                 id="login-email"
                 name="email"
                 type="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={e => { setEmail(e.target.value); if (error) setError('') }}
+                onAnimationStart={syncAutofill}
                 required
                 autoFocus
                 autoComplete="username"
@@ -306,12 +343,14 @@ export default function LoginPage() {
               <label htmlFor="login-password" className="block text-xs font-medium text-text-secondary mb-1.5">Password</label>
               <div className="relative">
                 <input
+                  ref={passwordRef}
                   id="login-password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
                   onChange={e => { setPassword(e.target.value); if (error) setError('') }}
+                  onAnimationStart={syncAutofill}
                   onKeyUp={onPasswordKey}
                   onKeyDown={onPasswordKey}
                   onBlur={() => setCapsLock(false)}
@@ -359,12 +398,14 @@ export default function LoginPage() {
               <div>
                 <label htmlFor="login-confirm" className="block text-xs font-medium text-text-secondary mb-1.5">Confirm password</label>
                 <input
+                  ref={confirmRef}
                   id="login-confirm"
                   name="confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={e => { setConfirmPassword(e.target.value); if (error) setError('') }}
+                  onAnimationStart={syncAutofill}
                   required
                   autoComplete="new-password"
                   className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm"

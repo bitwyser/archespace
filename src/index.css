@@ -436,9 +436,22 @@ body.bulk-bar-active .toast-stack {
 .password-field::-ms-clear {
   display: none;
 }
-.password-field::-webkit-credentials-auto-fill-button,
+/* Keep the browser's credential auto-fill button (the key icon) so password
+   managers can fill; only hide the "strong password" suggestion overlay. */
 .password-field::-webkit-strong-password-auto-fill-button {
   display: none !important;
   visibility: hidden;
   pointer-events: none;
+}
+
+/* Fire an animation when the browser autofills a field, so React can sync the
+   controlled value into state (otherwise a filled field can leave the gated
+   submit button disabled / the state empty). */
+@keyframes onAutoFillStart {
+  from {}
+  to {}
+}
+input:-webkit-autofill {
+  animation-name: onAutoFillStart;
+  animation-duration: 1ms;
 }
