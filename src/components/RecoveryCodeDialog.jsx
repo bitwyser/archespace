@@ -40,7 +40,32 @@ export default function RecoveryCodeDialog({
   }
 
   return (
-    <Modal title={title} onClose={finish}>
+    <Modal
+      title={title}
+      onClose={finish}
+      footer={
+        <div className="space-y-3">
+          <label className="flex cursor-pointer select-none items-start gap-2.5 text-xs text-text-secondary">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={e => setConfirmed(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-bg-border bg-bg-elevated accent-accent"
+            />
+            I&apos;ve saved my recovery code somewhere safe.
+          </label>
+
+          <button
+            type="button"
+            onClick={finish}
+            disabled={busy || !confirmed}
+            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+          >
+            {acknowledgeLabel}
+          </button>
+        </div>
+      }
+    >
       <div className="space-y-4">
         <p className="flex items-start gap-2 rounded-lg bg-amber-400/10 border border-amber-400/20 px-3 py-2.5 text-xs leading-relaxed text-amber-300">
           <AlertTriangle size={15} className="mt-0.5 shrink-0" />
@@ -67,25 +92,6 @@ export default function RecoveryCodeDialog({
             )}
           </button>
         </div>
-
-        <label className="flex cursor-pointer select-none items-start gap-2.5 text-xs text-text-secondary">
-          <input
-            type="checkbox"
-            checked={confirmed}
-            onChange={e => setConfirmed(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-bg-border bg-bg-elevated accent-accent"
-          />
-          I&apos;ve saved my recovery code somewhere safe.
-        </label>
-
-        <button
-          type="button"
-          onClick={finish}
-          disabled={busy || !confirmed}
-          className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-        >
-          {acknowledgeLabel}
-        </button>
       </div>
 
       <span aria-live="polite" className="sr-only">
