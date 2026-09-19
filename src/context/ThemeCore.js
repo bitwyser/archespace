@@ -37,6 +37,18 @@ export const ACCENT_COLORS = [
     description: 'A warm gold accent with a calm, focused feel.',
     swatch: '#f6b84b',
   },
+  {
+    id: 'sky',
+    name: 'Sky Blue',
+    description: 'A clear azure blue with a bright, calm feel.',
+    swatch: '#38a5f0',
+  },
+  {
+    id: 'rose',
+    name: 'Rose',
+    description: 'A warm rose pink with a soft, friendly feel.',
+    swatch: '#f56b8a',
+  },
 ]
 
 export const DEFAULT_THEME_MODE = 'system'

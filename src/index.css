@@ -105,6 +105,20 @@
   --accent-border: rgba(246,184,75,0.5);
 }
 
+[data-accent="sky"] {
+  --accent:        #38a5f0;
+  --accent-hover:  #78c4f7;
+  --accent-muted:  rgba(56,165,240,0.14);
+  --accent-border: rgba(56,165,240,0.5);
+}
+
+[data-accent="rose"] {
+  --accent:        #f56b8a;
+  --accent-hover:  #ff9cb2;
+  --accent-muted:  rgba(245,107,138,0.16);
+  --accent-border: rgba(245,107,138,0.5);
+}
+
 /* ── Base body styles ───────────────────────────────────── */
 body {
   background: var(--bg-base);
