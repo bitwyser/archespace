@@ -10,6 +10,7 @@ import { useAuth } from './AuthContextCore'
 import { EncryptionContext } from './EncryptionCore'
 import {
   setupUserVault,
+  resetUserVault,
   unlockUserVault,
   changeVaultPinWithVerification,
   createVaultRecoveryCode,
@@ -264,6 +265,35 @@ export function EncryptionProvider({ children }) {
     }
   }, [userId])
 
+  // Reset the vault (both PIN and recovery code lost): wipe all encrypted data
+  // and the vault row, drop old passkeys (they wrapped the destroyed key), then
+  // create a fresh vault. Unlock is deferred until the new recovery code is
+  // acknowledged (like setup). The caller must re-verify the account password.
+  const resetVault = useCallback(async (pin) => {
+    if (!userId) throw new Error('Not signed in')
+    setUnlocking(true)
+    setUnlockError('')
+    try {
+      const result = await resetUserVault(userId, pin)
+      // Old passkeys wrapped the now-destroyed master key; remove them locally.
+      try {
+        const existing = await listPasskeys(userId)
+        for (const pk of existing) await removePasskeyVault(userId, pk.id)
+      } catch {
+        // Best-effort; a stale local passkey just fails to unlock later.
+      }
+      await refreshPasskeys()
+      logAudit({ action: 'vault_reset' })
+      return result
+    } catch (err) {
+      const msg = err?.message || "Couldn't reset the vault."
+      setUnlockError(msg)
+      throw err
+    } finally {
+      setUnlocking(false)
+    }
+  }, [userId, refreshPasskeys])
+
   // Apply an unlocked master key and refresh status. Called after the recovery
   // code is acknowledged (setup / recover) or directly when there is no code.
   const commitVaultKey = useCallback(async (key) => {
@@ -452,6 +482,7 @@ export function EncryptionProvider({ children }) {
         commitVaultKey,
         verifyVaultPin,
         setup,
+        resetVault,
         updatePin,
         setupRecoveryCode,
         updatePinWithRecoveryCode,

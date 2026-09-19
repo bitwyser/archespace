@@ -2,7 +2,7 @@
  * VaultUnlockGate.jsx - Post-login vault PIN unlock or setup.
  */
 import { useState } from 'react'
-import { Shield, Lock, Fingerprint, Check } from 'lucide-react'
+import { Shield, Lock, Fingerprint, Check, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import PinInput from './PinInput'
@@ -13,11 +13,12 @@ import { ConfirmDialog, Spinner } from './ui/UI'
 import RecoveryCodeDialog from './RecoveryCodeDialog'
 
 export default function VaultUnlockGate({ children }) {
-  const { user, signOut, loading: authLoading } = useAuth()
+  const { user, signIn, signOut, loading: authLoading } = useAuth()
   const {
     isUnlocked,
     unlock,
     setup,
+    resetVault,
     commitVaultKey,
     recoverPinWithCode,
     unlocking,
@@ -37,6 +38,10 @@ export default function VaultUnlockGate({ children }) {
   const [oneTimeRecoveryCode, setOneTimeRecoveryCode] = useState('')
   const [recoverySetupWarning, setRecoverySetupWarning] = useState('')
   const [forgotPin, setForgotPin] = useState(false)
+  // "Lost recovery code too" destructive reset: wipe data and start fresh.
+  const [resetMode, setResetMode] = useState(false)
+  const [accountPassword, setAccountPassword] = useState('')
+  const [resetConfirmed, setResetConfirmed] = useState(false)
   const [formError, setFormError] = useState('')
   const [confirmSignOut, setConfirmSignOut] = useState(false)
   // Which action is running, so only its button shows a spinner (not all).
@@ -78,7 +83,15 @@ export default function VaultUnlockGate({ children }) {
     setPin('')
     setConfirmPin('')
     setRecoveryCodeInput('')
+    setAccountPassword('')
+    setResetConfirmed(false)
     setFormError('')
+  }
+
+  const leaveResetMode = () => {
+    setResetMode(false)
+    resetFields()
+    clearUnlockError()
   }
 
   const showRecoveryCode = (recoveryCode) => {
@@ -188,6 +201,53 @@ export default function VaultUnlockGate({ children }) {
       // Hold the key; unlock on "I saved this code" so the new code always shows.
       setPendingUnlockKey(masterKey)
       showRecoveryCode(recoveryCode)
+      setForgotPin(false)
+      resetFields()
+    } catch {
+      // unlockError set in context
+    } finally {
+      setPendingAction(null)
+      setAwaitingVaultResult(false)
+    }
+  }
+
+  // Destructive reset: re-verify the account password, then wipe all data and
+  // create a fresh vault. Used only when both the PIN and recovery code are lost.
+  const handleReset = async (e) => {
+    e.preventDefault()
+    clearUnlockError()
+    setFormError('')
+    if (!accountPassword) {
+      setFormError('Enter your account password.')
+      return
+    }
+    const err = validateVaultPin(pin)
+    if (err) {
+      setFormError(err)
+      return
+    }
+    if (pin !== confirmPin) {
+      setFormError('PINs do not match.')
+      return
+    }
+    if (!resetConfirmed) {
+      setFormError('Tick the box to confirm you understand this deletes your data.')
+      return
+    }
+    try {
+      setPendingAction('pin')
+      setAwaitingVaultResult(true)
+      // Re-verify the account password before destroying anything.
+      const { error: authError } = await signIn(user.email, accountPassword)
+      if (authError) {
+        setFormError('Incorrect account password.')
+        return
+      }
+      const { masterKey, recoveryCode } = await resetVault(pin)
+      // Hold the key; unlock on "I saved this code" so the new code always shows.
+      setPendingUnlockKey(masterKey)
+      showRecoveryCode(recoveryCode)
+      setResetMode(false)
       setForgotPin(false)
       resetFields()
     } catch {
@@ -315,6 +375,136 @@ export default function VaultUnlockGate({ children }) {
             </button>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if (resetMode) {
+    const resetPinsMatch = confirmPin.length > 0 && pin === confirmPin
+    const canReset = Boolean(accountPassword && pin && confirmPin && resetConfirmed)
+    return (
+      <div className="min-h-[100svh] bg-bg-base flex items-start sm:items-center justify-center px-4 pt-16 pb-6 sm:p-4 overflow-y-auto">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-danger/10 border border-danger/20 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <AlertTriangle size={24} className="text-danger sm:w-[26px] sm:h-[26px]" />
+            </div>
+            <h1 className="text-xl font-semibold text-text-primary">Reset vault</h1>
+            <p className="text-text-muted text-sm mt-1.5 sm:mt-2 leading-relaxed">
+              Use this only if you have lost both your PIN and recovery code.
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleReset}
+            className="bg-bg-surface border border-bg-border rounded-2xl p-6 space-y-3"
+          >
+            <div className="flex items-start gap-2 rounded-lg bg-danger/10 border border-danger/20 px-3 py-2.5 text-xs leading-relaxed text-danger">
+              <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+              This permanently deletes all your spaces and items. They are
+              encrypted and cannot be recovered without your PIN or recovery
+              code. This cannot be undone.
+            </div>
+
+            <div>
+              <label htmlFor="reset-account-password" className="block text-xs font-medium text-text-secondary mb-1.5">
+                Account password
+              </label>
+              <input
+                id="reset-account-password"
+                type="password"
+                value={accountPassword}
+                onChange={e => { setAccountPassword(e.target.value); setFormError('') }}
+                required
+                autoFocus
+                autoComplete="current-password"
+                disabled={unlocking}
+                className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm disabled:opacity-50"
+              />
+            </div>
+
+            <PinInput
+              id="reset-pin"
+              label="New vault PIN"
+              value={pin}
+              onChange={v => { setPin(v); setFormError('') }}
+              autoComplete="new-password"
+              disabled={unlocking}
+            />
+            <div>
+              <PinInput
+                id="reset-pin-confirm"
+                label="Confirm vault PIN"
+                value={confirmPin}
+                onChange={v => { setConfirmPin(v); setFormError('') }}
+                autoComplete="new-password"
+                disabled={unlocking}
+              />
+              {confirmPin.length > 0 && (
+                <p className={`mt-1.5 flex items-center gap-1.5 text-[11px] ${resetPinsMatch ? 'text-success' : 'text-danger'}`}>
+                  {resetPinsMatch ? <Check size={12} /> : null}
+                  {resetPinsMatch ? 'PINs match' : 'PINs do not match'}
+                </p>
+              )}
+            </div>
+
+            <label className="flex cursor-pointer select-none items-start gap-2.5 text-xs text-text-secondary">
+              <input
+                type="checkbox"
+                checked={resetConfirmed}
+                onChange={e => { setResetConfirmed(e.target.checked); setFormError('') }}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-bg-border bg-bg-elevated accent-danger"
+              />
+              I understand this permanently deletes all my data.
+            </label>
+
+            {formError && (
+              <p role="alert" className="text-danger text-xs">{formError}</p>
+            )}
+            {unlockError && (
+              <p role="alert" className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">
+                {unlockError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={unlocking || !canReset}
+              className="w-full flex items-center justify-center gap-2 bg-danger hover:bg-danger-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+            >
+              <AlertTriangle size={14} />
+              {pendingAction === 'pin' ? 'Resetting…' : 'Delete data & reset vault'}
+            </button>
+
+            <button
+              type="button"
+              onClick={leaveResetMode}
+              disabled={unlocking}
+              className="w-full text-center text-xs text-text-muted hover:text-accent transition-colors pt-1 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </form>
+
+          <button
+            type="button"
+            onClick={() => setConfirmSignOut(true)}
+            className="w-full text-center text-xs text-text-muted hover:text-danger transition-colors mt-4"
+          >
+            Sign out
+          </button>
+        </div>
+
+        {confirmSignOut && (
+          <ConfirmDialog
+            title="Sign out?"
+            message="You'll need your login password and vault PIN to sign back in."
+            confirmLabel="Sign out"
+            destructive
+            onConfirm={() => { setConfirmSignOut(false); signOut() }}
+            onClose={() => setConfirmSignOut(false)}
+          />
+        )}
       </div>
     )
   }
@@ -458,6 +648,16 @@ export default function VaultUnlockGate({ children }) {
               className="w-full text-center text-xs text-text-muted hover:text-accent transition-colors pt-1"
             >
               Back to PIN unlock
+            </button>
+          )}
+
+          {forgotPin && (
+            <button
+              type="button"
+              onClick={() => { setResetMode(true); setForgotPin(false); resetFields(); clearUnlockError() }}
+              className="w-full text-center text-xs text-text-muted hover:text-danger transition-colors"
+            >
+              Lost your recovery code too? Reset vault
             </button>
           )}
         </form>

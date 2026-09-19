@@ -54,6 +54,14 @@ function readCachedVaultMeta(userId) {
   }
 }
 
+function clearCachedVaultMeta(userId) {
+  try {
+    if (userId) localStorage.removeItem(VAULT_META_CACHE_PREFIX + userId)
+  } catch {
+    // Storage unavailable - nothing to clear.
+  }
+}
+
 export async function importRawAesKey(rawBytes) {
   return crypto.subtle.importKey(
     'raw',
@@ -261,6 +269,31 @@ export async function setupUserVault(userId, pin) {
     recoveryCode: recoverySaved ? recoveryCode : null,
     recoveryUnavailable: !recoverySaved,
   }
+}
+
+/**
+ * Reset the vault when BOTH the PIN and the recovery code are lost. Permanently
+ * deletes all encrypted content and the vault metadata (the data is
+ * unrecoverable without the key - that is the point), then creates a fresh
+ * PIN-protected vault and a new recovery code. Callers MUST re-verify the
+ * account password before invoking this.
+ * @param {string} userId
+ * @param {string} pin
+ */
+export async function resetUserVault(userId, pin) {
+  assertValidPin(pin)
+  // Delete all encrypted content. space_items cascade from spaces, but delete
+  // both explicitly so nothing is left behind if a cascade/RLS quirk skips them.
+  const { error: itemsError } = await supabase.from('space_items').delete().eq('user_id', userId)
+  if (itemsError) throw itemsError
+  const { error: spacesError } = await supabase.from('spaces').delete().eq('user_id', userId)
+  if (spacesError) throw spacesError
+  // Drop the old (now unusable) vault row so setup can create a fresh one.
+  const { error: vaultError } = await supabase.from('user_encryption').delete().eq('user_id', userId)
+  if (vaultError) throw vaultError
+  clearCachedVaultMeta(userId)
+  // Create a brand-new vault + recovery code.
+  return setupUserVault(userId, pin)
 }
 
 /**
