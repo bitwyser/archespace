@@ -117,6 +117,8 @@ export default defineConfig({
           if (id.includes('@supabase')) return 'supabase'
           if (id.includes('lucide-react')) return 'icons'
           if (id.includes('jszip')) return 'zip'
+          // Keep pdfmake in its own chunk so it loads only when exporting a PDF.
+          if (id.includes('pdfmake')) return 'pdfmake'
           return 'vendor'
         },
       },
