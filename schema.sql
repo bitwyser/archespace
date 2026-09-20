@@ -102,6 +102,18 @@ CREATE TABLE IF NOT EXISTS user_settings (
   updated_at   timestamptz NOT NULL DEFAULT now()
 );
 
+-- User Consent: proof that a user agreed to the Terms + Privacy Policy at
+-- sign-up (GDPR/DPDP audit trail). Written ONLY by the log_auth_event trigger
+-- (section 10), never by clients - the row records the policy version the
+-- client reported and a server-stamped acceptance time, so it can't be forged
+-- or back-dated. terms_version matches src/lib/legal.js TERMS_VERSION.
+CREATE TABLE IF NOT EXISTS user_consent (
+  user_id           uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  terms_version     text        NOT NULL,
+  terms_accepted_at timestamptz NOT NULL DEFAULT now(),
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
 
 -- ────────────────────────────────────────────────────────────
 -- 2. INDEXES
@@ -191,9 +203,14 @@ ALTER TABLE space_items     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_encryption ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_consent    ENABLE ROW LEVEL SECURITY;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_encryption TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE user_settings   TO authenticated;
+-- Consent is read-only to clients: only the log_auth_event trigger writes it.
+-- No INSERT/UPDATE/DELETE grant means a user can read their own consent record
+-- but cannot create, alter, or back-date it.
+GRANT SELECT ON TABLE user_consent TO authenticated;
 
 -- Spaces: full CRUD for the owning user only.
 DO $$ BEGIN
@@ -225,6 +242,15 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_settings' AND policyname = 'Users manage own settings') THEN
     CREATE POLICY "Users manage own settings"
       ON user_settings FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
+
+-- User consent: read-only for the owning user (writes happen only in the
+-- SECURITY DEFINER trigger, which bypasses RLS). SELECT-only policy.
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_consent' AND policyname = 'Users can read own consent') THEN
+    CREATE POLICY "Users can read own consent"
+      ON user_consent FOR SELECT USING (auth.uid() = user_id);
   END IF;
 END $$;
 
@@ -593,7 +619,24 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     INSERT INTO audit_log (user_id, action, details)
-    VALUES (NEW.id, 'account_created', jsonb_build_object('email', NEW.email));
+    VALUES (NEW.id, 'account_created', jsonb_build_object(
+      'email', NEW.email,
+      'terms_version', NEW.raw_user_meta_data->>'terms_version',
+      'terms_accepted_at_client', NEW.raw_user_meta_data->>'terms_accepted_at'
+    ));
+
+    -- Record consent proof when the sign-up client reported a policy version.
+    -- terms_accepted_at is stamped server-side (now()), so it is authoritative
+    -- and cannot be back-dated; the client's own timestamp is kept in the audit
+    -- entry above for reference only. Skipped for accounts created without a
+    -- version (e.g. older clients or admin-created users).
+    IF NEW.raw_user_meta_data ? 'terms_version'
+       AND coalesce(NEW.raw_user_meta_data->>'terms_version', '') <> '' THEN
+      INSERT INTO user_consent (user_id, terms_version, terms_accepted_at)
+      VALUES (NEW.id, NEW.raw_user_meta_data->>'terms_version', now())
+      ON CONFLICT (user_id) DO NOTHING;
+    END IF;
+
     RETURN NEW;
   END IF;
 

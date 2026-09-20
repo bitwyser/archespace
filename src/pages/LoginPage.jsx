@@ -9,6 +9,7 @@ import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '
 import { MULTI_USER_ENABLED } from '../lib/appConfig'
 import { APP_VERSION } from '../lib/buildInfo'
 import { WordmarkLogo } from '../components/WordmarkLogo'
+import { TERMS_VERSION } from '../lib/legal'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
 import { setRememberMe } from '../lib/supabase'
@@ -67,6 +68,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [capsLock, setCapsLock] = useState(false)
   const [remember, setRemember] = useState(true)
+  // Explicit consent to the Terms and Privacy Policy, required before an account
+  // can be created (GDPR/DPDP: record affirmative agreement at sign-up).
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   const emailRef = useRef(null)
   const passwordRef = useRef(null)
@@ -127,7 +131,7 @@ export default function LoginPage() {
   const canSubmit = isForgot
     ? Boolean(email.trim())
     : isSignUp
-      ? Boolean(email.trim() && password && confirmPassword)
+      ? Boolean(email.trim() && password && confirmPassword && acceptedTerms)
       : Boolean(email.trim() && password)
 
   // Sign-up is only reachable when multi-user mode is on; otherwise send the
@@ -155,6 +159,7 @@ export default function LoginPage() {
     setResetSent(false)
     setError('')
     setInfo('')
+    setAcceptedTerms(false)
   }, [pathMode])
 
   const handleSubmit = async (e) => {
@@ -198,8 +203,18 @@ export default function LoginPage() {
         setError('Passwords do not match.')
         return
       }
+      if (!acceptedTerms) {
+        setError('Please accept the Terms of Service and Privacy Policy to continue.')
+        return
+      }
       setLoading(true)
-      const { data, error: signUpError } = await signUp(email, password)
+      // Record which policy version was accepted. The server stamps the
+      // authoritative accepted-at time (see the user_consent trigger); the
+      // client timestamp is sent for reference only.
+      const { data, error: signUpError } = await signUp(email, password, {
+        terms_version: TERMS_VERSION,
+        terms_accepted_at: new Date().toISOString(),
+      })
       setLoading(false)
       if (signUpError) {
         setError(signUpError.message)
@@ -421,6 +436,28 @@ export default function LoginPage() {
                   </p>
                 )}
               </div>
+            )}
+
+            {isSignUp && (
+              <label className="flex cursor-pointer select-none items-start gap-2.5 pt-0.5 text-xs leading-5 text-text-secondary">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={e => { setAcceptedTerms(e.target.checked); if (error) setError('') }}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-bg-border bg-bg-elevated accent-accent"
+                />
+                <span>
+                  I agree to the{' '}
+                  <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-medium">
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-medium">
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
             )}
 
             {error && (

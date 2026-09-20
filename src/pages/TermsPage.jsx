@@ -2,10 +2,11 @@
  * TermsPage.jsx - Public terms of service (/terms).
  */
 import { LegalLayout } from './legal/LegalLayout'
+import { TERMS_LAST_UPDATED } from '../lib/legal'
 
 export default function TermsPage() {
   return (
-    <LegalLayout title="Terms of Service" updated="20 September 2026">
+    <LegalLayout title="Terms of Service" updated={TERMS_LAST_UPDATED}>
       <p>
         These terms govern your use of the ArcheSpace hosted service at archespace.app and the ArcheSpace
         apps (the "Service"). By creating an account or using the Service, you agree to these terms.

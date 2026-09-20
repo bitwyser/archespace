@@ -2,10 +2,11 @@
  * PrivacyPage.jsx - Public privacy policy (/privacy).
  */
 import { LegalLayout } from './legal/LegalLayout'
+import { TERMS_LAST_UPDATED } from '../lib/legal'
 
 export default function PrivacyPage() {
   return (
-    <LegalLayout title="Privacy Policy" updated="20 September 2026">
+    <LegalLayout title="Privacy Policy" updated={TERMS_LAST_UPDATED}>
       <p>
         ArcheSpace is built around <strong>zero-knowledge, end-to-end encryption</strong>. Your notes,
         spaces, and other content are encrypted on your device with a key derived from your vault PIN,
