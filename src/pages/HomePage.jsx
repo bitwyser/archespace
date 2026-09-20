@@ -830,7 +830,9 @@ export default function HomePage() {
               </a>
               .
             </p>
-            <p className="text-xs text-white/65">
+            <div className="flex items-center gap-4 text-xs text-white/65">
+              <a href="/privacy" className="no-underline hover:text-white/80 transition-colors">Privacy</a>
+              <a href="/terms" className="no-underline hover:text-white/80 transition-colors">Terms</a>
               <a
                 href={COMMIT_URL}
                 target="_blank"
@@ -839,7 +841,7 @@ export default function HomePage() {
               >
                 v{APP_VERSION}
               </a>
-            </p>
+            </div>
           </div>
         </div>
       </footer>

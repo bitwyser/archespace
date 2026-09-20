@@ -60,6 +60,8 @@ const SpacePage = lazyWithRetry(() => import('./pages/SpacePage'))
 const RecycleBinPage = lazyWithRetry(() => import('./pages/RecycleBinPage'))
 const ArchivePage = lazyWithRetry(() => import('./pages/ArchivePage'))
 const SettingsPage = lazyWithRetry(() => import('./pages/SettingsPage'))
+const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'))
+const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'))
 
 const queryClient = new QueryClient({
   // Realtime subscriptions keep the cache fresh, so a refetch on every window
@@ -103,6 +105,16 @@ function PublicRoute({ children, title }) {
 
   if (loading) return <PageLoader />
   if (user) return <Navigate to="/app" replace />
+  return (
+    <Suspense fallback={<PageLoader />}>
+      {children}
+    </Suspense>
+  )
+}
+
+/** Public legal pages: indexable, and viewable whether or not you're signed in. */
+function LegalRoute({ children, title }) {
+  useRouteMeta({ title, indexable: true })
   return (
     <Suspense fallback={<PageLoader />}>
       {children}
@@ -164,6 +176,8 @@ const router = createBrowserRouter([
       { path: '/login', element: <PublicRoute title="Sign in"><LoginPage /></PublicRoute> },
       { path: '/signup', element: <PublicRoute title="Create account"><LoginPage /></PublicRoute> },
       { path: '/reset-password', element: <Suspense fallback={<PageLoader />}><PasswordResetPage /></Suspense> },
+      { path: '/privacy', element: <LegalRoute title="Privacy Policy"><PrivacyPage /></LegalRoute> },
+      { path: '/terms', element: <LegalRoute title="Terms of Service"><TermsPage /></LegalRoute> },
       { path: '/', element: <HomeRoute /> },
       {
         element: <AppShell />,

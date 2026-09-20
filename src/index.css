@@ -469,3 +469,25 @@ input:-webkit-autofill {
   animation-name: onAutoFillStart;
   animation-duration: 1ms;
 }
+
+/* ── Legal document prose (privacy / terms) ─────────────── */
+.legal-prose h2 {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.75rem 0 0.5rem;
+}
+.legal-prose h3 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin: 1rem 0 0.25rem;
+}
+.legal-prose p { margin: 0 0 0.75rem; }
+.legal-prose ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0 0 0.75rem;
+}
+.legal-prose li { margin: 0.25rem 0; }
+.legal-prose a { color: var(--accent); }
+.legal-prose strong { color: var(--text-primary); font-weight: 600; }
