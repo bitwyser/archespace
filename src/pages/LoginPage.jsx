@@ -269,9 +269,13 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-6 sm:mb-10">
-          <div className="mx-auto mb-5 flex items-center justify-center text-accent">
+          <Link
+            to="/"
+            aria-label="Go to home page"
+            className="mx-auto mb-5 flex w-fit items-center justify-center text-accent hover:opacity-80 transition-opacity"
+          >
             <BrandGlyph className="h-14 w-14" />
-          </div>
+          </Link>
           <p className="text-text-secondary text-sm">
             {isForgot
               ? 'Reset your password'
@@ -532,6 +536,15 @@ export default function LoginPage() {
             )}
           </p>
         )}
+
+        <p className="text-center mt-4">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-accent transition-colors"
+          >
+            <ArrowLeft size={12} /> Back to home
+          </Link>
+        </p>
       </div>
     </div>
   )
