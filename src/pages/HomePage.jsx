@@ -352,23 +352,26 @@ export default function HomePage() {
                 {section.label}
               </a>
             ))}
+          </nav>
+          {/* Desktop right side: GitHub, then the primary action */}
+          <div className="hidden items-center gap-2 lg:flex">
             <a
               href={REPO_URL}
               target="_blank"
               rel="noreferrer"
-              className={`${navLink} home-nav-link`}
+              className="home-link-lift inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
             >
+              <GithubMark size={16} />
               GitHub
             </a>
-          </nav>
-          {/* Desktop primary action (right-aligned) */}
-          <Link
-            to="/signup"
-            className="home-link-lift hidden lg:inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-[#0c1a16] hover:bg-emerald-200 transition-colors"
-          >
-            Get started
-            <ArrowRight size={16} />
-          </Link>
+            <Link
+              to="/signup"
+              className="home-link-lift inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-[#0c1a16] hover:bg-emerald-200 transition-colors"
+            >
+              Get started
+              <ArrowRight size={16} />
+            </Link>
+          </div>
 
           {/* Mobile: primary action + menu toggle */}
           <div className="flex items-center gap-2 lg:hidden">
@@ -464,7 +467,7 @@ export default function HomePage() {
           <p className="mt-6 max-w-3xl text-base leading-7 text-white/72 sm:text-lg">
             Capture and organise all your information, knowledge, projects, notes, secrets, code,{' '}
             <br className="hidden sm:inline" />
-            checklists, ideas, and everything else you're working on in an open-source, encrypted space.
+            checklists, ideas, and everything else you're working on in an open-source, encrypted space that syncs across your devices.
           </p>
 
           <div className="mt-9 flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row">
