@@ -122,12 +122,12 @@ const steps = [
   {
     step: '01',
     title: 'Create your account',
-    body: 'Sign up with an email and password. This only gets you into the app - it does not unlock any of your content yet.',
+    body: 'Sign up with an email and password. This only gets you into the app; it does not unlock any of your content yet.',
   },
   {
     step: '02',
     title: 'Set your vault key',
-    body: 'Choose a PIN or passphrase. It becomes your encryption key on your device and is never sent to the server - not even we can see it.',
+    body: 'Choose a PIN or passphrase. It becomes your encryption key on your device and is never sent to the server, so not even we can see it.',
   },
   {
     step: '03',
@@ -139,7 +139,7 @@ const steps = [
 const serverFacts = [
   'Two separate secrets: your login proves who you are, your vault key unlocks your content.',
   'Your vault key is created on your device and never leaves it.',
-  'We store only unreadable ciphertext plus plain metadata - ids, timestamps, and order.',
+  'We store only unreadable ciphertext plus plain metadata: ids, timestamps, and order.',
   'There is no reset link and no backdoor. Lose both your PIN and recovery code, and the data can never be unlocked again.',
 ]
 
@@ -440,7 +440,7 @@ export default function HomePage() {
         <div className="hero-enter relative z-10 mx-auto flex max-w-3xl flex-col items-center py-16 text-center sm:py-20">
           <div className="hero-headline">
             <h1
-              aria-label="ArcheSpace - Everything in One Encrypted Space"
+              aria-label="ArcheSpace: Everything in One Encrypted Space"
               className="whitespace-normal sm:whitespace-nowrap text-[clamp(1.9rem,8vw,4.5rem)] font-semibold leading-[1.03] tracking-normal"
             >
               It&apos;s{' '}
@@ -548,7 +548,6 @@ export default function HomePage() {
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-300 font-mono text-xs font-bold text-[#0c1a16]">
                     {i + 1}
                   </span>
-                  <span className="font-mono text-xs font-semibold text-white/40">{step}</span>
                 </div>
                 <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-white/62">{body}</p>
@@ -559,8 +558,8 @@ export default function HomePage() {
           {/* What the server stores: the trust payoff of the flow above. */}
           <div className="mt-16 border-t border-white/10 pt-12">
             <SectionHeading eyebrow="What the server stores" title="Nothing on our side can unlock it">
-              Your vault key never reaches us, so there is nothing on our servers that we - or
-              anyone else - could ever read.
+              Your vault key never reaches us, so there is nothing on our servers that we, or
+              anyone else, could ever read.
             </SectionHeading>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
@@ -695,8 +694,8 @@ export default function HomePage() {
           <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div>
               <SectionHeading eyebrow="Also on Android" title="Your space, in your pocket">
-                A native Android app, built with Flutter and open source like the web - iOS
-                coming soon. It's the same zero-knowledge vault: unlock with your PIN or
+                A native Android app, built with Flutter and open source like the web, with
+                iOS coming soon. It's the same zero-knowledge vault: unlock with your PIN or
                 biometrics, and your spaces sync across every device. In active development, so
                 follow along or build it yourself on GitHub.
               </SectionHeading>
@@ -776,7 +775,7 @@ export default function HomePage() {
             <div>
               <WordmarkLogo className="h-7 w-auto text-emerald-400" />
               <p className="mt-3 max-w-xs text-sm leading-6 text-white/60">
-                An open-source, encrypted space.
+                Everything in One Encrypted Space.
               </p>
             </div>
 
