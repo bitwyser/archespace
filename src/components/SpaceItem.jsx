@@ -17,7 +17,7 @@
  * (auto-save after 5s).
  */
 
-import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, memo } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X,
@@ -45,6 +45,11 @@ import { exportItemToPdf } from '../lib/pdfExport'
 import { TYPE_LABELS, TYPE_STYLES } from '../lib/itemTypes'
 import { AUTO_SAVE_DELAY_MS } from '../lib/constants'
 
+// When an item's content is taller than this (px), it collapses to a fixed
+// preview of this height by default. Collapsing clamps the card to this height
+// (with a fade) rather than hiding the content; expanding restores full height.
+const COLLAPSED_MAX_PX = 320
+
 /**
  * @param {{ item: Object, onUpdate: Function, onTogglePin: Function, onDelete: Function, onDirtyChange?: Function, dragHandleProps?: Object }} props
  */
@@ -62,7 +67,8 @@ function SpaceItem({
   onDragStart,
   onDragEnd,
   dragDisabled = false,
-  collapsed = false,
+  forcedCollapsed = false,
+  forcedExpanded = false,
   onCollapsedChange,
   selectMode = false,
   selected = false,
@@ -82,6 +88,10 @@ function SpaceItem({
   const [pendingSync, setPendingSync] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [editorVersion, setEditorVersion] = useState(0)
+  // Measured: is the content taller than the collapse threshold? Drives both the
+  // auto-collapse default and whether the collapse/expand control is shown.
+  const [overflowing, setOverflowing] = useState(false)
+  const contentRef = useRef(null)
   const [copied, setCopied] = useState(false)
   const [secretState, setSecretState] = useState({ revealed: false, prompting: false })
   const secretEditorRef = useRef(null)
@@ -142,6 +152,22 @@ function SpaceItem({
   useEffect(() => {
     onDirtyChange?.(item.id, isDirty)
   }, [isDirty, item.id, onDirtyChange])
+
+  // ── Measure content height to decide if the card is "long" ──
+  // scrollHeight reports the full natural height even while the card is clamped,
+  // so this stays correct whether the card is collapsed or expanded.
+  useLayoutEffect(() => {
+    const el = contentRef.current
+    if (!el) return
+    const measure = () => {
+      const long = el.scrollHeight > COLLAPSED_MAX_PX + 24
+      setOverflowing(prev => (prev !== long ? long : prev))
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [localContent, editorVersion])
 
   // ── Cleanup timers on unmount ──
   useEffect(() => {
@@ -298,6 +324,23 @@ function SpaceItem({
   // In grid view on small screens the card is shown denser (smaller text and
   // padding) so its full content still fits in a narrow two-column cell.
   const denseView = dense && !isFullscreen && !selectMode
+  // Clamping applies in the normal list card, not in fullscreen or the dense
+  // grid preview (which has its own tap-to-open behaviour).
+  const canClamp = !isFullscreen && !denseView
+  // Tri-state collapse: an explicit collapse/expand wins; otherwise long items
+  // default to collapsed (clamped preview) and short ones stay open.
+  const collapsed = isFullscreen
+    ? false
+    : forcedCollapsed
+      ? true
+      : forcedExpanded
+        ? false
+        // Never auto-collapse an item that's being edited (unsaved changes),
+        // so typing can't clamp the card out from under the user.
+        : canClamp && overflowing && !isDirty
+  // Show the collapse/expand control only when it does something: the content is
+  // long, or the card is currently collapsed.
+  const showCollapseToggle = canClamp && (overflowing || collapsed)
   // Whether the tags row is shown (drives content top padding so the two don't
   // stack into a large gap).
   const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || online)
@@ -440,6 +483,7 @@ function SpaceItem({
                 </>
               ) : (
                 <>
+                  {showCollapseToggle && (
                   <button
                     type="button"
                     onClick={handleCollapseClick}
@@ -449,6 +493,7 @@ function SpaceItem({
                   >
                     {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                   </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleFullscreenClick}
@@ -608,35 +653,51 @@ function SpaceItem({
         </div>
       )}
 
-      {/* ── Content editor (conditionally rendered) ── */}
-      {!collapsed && (
-        <div
-          onClick={denseView ? () => setIsFullscreen(true) : undefined}
-          className={isFullscreen
+      {/* ── Content editor ──
+          Always rendered so its height can be measured. When "collapsed" the
+          card is clamped to a fixed preview height (with a fade) instead of
+          hiding the content; clicking the preview expands it to full height. */}
+      <div
+        ref={contentRef}
+        onClick={
+          collapsed && !selectMode
+            ? () => onCollapsedChange?.(item.id, false)
+            : denseView
+              ? () => setIsFullscreen(true)
+              : undefined
+        }
+        style={collapsed ? { maxHeight: COLLAPSED_MAX_PX } : undefined}
+        className={`${
+          isFullscreen
             ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8'
             : denseView
               ? `px-2.5 ${showTags ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
-              : `px-4 ${showTags || showRichToolbar ? 'pt-0' : 'pt-4'} pb-4`}
-        >
-          {/* In dense grid the content is a non-interactive preview; tapping it
-              opens full screen instead of editing inline in a narrow cell. */}
-          <div className={denseView ? 'pointer-events-none' : 'contents'}>
-          {/* Render only the editor for this item's type (not all four) */}
-          {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'richtext'      && <RichTextEditor   key={`${item.id}:${editorVersion}`} ref={richTextRef} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'code'          && <CodeEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'checkbox_list' && <ChecklistEditor  key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'menu_list'     && <MenuListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'numbered_list' && <NumberedListEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'card_list'     && <CardListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'secret'        && <SecretEditor     key={`${item.id}:${editorVersion}`} ref={secretEditorRef} content={localContent} onChange={handleContentChange} onStateChange={setSecretState} />}
-          {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          {item.type === 'authenticator' && <AuthenticatorEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-          </div>
+              : `px-4 ${showTags || showRichToolbar ? 'pt-0' : 'pt-4'} pb-4`
+        }${collapsed ? ` relative overflow-hidden${selectMode ? '' : ' cursor-pointer'}` : ''}`}
+      >
+        {/* In the dense grid, or while clamped, the content is a non-interactive
+            preview; tapping it opens full screen / expands instead of editing. */}
+        <div className={denseView || collapsed ? 'pointer-events-none' : 'contents'}>
+        {/* Render only the editor for this item's type (not all four) */}
+        {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'richtext'      && <RichTextEditor   key={`${item.id}:${editorVersion}`} ref={richTextRef} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'code'          && <CodeEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'checkbox_list' && <ChecklistEditor  key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'menu_list'     && <MenuListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'numbered_list' && <NumberedListEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'card_list'     && <CardListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'secret'        && <SecretEditor     key={`${item.id}:${editorVersion}`} ref={secretEditorRef} content={localContent} onChange={handleContentChange} onStateChange={setSecretState} />}
+        {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'authenticator' && <AuthenticatorEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
         </div>
-      )}
+        {collapsed && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-20 items-end justify-center bg-gradient-to-t from-bg-card via-bg-card/80 to-transparent">
+            <span className="mb-2 text-[11px] font-medium text-text-muted">Show more</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 
