@@ -64,7 +64,7 @@ export default function AppSidebar({
   return (
     <aside
       className={`hidden sm:flex flex-col shrink-0 h-screen sticky top-0 border-r border-bg-border bg-bg-surface/40 transition-[width] duration-200 ${
-        collapsed ? 'w-16' : 'w-52'
+        collapsed ? 'w-16' : 'w-44'
       }`}
     >
       {/* Logo */}
@@ -72,14 +72,15 @@ export default function AppSidebar({
         type="button"
         onClick={() => navigate('/app')}
         aria-label="ArcheSpace"
-        className={`flex items-center h-16 shrink-0 ${collapsed ? 'justify-center px-0' : 'px-4'}`}
+        className="flex items-center justify-center h-16 shrink-0 px-3"
       >
-        {/* The bare "A" mark when collapsed, the full wordmark when expanded.
-            No badge - only the mobile app icon keeps the box. */}
+        {/* The bare "A" mark when collapsed, the full wordmark when expanded,
+            centered in the sidebar. No badge - only the mobile app icon keeps
+            the box. */}
         {collapsed ? (
           <BrandGlyph className="h-8 w-8 shrink-0 text-accent" />
         ) : (
-          <WordmarkLogo className="h-6 w-auto text-accent" />
+          <WordmarkLogo className="h-[22px] w-auto text-accent" />
         )}
       </button>
 

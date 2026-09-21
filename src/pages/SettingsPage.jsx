@@ -20,7 +20,7 @@ import WeakPinWarning from '../components/WeakPinWarning'
 import { VAULT_PIN_MIN_LENGTH, VAULT_AUTO_LOCK_OPTIONS } from '../lib/constants'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
-import { APP_VERSION, BUILD_HASH, COMMIT_URL } from '../lib/buildInfo'
+import { APP_VERSION, COMMIT_URL } from '../lib/buildInfo'
 import ReauthCode from '../components/ReauthCode'
 import { Modal, ConfirmDialog } from '../components/ui/UI'
 import RecoveryCodeDialog from '../components/RecoveryCodeDialog'
@@ -907,15 +907,15 @@ export default function SettingsPage() {
             </div>
 
             <p className="mt-6 shrink-0 text-center text-xs text-text-muted">
-              ArcheSpace <span className="text-text-secondary">v{APP_VERSION}</span> · build{' '}
+              ArcheSpace{' · '}
               <a
                 href={COMMIT_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="font-mono underline hover:text-text-secondary transition-colors"
+                className="text-text-secondary hover:text-text-primary transition-colors"
                 title="View this build's source commit"
               >
-                {BUILD_HASH}
+                v{APP_VERSION}
               </a>
             </p>
           </div>

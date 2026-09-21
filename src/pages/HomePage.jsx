@@ -338,10 +338,10 @@ export default function HomePage() {
         }`}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <a href="#top" className="flex items-center" aria-label="ArcheSpace home">
-            <WordmarkLogo className="h-6 w-auto text-emerald-400" />
-          </a>
-          {/* Desktop nav */}
+          {/* Spacer (mobile only) keeps the mobile actions on the right when the
+              desktop nav is hidden. */}
+          <div className="lg:hidden" aria-hidden="true" />
+          {/* Desktop nav (left-aligned) */}
           <nav className="hidden items-center gap-1 lg:flex">
             {navSections.map(section => (
               <a
@@ -360,14 +360,15 @@ export default function HomePage() {
             >
               GitHub
             </a>
-            <Link
-              to="/signup"
-              className="home-link-lift inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-[#0c1a16] hover:bg-emerald-200 transition-colors"
-            >
-              Get started
-              <ArrowRight size={16} />
-            </Link>
           </nav>
+          {/* Desktop primary action (right-aligned) */}
+          <Link
+            to="/signup"
+            className="home-link-lift hidden lg:inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-[#0c1a16] hover:bg-emerald-200 transition-colors"
+          >
+            Get started
+            <ArrowRight size={16} />
+          </Link>
 
           {/* Mobile: primary action + menu toggle */}
           <div className="flex items-center gap-2 lg:hidden">
@@ -833,6 +834,14 @@ export default function HomePage() {
             <div className="flex items-center gap-4 text-xs text-white/65">
               <a href="/privacy" className="no-underline hover:text-white/80 transition-colors">Privacy</a>
               <a href="/terms" className="no-underline hover:text-white/80 transition-colors">Terms</a>
+              <a
+                href={`${REPO_URL}/blob/main/SECURITY.md`}
+                target="_blank"
+                rel="noreferrer"
+                className="no-underline hover:text-white/80 transition-colors"
+              >
+                Security
+              </a>
               <a
                 href={COMMIT_URL}
                 target="_blank"

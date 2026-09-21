@@ -4,11 +4,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContextCore'
-import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Home, Check } from 'lucide-react'
+import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Check } from 'lucide-react'
 import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '../lib/constants'
 import { MULTI_USER_ENABLED } from '../lib/appConfig'
-import { APP_VERSION } from '../lib/buildInfo'
-import { WordmarkLogo } from '../components/WordmarkLogo'
+import { BrandGlyph } from '../components/BrandGlyph'
 import { TERMS_VERSION } from '../lib/legal'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
@@ -268,26 +267,17 @@ export default function LoginPage() {
         />
       </div>
 
-      <Link
-        to="/"
-        className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all z-50 text-sm font-medium"
-        aria-label="Go to home page"
-      >
-        <Home size={16} />
-        <span className="hidden sm:inline">Home</span>
-      </Link>
-
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-6 sm:mb-10">
           <div className="mx-auto mb-5 flex items-center justify-center text-accent">
-            <WordmarkLogo className="h-10 w-auto" />
+            <BrandGlyph className="h-14 w-14" />
           </div>
           <p className="text-text-secondary text-sm">
             {isForgot
               ? 'Reset your password'
               : isSignUp
-                ? 'Create your account'
-                : 'Sign in to your account'}
+                ? 'Sign up for ArcheSpace'
+                : 'Sign in to ArcheSpace'}
           </p>
         </div>
 
@@ -542,10 +532,6 @@ export default function LoginPage() {
             )}
           </p>
         )}
-
-        <p className="text-center text-text-muted text-xs mt-4 sm:mt-6">
-          Everything in Encrypted Space · v{APP_VERSION}
-        </p>
       </div>
     </div>
   )
