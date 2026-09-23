@@ -16,6 +16,22 @@ export const TYPE_LABELS = {
   authenticator: 'Authenticator',
 }
 
+/** Icon per item type (used on item cards). */
+export const TYPE_ICONS = {
+  textbox: AlignLeft,
+  richtext: Type,
+  markdown: FileCode,
+  menu_list: List,
+  numbered_list: ListOrdered,
+  checkbox_list: CheckSquare,
+  card_list: LayoutList,
+  table: Table,
+  secret: KeyRound,
+  draw: Brush,
+  code: Code,
+  authenticator: ShieldCheck,
+}
+
 /** Colour scheme per item type (text, background, border) */
 export const TYPE_STYLES = {
   textbox: { text: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/20' },

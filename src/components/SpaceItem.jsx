@@ -42,13 +42,13 @@ import { useEncryption } from '../context/EncryptionCore'
 import { encryptItem } from '../lib/dataProtection'
 import { itemToClipboardText } from '../lib/itemClipboard'
 import { exportItemToPdf } from '../lib/pdfExport'
-import { TYPE_LABELS, TYPE_STYLES } from '../lib/itemTypes'
+import { TYPE_LABELS, TYPE_STYLES, TYPE_ICONS } from '../lib/itemTypes'
 import { AUTO_SAVE_DELAY_MS } from '../lib/constants'
 
 // When an item's content is taller than this (px), it collapses to a fixed
 // preview of this height by default. Collapsing clamps the card to this height
 // (with a fade) rather than hiding the content; expanding restores full height.
-const COLLAPSED_MAX_PX = 320
+const COLLAPSED_MAX_PX = 480
 
 /**
  * @param {{ item: Object, onUpdate: Function, onTogglePin: Function, onDelete: Function, onDirtyChange?: Function, dragHandleProps?: Object }} props
@@ -366,9 +366,14 @@ function SpaceItem({
         : 'relative rounded-2xl bg-bg-card'
     } transition-colors ${denseView ? 'text-[13px]' : ''} ${
       isFullscreen ? '' :
-      selected || (item.pinned && !selectMode) ? 'border-2 border-accent-border' :
+      selected ? 'border-[1.5px] border-accent-border' :
+      (item.pinned && !selectMode) ? 'border-[1.5px]' :
       'border border-bg-border'
-    }`}>
+    }`}
+    style={!isFullscreen && !selected && item.pinned && !selectMode
+      ? { borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)' }
+      : undefined}
+    >
       {/* ── Header ────────────────────────────────────── */}
       <div className={`flex items-center gap-2 flex-wrap gap-y-2 ${
         denseView ? 'px-2.5 py-2' : 'px-4 py-3'
@@ -390,10 +395,19 @@ function SpaceItem({
         {/* Pin indicator */}
         {item.pinned && <Pin size={14} className="text-accent shrink-0 fill-accent" />}
 
-        {/* Type badge */}
-        <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg ${style.bg} ${style.text} border ${style.border}`}>
-          {TYPE_LABELS[item.type]}
-        </span>
+        {/* Type badge: the type's colored icon in a tinted pill. */}
+        {(() => {
+          const TypeIcon = TYPE_ICONS[item.type]
+          return (
+            <span
+              className={`shrink-0 inline-flex items-center justify-center p-1.5 rounded-lg ${style.bg} ${style.text} border ${style.border}`}
+              title={TYPE_LABELS[item.type]}
+              aria-label={TYPE_LABELS[item.type]}
+            >
+              {TypeIcon ? <TypeIcon size={14} /> : null}
+            </span>
+          )
+        })()}
 
         {/* Title (inline editable) */}
         <div className="flex-1 min-w-0">
@@ -673,7 +687,7 @@ function SpaceItem({
             : denseView
               ? `px-2.5 ${showTags ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
               : `px-4 ${showTags || showRichToolbar ? 'pt-0' : 'pt-4'} pb-4`
-        }${collapsed ? ` relative overflow-hidden${selectMode ? '' : ' cursor-pointer'}` : ''}`}
+        }${collapsed ? ` relative overflow-hidden rounded-b-2xl${selectMode ? '' : ' cursor-pointer'}` : ''}`}
       >
         {/* In the dense grid, or while clamped, the content is a non-interactive
             preview; tapping it opens full screen / expands instead of editing. */}
@@ -692,10 +706,10 @@ function SpaceItem({
         {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
         {item.type === 'authenticator' && <AuthenticatorEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
         </div>
+        {/* A soft fade at the bottom cues "more below" without a label; tapping
+            the preview expands it in full. */}
         {collapsed && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-20 items-end justify-center bg-gradient-to-t from-bg-card via-bg-card/80 to-transparent">
-            <span className="mb-2 text-[11px] font-medium text-text-muted">Show more</span>
-          </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-bg-card to-transparent" />
         )}
       </div>
     </div>
