@@ -25,7 +25,7 @@ export function useGlobalSearchData() {
           .limit(GLOBAL_SEARCH_RESULT_LIMIT),
         supabase
           .from('space_items')
-          .select('id, space_id, type, title, content, pinned')
+          .select('id, space_id, type, title, content, tags, pinned')
           .is('deleted_at', null)
           .is('archived_at', null)
           .order('updated_at', { ascending: false })

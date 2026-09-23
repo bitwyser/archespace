@@ -18,6 +18,7 @@ function norm(s) {
 
 function itemSearchText(item) {
   const parts = [item.title]
+  if (Array.isArray(item.tags)) parts.push(...item.tags)
   const c = item.content || {}
   if (item.type === 'textbox' || item.type === 'markdown') parts.push(c.text)
   if (item.type === 'richtext') parts.push(richHtmlToPlainText(c.html))
