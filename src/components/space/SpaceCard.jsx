@@ -2,13 +2,36 @@
  * SpaceCard.jsx - A single space on the dashboard.
  *
  * `layout="grid"` (default) renders the full card; `layout="list"` renders a
- * compact full-width row (colour bar, name, description, tags, item count).
- * Both share the same navigate / select / drag / action-menu behaviour.
+ * compact full-width row. Both share the same navigate / select / drag /
+ * action-menu behaviour, and adopt the mobile design: borderless cards set off
+ * by their surface, a soft space-colour strip, tags coloured by name shown
+ * inline with the item count, and a vertical 3-dot menu in the top-right.
  */
-import { ChevronRight, Check, Pin, PinOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square } from 'lucide-react'
-import { getColorPreset, softColorValue } from '../../lib/spaceColors'
+import { Check, Pin, PinOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square, MoreVertical } from 'lucide-react'
+import { getColorPreset, softColorValue, tagColorValue } from '../../lib/spaceColors'
 import { ActionMenu } from '../ui/ActionMenu'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
+
+/** A tag chip tinted by the tag's own stable colour; brighter when it's an
+ * active filter. Consumes its own click so it filters instead of opening. */
+function TagPill({ tag, active, onClick }) {
+  const color = tagColorValue(tag)
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onClick?.(tag) }}
+      aria-pressed={active}
+      className="text-[11px] font-semibold px-2 py-0.5 rounded-md border transition-colors"
+      style={{
+        backgroundColor: `${color}${active ? '42' : '29'}`,
+        color,
+        borderColor: active ? `${color}8c` : 'transparent',
+      }}
+    >
+      {tag}
+    </button>
+  )
+}
 
 export function SpaceCard({
   col, index, search, dragIndex, dragOverIndex,
@@ -25,11 +48,13 @@ export function SpaceCard({
 }) {
   const online = useOnlineStatus()
   const colorPreset = getColorPreset(col.color)
-  const softColor = softColorValue(col.color)
+  // Softer, thinner space-colour strip (~50% alpha) than the picker's vivid value.
+  const softColor = softColorValue(col.color, '80')
   const itemStats = stats?.[col.id]
   const itemLabel = itemStats
     ? `${itemStats.total} ${itemStats.total === 1 ? 'item' : 'items'}`
     : '0 items'
+  const tags = Array.isArray(col.tags) ? col.tags : []
 
   const activate = () => (selectMode ? onToggleSelect?.() : navigate(`/space/${col.id}`))
 
@@ -71,6 +96,10 @@ export function SpaceCard({
     ? `${selected ? 'Deselect' : 'Select'} space: ${col.name}`
     : `Open space: ${col.name}`
 
+  // Borderless: the card is set off by its surface plus a soft shadow; only a
+  // selected card in select mode gets a soft accent ring.
+  const selectedRing = selected ? 'ring-[1.5px] ring-accent-border' : ''
+
   // ── List row ──────────────────────────────────────────────
   if (layout === 'list') {
     return (
@@ -82,12 +111,10 @@ export function SpaceCard({
         tabIndex={0}
         aria-pressed={selectMode ? selected : undefined}
         aria-label={ariaLabel}
-        className={`group relative flex items-center gap-3 sm:gap-4 rounded-xl pl-4 pr-3 py-3 cursor-pointer transition-colors animate-fade-in-up bg-bg-card ${
-          selected || (col.pinned && !selectMode) ? 'border-2 border-accent-border' : 'border border-bg-border hover:border-accent/40'
-        } ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
+        className={`group relative flex items-center gap-3 sm:gap-4 rounded-xl pl-4 pr-3 py-3 cursor-pointer transition-all animate-fade-in-up bg-bg-card shadow-sm hover:shadow-md hover:bg-bg-elevated active:scale-[0.99] ${selectedRing} ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
         style={{
           animationDelay: `${index * 30}ms`,
-          borderLeftWidth: colorPreset ? '3px' : undefined,
+          borderLeftWidth: colorPreset ? '2px' : undefined,
           borderLeftColor: softColor,
         }}
       >
@@ -104,35 +131,19 @@ export function SpaceCard({
           ? <p className="text-text-secondary text-sm truncate flex-1 min-w-0">{col.description}</p>
           : <span className="flex-1 min-w-0" />}
 
-        {Array.isArray(col.tags) && col.tags.length > 0 && (
-          <div className="hidden md:flex items-center gap-1 shrink-0">
-            {col.tags.slice(0, 3).map(tag => (
-              <button
-                key={tag}
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onTagClick?.(tag) }}
-                aria-pressed={activeTags.includes(tag)}
-                className={`text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded-md border transition-colors ${
-                  activeTags.includes(tag)
-                    ? 'bg-accent/15 border-accent/40 text-accent'
-                    : 'bg-bg-elevated text-text-muted border-bg-border hover:text-text-primary'
-                }`}
-              >
-                {tag}
-              </button>
+        {tags.length > 0 && (
+          <div className="hidden md:flex items-center gap-1.5 shrink-0">
+            {tags.slice(0, 3).map(tag => (
+              <TagPill key={tag} tag={tag} active={activeTags.includes(tag)} onClick={onTagClick} />
             ))}
+            <span className="text-text-muted text-xs">·</span>
           </div>
         )}
 
         <p className="text-text-muted text-xs shrink-0 whitespace-nowrap tabular-nums">{itemLabel}</p>
 
         {!selectMode && (
-          <div className="shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-            <ActionMenu label="Space actions" actions={menuActions} bordered={false} />
-          </div>
-        )}
-        {!selectMode && (
-          <ChevronRight size={16} className="shrink-0 text-text-muted group-hover:text-accent transition-colors" />
+          <ActionMenu label="Space actions" actions={menuActions} bordered={false} icon={MoreVertical} />
         )}
       </div>
     )
@@ -148,14 +159,12 @@ export function SpaceCard({
       tabIndex={0}
       aria-pressed={selectMode ? selected : undefined}
       aria-label={ariaLabel}
-      className={`group relative rounded-2xl p-3.5 cursor-pointer hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up bg-bg-card ${
-        selected || (col.pinned && !selectMode) ? 'border-2 border-accent-border' : 'border border-bg-border hover:border-accent/40'
-      } ${
-        !selectMode && dragOverIndex === index && dragIndex !== index ? 'border-l-4 border-l-accent pl-3' : ''
+      className={`group relative rounded-2xl p-3.5 cursor-pointer bg-bg-card shadow-sm hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 hover:bg-bg-elevated active:scale-[0.99] transition-all duration-200 animate-fade-in-up ${selectedRing} ${
+        !selectMode && dragOverIndex === index && dragIndex !== index ? 'ring-2 ring-accent' : ''
       } ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
       style={{
         animationDelay: `${index * 50}ms`,
-        borderTopWidth: colorPreset ? '3px' : undefined,
+        borderTopWidth: colorPreset ? '2px' : undefined,
         borderTopColor: softColor,
       }}
     >
@@ -178,31 +187,17 @@ export function SpaceCard({
             <Check size={14} />
           </span>
         ) : (
-          <ChevronRight size={16} className="text-text-muted shrink-0 mt-0.5 group-hover:text-accent transition-colors" />
+          <ActionMenu label="Space actions" actions={menuActions} bordered={false} icon={MoreVertical} />
         )}
       </div>
-      {Array.isArray(col.tags) && col.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-2.5">
-          {col.tags.slice(0, 4).map(tag => (
-            <button
-              key={tag}
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onTagClick?.(tag) }}
-              aria-pressed={activeTags.includes(tag)}
-              className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border transition-colors ${
-                activeTags.includes(tag)
-                  ? 'bg-accent/15 border-accent/40 text-accent'
-                  : 'bg-bg-elevated text-text-muted border-bg-border hover:text-text-primary'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-bg-border gap-2">
-        <p className="text-text-muted text-xs truncate">{itemLabel}</p>
-        {!selectMode && <ActionMenu label="Space actions" actions={menuActions} bordered={false} />}
+
+      {/* Tags and item count on one line, separated by a dot. */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+        {tags.slice(0, 4).map(tag => (
+          <TagPill key={tag} tag={tag} active={activeTags.includes(tag)} onClick={onTagClick} />
+        ))}
+        {tags.length > 0 && <span className="text-text-muted text-xs">·</span>}
+        <span className="text-text-muted text-xs tabular-nums">{itemLabel}</span>
       </div>
     </div>
   )

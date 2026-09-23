@@ -88,8 +88,8 @@ export default function AppSidebar({
       <nav className="flex-1 overflow-y-auto px-2">
         <SectionLabel collapsed={collapsed}>Library</SectionLabel>
         <NavItem icon={LayoutGrid} label="Spaces" active={active === 'spaces'} count={spacesCount} collapsed={collapsed} onClick={() => navigate('/app')} />
-        <NavItem icon={Archive} label="Archive" active={active === 'archive'} badge={archiveTotal} collapsed={collapsed} onClick={() => navigate('/archive')} />
-        <NavItem icon={Trash2} label="Bin" active={active === 'bin'} badge={binTotal} badgeColor="bg-danger" collapsed={collapsed} onClick={() => navigate('/recycle-bin')} />
+        <NavItem icon={Archive} label="Archive" active={active === 'archive'} count={archiveTotal} collapsed={collapsed} onClick={() => navigate('/archive')} />
+        <NavItem icon={Trash2} label="Bin" active={active === 'bin'} count={binTotal} collapsed={collapsed} onClick={() => navigate('/recycle-bin')} />
 
         <SectionLabel collapsed={collapsed}>Tools</SectionLabel>
         <NavItem icon={Keyboard} label="Shortcuts" collapsed={collapsed} onClick={onShortcuts} />

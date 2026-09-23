@@ -611,34 +611,41 @@ export default function SpacePage() {
           /* Items in list (single column) or grid (round-robin masonry) view */
           <>
             {allTags.length > 0 && (
-              <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                {allTags.map(tag => {
-                  const active = activeTags.includes(tag)
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                {(() => {
+                  const pill = (active) =>
+                    `text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                      active
+                        ? 'bg-accent-muted border-accent-border text-accent'
+                        : 'bg-bg-surface border-bg-border text-text-secondary hover:text-text-primary'
+                    }`
                   return (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTagFilter(tag)}
-                      aria-pressed={active}
-                      className={`text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors ${
-                        active
-                          ? 'bg-accent/15 border-accent/40 text-accent'
-                          : 'bg-bg-elevated border-bg-border text-text-muted hover:text-text-primary'
-                      }`}
-                    >
-                      {tag}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTags([])}
+                        aria-pressed={activeTags.length === 0}
+                        className={pill(activeTags.length === 0)}
+                      >
+                        All
+                      </button>
+                      {allTags.map(tag => {
+                        const active = activeTags.includes(tag)
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => toggleTagFilter(tag)}
+                            aria-pressed={active}
+                            className={pill(active)}
+                          >
+                            {tag}
+                          </button>
+                        )
+                      })}
+                    </>
                   )
-                })}
-                {activeTags.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTags([])}
-                    className="text-[11px] font-medium px-2 py-0.5 rounded-md text-text-muted hover:text-text-primary"
-                  >
-                    Clear
-                  </button>
-                )}
+                })()}
               </div>
             )}
             {viewMode === 'grid' ? (

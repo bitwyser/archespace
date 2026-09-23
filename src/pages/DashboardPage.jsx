@@ -8,8 +8,9 @@ import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, Folder,
   Trash2, Archive, Command, CheckSquare, ListChecks, Settings, Lock, Menu, Keyboard, LogOut,
-  LayoutGrid, List,
+  LayoutGrid, List, Palette,
 } from 'lucide-react'
+import { useTheme } from '../context/ThemeCore'
 import GlobalSearchResults from '../components/GlobalSearchResults'
 import { WordmarkLogo } from '../components/WordmarkLogo'
 import { useDragReorder } from '../hooks/useDragReorder'
@@ -48,6 +49,14 @@ export default function DashboardPage() {
   const { data: stats = {} } = useSpaceStats()
   const { data: globalSearchData } = useGlobalSearchData()
   const navigate = useNavigate()
+  const { accentColor, accentColors, setAccentColor, resolvedThemeMode, setThemeMode } = useTheme()
+  // Shuffle the look: a random accent (never the current one) and flip the
+  // theme between light and dark (matches the mobile app's drawer shuffle).
+  const shuffleAppearance = useCallback(() => {
+    const others = accentColors.filter(a => a.id !== accentColor)
+    if (others.length) setAccentColor(others[Math.floor(Math.random() * others.length)].id)
+    setThemeMode(resolvedThemeMode === 'dark' ? 'light' : 'dark')
+  }, [accentColor, accentColors, setAccentColor, resolvedThemeMode, setThemeMode])
   const headerRef = useRef(null)
   const searchInputRef = useRef(null)
   const mobileSearchInputRef = useRef(null)
@@ -430,8 +439,8 @@ export default function DashboardPage() {
         {/* Search - desktop (stays fixed at the top; the header, tag filter and
             grid scroll beneath it). */}
         <div className="hidden sm:block sticky top-0 z-30 bg-bg-base -mx-4 sm:-mx-6 px-4 sm:px-6 pt-6 pb-3 mb-3 -mt-6">
-          <div className="max-w-xl">
-          <div className="relative">
+          <div className="flex items-center gap-2">
+          <div className="relative w-full max-w-xl">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             <input
               ref={searchInputRef}
@@ -463,6 +472,15 @@ export default function DashboardPage() {
               />
             )}
           </div>
+          <button
+            type="button"
+            onClick={shuffleAppearance}
+            title="Shuffle accent and theme"
+            aria-label="Shuffle accent and theme"
+            className="ml-auto shrink-0 p-2.5 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-accent hover:bg-bg-elevated transition-all"
+          >
+            <Palette size={16} />
+          </button>
           </div>
         </div>
 
@@ -505,9 +523,6 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <div>
             <h2 className="text-xl font-semibold text-text-primary">Spaces</h2>
-            <p className="text-text-muted text-sm mt-0.5">
-              {topLevelSpaces.length} {topLevelSpaces.length === 1 ? 'space' : 'spaces'}
-            </p>
           </div>
           <div className="flex items-center gap-2">
             {filtered.length > 0 && !selectMode && (
@@ -583,34 +598,41 @@ export default function DashboardPage() {
 
         {/* Tag filter */}
         {allTags.length > 0 && !selectMode && (
-          <div className="mb-4 flex flex-wrap items-center gap-1.5">
-            {allTags.map(tag => {
-              const active = activeTags.includes(tag)
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {(() => {
+              const pill = (active) =>
+                `text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                  active
+                    ? 'bg-accent-muted border-accent-border text-accent'
+                    : 'bg-bg-surface border-bg-border text-text-secondary hover:text-text-primary'
+                }`
               return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTagFilter(tag)}
-                  aria-pressed={active}
-                  className={`text-[11px] font-medium px-2 py-0.5 rounded-md border transition-colors ${
-                    active
-                      ? 'bg-accent/15 border-accent/40 text-accent'
-                      : 'bg-bg-elevated border-bg-border text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  {tag}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTags([])}
+                    aria-pressed={activeTags.length === 0}
+                    className={pill(activeTags.length === 0)}
+                  >
+                    All
+                  </button>
+                  {allTags.map(tag => {
+                    const active = activeTags.includes(tag)
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTagFilter(tag)}
+                        aria-pressed={active}
+                        className={pill(active)}
+                      >
+                        {tag}
+                      </button>
+                    )
+                  })}
+                </>
               )
-            })}
-            {activeTags.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setActiveTags([])}
-                className="text-[11px] font-medium px-2 py-0.5 rounded-md text-text-muted hover:text-text-primary"
-              >
-                Clear
-              </button>
-            )}
+            })()}
           </div>
         )}
 

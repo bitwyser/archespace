@@ -27,6 +27,20 @@ export function softColorValue(id, alpha = 'a6') {
   return preset ? `${preset.value}${alpha}` : undefined
 }
 
+/**
+ * A stable colour for a tag: the same tag name always maps to the same preset
+ * colour (case-insensitively), so a tag reads consistently across spaces.
+ * @param {string} tag
+ * @returns {string} hex value
+ */
+export function tagColorValue(tag) {
+  const key = (tag || '').trim().toLowerCase()
+  if (!key) return SPACE_COLORS[0].value
+  let sum = 0
+  for (let i = 0; i < key.length; i++) sum += key.charCodeAt(i)
+  return SPACE_COLORS[sum % SPACE_COLORS.length].value
+}
+
 export function parseTags(raw) {
   if (Array.isArray(raw)) return raw.filter(t => typeof t === 'string').map(t => t.trim()).filter(Boolean)
   return []

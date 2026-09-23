@@ -4,12 +4,14 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MoreHorizontal } from 'lucide-react'
+// The trigger icon is configurable (defaults to horizontal dots); pass a
+// different lucide icon via the `icon` prop (e.g. MoreVertical).
 
 const MENU_WIDTH = 176
 const VIEWPORT_PADDING = 8
 const MENU_GAP = 8
 
-export function ActionMenu({ actions, label = 'Actions', align = 'right', bordered = true }) {
+export function ActionMenu({ actions, label = 'Actions', align = 'right', bordered = true, icon: TriggerIcon = MoreHorizontal }) {
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0, origin: 'top' })
   const menuId = useId()
@@ -177,7 +179,7 @@ export function ActionMenu({ actions, label = 'Actions', align = 'right', border
         aria-label={label}
         title={label}
       >
-        <MoreHorizontal size={14} />
+        <TriggerIcon size={14} />
       </button>
 
       {open && createPortal(
