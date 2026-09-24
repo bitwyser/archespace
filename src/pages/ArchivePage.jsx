@@ -3,7 +3,7 @@
  */
 import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Archive, RotateCcw, Folder, LayoutList, CheckSquare, ListChecks } from 'lucide-react'
+import { ArrowLeft, Archive, RotateCcw, Trash2, Folder, LayoutList, CheckSquare, ListChecks } from 'lucide-react'
 import { useArchive } from '../hooks/useArchive'
 import { useDualEntitySelection } from '../hooks/useDualEntitySelection'
 import { useToast } from '../context/ToastCore'
@@ -19,7 +19,9 @@ export default function ArchivePage() {
   const { toast } = useToast()
   const {
     data, isLoading, unarchiveSpace, unarchiveItem,
-    bulkUnarchiveSpaces, bulkUnarchiveItems, total,
+    bulkUnarchiveSpaces, bulkUnarchiveItems,
+    moveSpaceToBin, moveItemToBin, bulkMoveSpacesToBin, bulkMoveItemsToBin,
+    total,
   } = useArchive()
 
   const spaces = data?.spaces || []
@@ -45,6 +47,21 @@ export default function ArchivePage() {
     }
   }, [selectedSpaceIds, selectedItemIds, bulkUnarchiveSpaces, bulkUnarchiveItems, exitSelectMode, toast])
 
+  const runBulkMoveToBin = useCallback(async () => {
+    const colIds = [...selectedSpaceIds]
+    const itemIds = [...selectedItemIds]
+    const count = colIds.length + itemIds.length
+    if (!count) return
+    try {
+      if (colIds.length) await bulkMoveSpacesToBin.mutateAsync(colIds)
+      if (itemIds.length) await bulkMoveItemsToBin.mutateAsync(itemIds)
+      toast.success(`Moved ${count} ${count === 1 ? 'item' : 'items'} to bin`)
+      exitSelectMode()
+    } catch {
+      toast.error("Couldn't move the selection to the bin.")
+    }
+  }, [selectedSpaceIds, selectedItemIds, bulkMoveSpacesToBin, bulkMoveItemsToBin, exitSelectMode, toast])
+
   const bulkActions = useMemo(() => [
     {
       id: 'restore',
@@ -52,7 +69,14 @@ export default function ArchivePage() {
       icon: BULK_ICONS.restore,
       onClick: runBulkUnarchive,
     },
-  ], [runBulkUnarchive])
+    {
+      id: 'move-to-bin',
+      label: 'Move to bin',
+      icon: BULK_ICONS.trash,
+      variant: 'danger',
+      onClick: runBulkMoveToBin,
+    },
+  ], [runBulkUnarchive, runBulkMoveToBin])
 
   return (
     <div className="min-h-screen bg-bg-base pb-32">
@@ -124,16 +148,29 @@ export default function ArchivePage() {
                       selected={selectedSpaceIds.has(col.id)}
                       onToggle={() => toggleSpace(col.id)}
                       actions={
-                        <button
-                          type="button"
-                          onClick={() => unarchiveSpace.mutate(col.id, {
-                            onSuccess: () => toast.success('Space restored from archive'),
-                            onError: () => toast.error("Couldn't restore it."),
-                          })}
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-success/10 hover:text-success text-text-secondary text-xs font-medium"
-                        >
-                          <RotateCcw size={14} /> Unarchive
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => unarchiveSpace.mutate(col.id, {
+                              onSuccess: () => toast.success('Space restored from archive'),
+                              onError: () => toast.error("Couldn't restore it."),
+                            })}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-success/10 hover:text-success text-text-secondary text-xs font-medium"
+                          >
+                            <RotateCcw size={14} /> Unarchive
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveSpaceToBin.mutate(col.id, {
+                              onSuccess: () => toast.success('Space moved to bin'),
+                              onError: () => toast.error("Couldn't move it to the bin."),
+                            })}
+                            title="Move to bin"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary text-xs font-medium transition-all"
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </>
                       }
                     >
                       <p className="text-sm font-semibold text-text-primary truncate">{col.name}</p>
@@ -157,16 +194,29 @@ export default function ArchivePage() {
                       selected={selectedItemIds.has(item.id)}
                       onToggle={() => toggleItem(item.id)}
                       actions={
-                        <button
-                          type="button"
-                          onClick={() => unarchiveItem.mutate(item.id, {
-                            onSuccess: () => toast.success('Item restored'),
-                            onError: () => toast.error("Couldn't restore it."),
-                          })}
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-success/10 hover:text-success text-text-secondary text-xs font-medium"
-                        >
-                          <RotateCcw size={14} /> Unarchive
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => unarchiveItem.mutate(item.id, {
+                              onSuccess: () => toast.success('Item restored'),
+                              onError: () => toast.error("Couldn't restore it."),
+                            })}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-success/10 hover:text-success text-text-secondary text-xs font-medium"
+                          >
+                            <RotateCcw size={14} /> Unarchive
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveItemToBin.mutate(item.id, {
+                              onSuccess: () => toast.success('Item moved to bin'),
+                              onError: () => toast.error("Couldn't move it to the bin."),
+                            })}
+                            title="Move to bin"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary text-xs font-medium transition-all"
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </>
                       }
                     >
                       <span className="text-xs text-text-muted bg-bg-elevated px-2 py-0.5 rounded border border-bg-border">
