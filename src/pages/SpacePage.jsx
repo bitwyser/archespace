@@ -86,9 +86,8 @@ export default function SpacePage() {
   const [dirtyItems, setDirtyItems]       = useState(new Set())
   const [selectMode, setSelectMode]       = useState(false)
   const [selectedIds, setSelectedIds]     = useState(() => new Set())
+  // Items the user has collapsed to header-only via the card chevron.
   const [collapsedIds, setCollapsedIds] = useState(() => new Set())
-  // Explicit expand overrides for long items that would otherwise auto-collapse.
-  const [expandedIds, setExpandedIds] = useState(() => new Set())
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null)
   const [moveRequest, setMoveRequest] = useState(null)
   const [flashItemId, setFlashItemId] = useState(null)
@@ -191,18 +190,10 @@ export default function SpacePage() {
   }, [])
 
   const setItemCollapsed = useCallback((id, collapsed) => {
-    // Collapse and expand are explicit, mutually exclusive overrides so they
-    // win over the height-based auto default in either direction.
     setCollapsedIds(prev => {
       const next = new Set(prev)
       if (collapsed) next.add(id)
       else next.delete(id)
-      return next
-    })
-    setExpandedIds(prev => {
-      const next = new Set(prev)
-      if (collapsed) next.delete(id)
-      else next.add(id)
       return next
     })
   }, [])
@@ -392,7 +383,6 @@ export default function SpacePage() {
         selected={selectedIds.has(item.id)}
         onSelectedChange={toggleSelected}
         forcedCollapsed={collapsedIds.has(item.id)}
-        forcedExpanded={expandedIds.has(item.id)}
         onCollapsedChange={setItemCollapsed}
         onUpdate={handleItemUpdate}
         onSetTags={handleSetTags}
@@ -696,11 +686,6 @@ export default function SpacePage() {
                       selectedIds.forEach(id => next.add(id))
                       return next
                     })
-                    setExpandedIds(prev => {
-                      const next = new Set(prev)
-                      selectedIds.forEach(id => next.delete(id))
-                      return next
-                    })
                     toast.info(`Collapsed ${selectedCount} items`)
                   },
                 },
@@ -712,11 +697,6 @@ export default function SpacePage() {
                     setCollapsedIds(prev => {
                       const next = new Set(prev)
                       selectedIds.forEach(id => next.delete(id))
-                      return next
-                    })
-                    setExpandedIds(prev => {
-                      const next = new Set(prev)
-                      selectedIds.forEach(id => next.add(id))
                       return next
                     })
                     toast.info('Expanded items')

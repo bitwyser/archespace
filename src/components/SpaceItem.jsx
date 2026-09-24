@@ -68,7 +68,6 @@ function SpaceItem({
   onDragEnd,
   dragDisabled = false,
   forcedCollapsed = false,
-  forcedExpanded = false,
   onCollapsedChange,
   selectMode = false,
   selected = false,
@@ -91,6 +90,9 @@ function SpaceItem({
   // Measured: is the content taller than the collapse threshold? Drives both the
   // auto-collapse default and whether the collapse/expand control is shown.
   const [overflowing, setOverflowing] = useState(false)
+  // Local tap-to-reveal for a long, clamped body. Independent of the header
+  // collapse chevron (which hides the body entirely).
+  const [expanded, setExpanded] = useState(false)
   const contentRef = useRef(null)
   const [copied, setCopied] = useState(false)
   const [secretState, setSecretState] = useState({ revealed: false, prompting: false })
@@ -146,6 +148,8 @@ function SpaceItem({
     setTitleVal(item.title)
     setLocalContent(item.content)
     setEditorVersion(version => version + 1)
+    // Reset the tap-to-reveal state when the card is reused for a new item.
+    if (syncedItem.id !== item.id) setExpanded(false)
   }
 
   // ── Notify parent about dirty state (for beforeunload warning) ──
@@ -305,16 +309,16 @@ function SpaceItem({
    * instead of losing their edits.
    */
   const handleCollapseClick = () => {
-    if (!collapsed && isDirty) {
+    if (!headerCollapsed && isDirty) {
       setCollapseGuard(true)
       return
     }
     setCollapseGuard(false)
-    onCollapsedChange?.(item.id, !collapsed)
+    onCollapsedChange?.(item.id, !headerCollapsed)
   }
 
   const handleFullscreenClick = () => {
-    if (!isFullscreen && collapsed) {
+    if (!isFullscreen && headerCollapsed) {
       onCollapsedChange?.(item.id, false)
       setCollapseGuard(false)
     }
@@ -327,26 +331,23 @@ function SpaceItem({
   // Clamping applies in the normal list card, not in fullscreen or the dense
   // grid preview (which has its own tap-to-open behaviour).
   const canClamp = !isFullscreen && !denseView
-  // Tri-state collapse: an explicit collapse/expand wins; otherwise long items
-  // default to collapsed (clamped preview) and short ones stay open.
-  const collapsed = isFullscreen
-    ? false
-    : forcedCollapsed
-      ? true
-      : forcedExpanded
-        ? false
-        // Never auto-collapse an item that's being edited (unsaved changes),
-        // so typing can't clamp the card out from under the user.
-        : canClamp && overflowing && !isDirty
-  // Show the collapse/expand control only when it does something: the content is
-  // long, or the card is currently collapsed.
-  const showCollapseToggle = canClamp && (overflowing || collapsed)
+  // Header collapse (the chevron): an explicit, header-only collapse that hides
+  // the body entirely - only the header (and tags) stay visible. Never applies
+  // in fullscreen or select mode.
+  const headerCollapsed = !isFullscreen && !selectMode && forcedCollapsed
+  // Long-content clamp: a body taller than the threshold shows as a fixed-height
+  // preview (with a fade) until tapped to reveal in full. Independent of the
+  // header collapse, and never while editing (unsaved) so typing can't clamp the
+  // card out from under the user.
+  const clamped = canClamp && !headerCollapsed && overflowing && !isDirty && !expanded
+  // The collapse/expand chevron is always available outside fullscreen.
+  const showCollapseToggle = !isFullscreen
   // Whether the tags row is shown (drives content top padding so the two don't
   // stack into a large gap).
   const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || online)
   // The Rich Text formatting toolbar shares the tags row (right-aligned). Shown
-  // whenever the editor is live - not in the dense grid preview or when collapsed.
-  const showRichToolbar = item.type === 'richtext' && !collapsed && !selectMode && !denseView
+  // whenever the editor is live - not collapsed, clamped, or a dense preview.
+  const showRichToolbar = item.type === 'richtext' && !headerCollapsed && !clamped && !selectMode && !denseView
 
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
@@ -380,7 +381,7 @@ function SpaceItem({
       } ${
         isFullscreen ? 'sticky top-0 z-10 bg-bg-surface/95 backdrop-blur-md' : ''
       } ${
-        !collapsed || collapseGuard ? 'border-b border-bg-border' : ''
+        !headerCollapsed || collapseGuard ? 'border-b border-bg-border' : ''
       }`}>
         {!selectMode && (
           <div
@@ -430,7 +431,7 @@ function SpaceItem({
           )}
         </div>
 
-        {collapsed && checklistProgress && (
+        {headerCollapsed && checklistProgress && (
           <span className="shrink-0 text-xs text-text-muted font-medium tabular-nums">
             {checklistProgress.done}/{checklistProgress.total} done
           </span>
@@ -502,10 +503,10 @@ function SpaceItem({
                     type="button"
                     onClick={handleCollapseClick}
                     className="p-2 rounded-lg border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all"
-                    aria-label={collapsed ? 'Expand item' : 'Collapse item'}
-                    title={collapsed ? 'Expand' : 'Collapse'}
+                    aria-label={headerCollapsed ? 'Expand item' : 'Collapse item'}
+                    title={headerCollapsed ? 'Expand' : 'Collapse'}
                   >
-                    {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                    {headerCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                   </button>
                   )}
                   <button
@@ -668,30 +669,31 @@ function SpaceItem({
       )}
 
       {/* ── Content editor ──
-          Always rendered so its height can be measured. When "collapsed" the
-          card is clamped to a fixed preview height (with a fade) instead of
-          hiding the content; clicking the preview expands it to full height. */}
+          Always rendered so its height can be measured. The header chevron
+          hides the body entirely (clamped to 0 height, header only); a long
+          body instead shows a fixed-height preview (with a fade) that expands
+          to full height when tapped. */}
       <div
         ref={contentRef}
         onClick={
-          collapsed && !selectMode
-            ? () => onCollapsedChange?.(item.id, false)
+          clamped && !selectMode
+            ? () => setExpanded(true)
             : denseView
               ? () => setIsFullscreen(true)
               : undefined
         }
-        style={collapsed ? { maxHeight: COLLAPSED_MAX_PX } : undefined}
+        style={headerCollapsed ? { maxHeight: 0 } : clamped ? { maxHeight: COLLAPSED_MAX_PX } : undefined}
         className={`${
           isFullscreen
             ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8'
             : denseView
               ? `px-2.5 ${showTags ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
               : `px-4 ${showTags || showRichToolbar ? 'pt-0' : 'pt-4'} pb-4`
-        }${collapsed ? ` relative overflow-hidden rounded-b-2xl${selectMode ? '' : ' cursor-pointer'}` : ''}`}
+        }${clamped ? ` relative overflow-hidden rounded-b-2xl${selectMode ? '' : ' cursor-pointer'}` : ''}${headerCollapsed ? ' overflow-hidden' : ''}`}
       >
-        {/* In the dense grid, or while clamped, the content is a non-interactive
-            preview; tapping it opens full screen / expands instead of editing. */}
-        <div className={denseView || collapsed ? 'pointer-events-none' : 'contents'}>
+        {/* In the dense grid, while clamped, or while header-collapsed the
+            content is non-interactive; tapping opens full screen / expands. */}
+        <div className={denseView || clamped || headerCollapsed ? 'pointer-events-none' : 'contents'}>
         {/* Render only the editor for this item's type (not all four) */}
         {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
         {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
@@ -708,7 +710,7 @@ function SpaceItem({
         </div>
         {/* A soft fade at the bottom cues "more below" without a label; tapping
             the preview expands it in full. */}
-        {collapsed && (
+        {clamped && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-bg-card to-transparent" />
         )}
       </div>
