@@ -76,7 +76,7 @@ export default function RecycleBinPage() {
     },
     {
       id: 'purge',
-      label: 'Delete forever',
+      label: 'Delete permanently',
       icon: BULK_ICONS.trash,
       variant: 'danger',
       onClick: () => setConfirmBulkPurge(true),
@@ -210,7 +210,7 @@ export default function RecycleBinPage() {
                             onClick={() => setConfirmPurge({ type: 'space', id: col.id, name: col.name })}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary transition-all text-xs font-medium"
                           >
-                            <Trash2 size={14} /> Delete forever
+                            <Trash2 size={14} /> Delete permanently
                           </button>
                         </>
                       }
@@ -257,7 +257,7 @@ export default function RecycleBinPage() {
                             onClick={() => setConfirmPurge({ type: 'item', id: item.id, name: item.title || 'Untitled' })}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary transition-all text-xs font-medium"
                           >
-                            <Trash2 size={14} /> Delete forever
+                            <Trash2 size={14} /> Delete permanently
                           </button>
                         </>
                       }
@@ -340,7 +340,7 @@ export default function RecycleBinPage() {
                 onClick={runBulkPurge}
                 className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
-                Delete forever
+                Delete permanently
               </button>
             </div>
           }
@@ -367,7 +367,7 @@ export default function RecycleBinPage() {
                 onClick={handlePurge}
                 className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
-                Delete forever
+                Delete permanently
               </button>
             </div>
           }
