@@ -157,9 +157,17 @@ function SpaceItem({
     onDirtyChange?.(item.id, isDirty)
   }, [isDirty, item.id, onDirtyChange])
 
+  // Header collapse (the chevron): an explicit, header-only collapse that hides
+  // the body entirely - only the header (and tags) stay visible. Never applies
+  // in fullscreen or select mode. Defined here (above the measure effect) so
+  // that re-expanding a card re-measures its body.
+  const headerCollapsed = !isFullscreen && !selectMode && forcedCollapsed
+
   // ── Measure content height to decide if the card is "long" ──
   // scrollHeight reports the full natural height even while the card is clamped,
-  // so this stays correct whether the card is collapsed or expanded.
+  // so this stays correct whether the card is collapsed or expanded. While the
+  // header is collapsed the body isn't rendered, so this simply re-runs (and
+  // re-measures) when the card is expanded again.
   useLayoutEffect(() => {
     const el = contentRef.current
     if (!el) return
@@ -171,7 +179,7 @@ function SpaceItem({
     const observer = new ResizeObserver(measure)
     observer.observe(el)
     return () => observer.disconnect()
-  }, [localContent, editorVersion])
+  }, [localContent, editorVersion, headerCollapsed])
 
   // ── Cleanup timers on unmount ──
   useEffect(() => {
@@ -331,10 +339,6 @@ function SpaceItem({
   // Clamping applies in the normal list card, not in fullscreen or the dense
   // grid preview (which has its own tap-to-open behaviour).
   const canClamp = !isFullscreen && !denseView
-  // Header collapse (the chevron): an explicit, header-only collapse that hides
-  // the body entirely - only the header (and tags) stay visible. Never applies
-  // in fullscreen or select mode.
-  const headerCollapsed = !isFullscreen && !selectMode && forcedCollapsed
   // Long-content clamp: a body taller than the threshold shows as a fixed-height
   // preview (with a fade) until tapped to reveal in full. Independent of the
   // header collapse, and never while editing (unsaved) so typing can't clamp the
@@ -669,10 +673,10 @@ function SpaceItem({
       )}
 
       {/* ── Content editor ──
-          Always rendered so its height can be measured. The header chevron
-          hides the body entirely (clamped to 0 height, header only); a long
-          body instead shows a fixed-height preview (with a fade) that expands
-          to full height when tapped. */}
+          The header chevron hides the body entirely (only the header and tags
+          stay). When shown, a long body is clamped to a fixed preview height
+          (with a fade) that expands to full height when tapped. */}
+      {!headerCollapsed && (
       <div
         ref={contentRef}
         onClick={
@@ -682,18 +686,18 @@ function SpaceItem({
               ? () => setIsFullscreen(true)
               : undefined
         }
-        style={headerCollapsed ? { maxHeight: 0 } : clamped ? { maxHeight: COLLAPSED_MAX_PX } : undefined}
+        style={clamped ? { maxHeight: COLLAPSED_MAX_PX } : undefined}
         className={`${
           isFullscreen
             ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8'
             : denseView
               ? `px-2.5 ${showTags ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
               : `px-4 ${showTags || showRichToolbar ? 'pt-0' : 'pt-4'} pb-4`
-        }${clamped ? ` relative overflow-hidden rounded-b-2xl${selectMode ? '' : ' cursor-pointer'}` : ''}${headerCollapsed ? ' overflow-hidden' : ''}`}
+        }${clamped ? ` relative overflow-hidden rounded-b-2xl${selectMode ? '' : ' cursor-pointer'}` : ''}`}
       >
-        {/* In the dense grid, while clamped, or while header-collapsed the
-            content is non-interactive; tapping opens full screen / expands. */}
-        <div className={denseView || clamped || headerCollapsed ? 'pointer-events-none' : 'contents'}>
+        {/* In the dense grid, or while clamped, the content is a non-interactive
+            preview; tapping it opens full screen / expands instead of editing. */}
+        <div className={denseView || clamped ? 'pointer-events-none' : 'contents'}>
         {/* Render only the editor for this item's type (not all four) */}
         {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
         {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
@@ -714,6 +718,7 @@ function SpaceItem({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-bg-card to-transparent" />
         )}
       </div>
+      )}
     </div>
   )
 
