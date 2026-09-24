@@ -5,8 +5,8 @@ export default function SelectableRow({ selectMode, selected, onToggle, actions,
       tabIndex={selectMode ? 0 : undefined}
       onClick={selectMode ? onToggle : undefined}
       onKeyDown={selectMode ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } } : undefined}
-      className={`bg-bg-surface border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 transition-colors ${
-        selected ? 'border-accent/50 bg-accent-muted/20' : 'border-bg-border'
+      className={`bg-bg-surface rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 transition-colors ${
+        selected ? 'border-[1.5px] border-accent-border bg-accent-muted' : 'border border-bg-border'
       } ${selectMode ? 'cursor-pointer' : ''}`}
     >
       {selectMode && (
