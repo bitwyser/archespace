@@ -93,7 +93,7 @@ export const SecretEditor = forwardRef(function SecretEditor({ content, onChange
         onChange={e => handleTextChange(e.target.value)}
         placeholder="Secret content…"
         rows={3}
-        className="password-field w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-text-content placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm resize-none overflow-hidden min-h-[80px] leading-relaxed font-mono"
+        className="password-field w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-text-content placeholder-text-muted focus:outline-none transition-colors text-sm resize-none overflow-hidden min-h-[80px] leading-relaxed font-mono"
       />
     )
   }

@@ -82,7 +82,7 @@ export function TextboxEditor({ content, onChange }) {
         onChange={handleChange}
         placeholder="Start writing anything…"
         rows={3}
-        className="w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-text-content placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm resize-none overflow-hidden leading-relaxed min-h-[80px]"
+        className="w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-text-content placeholder-text-muted focus:outline-none transition-colors text-sm resize-none overflow-hidden leading-relaxed min-h-[80px]"
       />
     </div>
   )
@@ -143,7 +143,7 @@ export function MarkdownEditor({ content, onChange }) {
           onBlur={exitEditMode}
           placeholder="Write markdown here…"
           rows={3}
-          className="w-full bg-bg-sunken border border-accent/50 rounded-xl px-4 pt-3 pb-8 text-text-content placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm resize-none overflow-hidden leading-relaxed min-h-[80px] font-mono"
+          className="w-full bg-bg-sunken border border-bg-border rounded-xl px-4 pt-3 pb-8 text-text-content placeholder-text-muted focus:outline-none transition-colors text-sm resize-none overflow-hidden leading-relaxed min-h-[80px] font-mono"
         />
         {/* Same corner + style as the preview "Click to edit" hint - inside the
             card at bottom-right, only the text and icon change between modes. */}

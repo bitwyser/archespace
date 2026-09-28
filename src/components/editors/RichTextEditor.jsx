@@ -122,7 +122,7 @@ const RichTextEditor = forwardRef(function RichTextEditor({ content, onChange },
       onInput={emit}
       onKeyDown={handleKeyDown}
       onPaste={handlePaste}
-      className="rich-text-editor w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-sm text-text-content leading-relaxed min-h-[80px] focus:outline-none focus:border-accent transition-colors whitespace-pre-wrap break-words"
+      className="rich-text-editor w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-sm text-text-content leading-relaxed min-h-[80px] focus:outline-none transition-colors whitespace-pre-wrap break-words"
     />
   )
 })

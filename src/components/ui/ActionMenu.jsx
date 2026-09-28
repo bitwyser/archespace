@@ -11,7 +11,7 @@ const MENU_WIDTH = 176
 const VIEWPORT_PADDING = 8
 const MENU_GAP = 8
 
-export function ActionMenu({ actions, label = 'Actions', align = 'right', bordered = true, icon: TriggerIcon = MoreHorizontal }) {
+export function ActionMenu({ actions, label = 'Actions', align = 'right', bordered = true, compact = false, icon: TriggerIcon = MoreHorizontal }) {
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0, origin: 'top' })
   const menuId = useId()
@@ -164,7 +164,7 @@ export function ActionMenu({ actions, label = 'Actions', align = 'right', border
         type="button"
         onClick={() => open ? closeMenu() : openMenuFocused()}
         onKeyDown={handleTriggerKeyDown}
-        className={`p-2 rounded-lg transition-all ${
+        className={`${compact ? 'p-1.5' : 'p-2'} rounded-lg transition-all ${
           bordered
             ? `border ${open
                 ? 'border-accent/30 bg-accent-muted text-accent'

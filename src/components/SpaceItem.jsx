@@ -22,7 +22,7 @@ import { createPortal } from 'react-dom'
 import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X,
   Pin, PinOff, Save, AlertTriangle, GripVertical, Copy, Archive,
-  Maximize2, Minimize2, MoveRight,
+  Maximize2, Minimize2, MoveRight, MoreVertical,
   ClipboardCopy, ClipboardCheck, FileDown, Eye, EyeOff,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, MenuListEditor, NumberedListEditor, CardListEditor } from './editors/ItemEditors'
@@ -364,24 +364,23 @@ function SpaceItem({
     }
   }
 
+  // Styled like a space card: borderless on a soft shadow that deepens on
+  // hover, a thin accent ring when selected, and no border when pinned (the
+  // pin icon marks it). The space card's hover lift, press shrink and hover
+  // background are left out: this card is an inline editor, so they would
+  // fire while typing or clicking into content (and clash with the fade).
   const itemCard = (
     <div className={`${
       isFullscreen
         ? 'fixed inset-0 z-[80] flex flex-col rounded-none border-0 bg-bg-base'
-        : 'relative rounded-2xl bg-bg-card'
-    } transition-colors ${denseView ? 'text-[13px]' : ''} ${
-      isFullscreen ? '' :
-      selected ? 'border-[1.5px] border-accent-border' :
-      (item.pinned && !selectMode) ? 'border-[1.5px]' :
-      'border border-bg-border'
+        : 'relative rounded-2xl bg-bg-card shadow-sm hover:shadow-xl hover:shadow-accent/5 transition-shadow duration-200'
+    } ${denseView ? 'text-[13px]' : ''} ${
+      !isFullscreen && selected ? 'ring-[1.5px] ring-accent-border' : ''
     }`}
-    style={!isFullscreen && !selected && item.pinned && !selectMode
-      ? { borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)' }
-      : undefined}
     >
       {/* ── Header ────────────────────────────────────── */}
       <div className={`flex items-center gap-2 flex-wrap gap-y-2 ${
-        denseView ? 'px-2.5 py-2' : 'px-4 py-3'
+        denseView ? 'px-2.5 py-[7px]' : 'px-4 py-[9px]'
       } ${
         isFullscreen ? 'sticky top-0 z-10 bg-bg-surface/95 backdrop-blur-md' : ''
       } ${
@@ -405,7 +404,7 @@ function SpaceItem({
           const TypeIcon = TYPE_ICONS[item.type]
           return (
             <span
-              className={`shrink-0 inline-flex items-center justify-center p-1.5 rounded-lg ${style.bg} ${style.text} border ${style.border}`}
+              className={`shrink-0 inline-flex items-center justify-center p-1 rounded-lg ${style.bg} ${style.text} border ${style.border}`}
               title={TYPE_LABELS[item.type]}
               aria-label={TYPE_LABELS[item.type]}
             >
@@ -467,7 +466,7 @@ function SpaceItem({
 
         {/* ── Action buttons ── */}
         {!selectMode && (
-        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+        <div className="flex items-center gap-1 shrink-0 flex-wrap">
           {isDirty ? (
             /* Save / Discard mode */
             <>
@@ -506,7 +505,7 @@ function SpaceItem({
                   <button
                     type="button"
                     onClick={handleCollapseClick}
-                    className="p-2 rounded-lg border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all"
+                    className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
                     aria-label={headerCollapsed ? 'Expand item' : 'Collapse item'}
                     title={headerCollapsed ? 'Expand' : 'Collapse'}
                   >
@@ -516,10 +515,10 @@ function SpaceItem({
                   <button
                     type="button"
                     onClick={handleFullscreenClick}
-                    className={`p-2 rounded-lg border transition-all ${
+                    className={`p-1.5 rounded-lg transition-colors ${
                       isFullscreen
-                        ? 'border-accent/30 bg-accent-muted text-accent hover:bg-accent/20'
-                        : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                        ? 'bg-accent-muted text-accent'
+                        : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
                     }`}
                     aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
                     title={isFullscreen ? 'Exit full screen' : 'Full screen'}
@@ -530,10 +529,10 @@ function SpaceItem({
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className={`p-2 rounded-lg border transition-all ${
+                    className={`p-1.5 rounded-lg transition-colors ${
                       copied
-                        ? 'border-success/30 bg-success/10 text-success'
-                        : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                        ? 'text-success'
+                        : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
                     }`}
                     aria-label={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
                     title={copied ? 'Copied' : 'Copy to clipboard'}
@@ -546,7 +545,7 @@ function SpaceItem({
                       <button
                         type="button"
                         onClick={() => secretEditorRef.current?.hide()}
-                        className="p-2 rounded-lg border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all"
+                        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
                         aria-label="Hide secret"
                         title="Hide secret"
                       >
@@ -556,7 +555,7 @@ function SpaceItem({
                       <button
                         type="button"
                         onClick={() => secretEditorRef.current?.startReveal()}
-                        className="p-2 rounded-lg border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all"
+                        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
                         aria-label="Reveal secret"
                         title="Reveal secret"
                       >
@@ -566,6 +565,9 @@ function SpaceItem({
                   )}
                   <ActionMenu
                     label="Item actions"
+                    bordered={false}
+                    compact
+                    icon={MoreVertical}
                     actions={[
                       {
                         id: 'pin',
