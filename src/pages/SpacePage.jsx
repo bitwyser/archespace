@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate, useBlocker, useLocation } from 'react-router-dom'
-import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List, FolderPlus } from 'lucide-react'
+import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List, FolderPlus, Search, SearchX, X } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useSpaces } from '../hooks/useSpaces'
@@ -111,11 +111,25 @@ export default function SpacePage() {
   const toggleTagFilter = useCallback((tag) => {
     setActiveTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
   }, [])
-  // An item matches when it carries any of the active tags (OR).
+  // ── In-space search (item title + tags, like mobile) ──
+  const [query, setQuery] = useState('')
+  const trimmedQuery = query.trim().toLowerCase()
+
+  // An item matches when it carries any of the active tags (OR) and, while
+  // searching, its title or one of its tags contains the query.
   const visibleItems = useMemo(() => {
-    if (activeTags.length === 0) return items
-    return items.filter(it => (it.tags || []).some(t => activeTags.includes(t)))
-  }, [items, activeTags])
+    if (activeTags.length === 0 && !trimmedQuery) return items
+    return items.filter(it => {
+      const tags = it.tags || []
+      if (activeTags.length > 0 && !tags.some(t => activeTags.includes(t))) return false
+      if (trimmedQuery) {
+        const inTitle = (it.title || '').toLowerCase().includes(trimmedQuery)
+        const inTags = tags.some(t => t.toLowerCase().includes(trimmedQuery))
+        if (!inTitle && !inTags) return false
+      }
+      return true
+    })
+  }, [items, activeTags, trimmedQuery])
 
   const sortedItems = useMemo(
     () => sortEntities(visibleItems, itemSort, i => i.title),
@@ -163,7 +177,7 @@ export default function SpacePage() {
 
   // Manual drag order (in both list and grid views) only applies to the
   // default sort; other sorts and select mode disable it.
-  const reorderDisabled = selectMode || itemSort !== 'default' || activeTags.length > 0
+  const reorderDisabled = selectMode || itemSort !== 'default' || activeTags.length > 0 || !!trimmedQuery
 
   const selectedCount = selectedIds.size
   const selectedItems = useMemo(
@@ -600,6 +614,38 @@ export default function SpacePage() {
         ) : (
           /* Items in list (single column) or grid (round-robin masonry) view */
           <>
+            {/* Compact in-space search (matches item titles and tags). */}
+            {items.length > 0 && !selectMode && (
+              <div className="mb-3 flex h-9 w-full items-center gap-2 rounded-full bg-bg-card pl-3.5 pr-1.5 sm:max-w-md focus-within:ring-1 focus-within:ring-accent-border transition-shadow">
+                <Search size={15} className="shrink-0 text-text-muted" />
+                <input
+                  type="text"
+                  enterKeyHint="search"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Escape' && query) {
+                      e.stopPropagation()
+                      setQuery('')
+                    }
+                  }}
+                  placeholder="Search items"
+                  aria-label="Search items in this space"
+                  className="min-w-0 flex-1 bg-transparent text-[13.5px] text-text-primary placeholder-text-muted focus:outline-none"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search"
+                    title="Clear"
+                    className="shrink-0 rounded-full p-1.5 text-text-muted hover:bg-bg-elevated hover:text-text-primary transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            )}
             {allTags.length > 0 && (
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 {(() => {
@@ -636,6 +682,17 @@ export default function SpacePage() {
                     </>
                   )
                 })()}
+              </div>
+            )}
+            {/* A search or tag filter that matches nothing (the search bar above
+                stays usable). */}
+            {sortedItems.length === 0 && items.length > 0 && (trimmedQuery || activeTags.length > 0) && (
+              <div className="flex flex-col items-center px-6 pt-12 pb-6 text-center">
+                <SearchX size={36} className="text-text-muted" />
+                <p className="mt-3 font-medium text-text-secondary">No matching items</p>
+                <p className="mt-1 text-sm text-text-muted">
+                  {trimmedQuery ? `No items match "${query.trim()}".` : 'No items have the selected tags.'}
+                </p>
               </div>
             )}
             {viewMode === 'grid' ? (
