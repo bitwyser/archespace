@@ -48,7 +48,7 @@ import { AUTO_SAVE_DELAY_MS } from '../lib/constants'
 // When an item's content is taller than this (px), it collapses to a fixed
 // preview of this height by default. Collapsing clamps the card to this height
 // (with a fade) rather than hiding the content; expanding restores full height.
-const COLLAPSED_MAX_PX = 480
+const COLLAPSED_MAX_PX = 640
 
 /**
  * @param {{ item: Object, onUpdate: Function, onTogglePin: Function, onDelete: Function, onDirtyChange?: Function, dragHandleProps?: Object }} props
