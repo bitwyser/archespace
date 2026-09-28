@@ -35,33 +35,36 @@ const BACKUP_VERSION = 2
 export async function exportSpaces(spaces, cryptoKey) {
   if (!cryptoKey) throw new Error('Vault must be unlocked to export')
 
+  // Active items of one space, or the dashboard's items (no space) for `null`.
+  const loadItems = async (spaceId) => {
+    let q = supabase
+      .from('space_items')
+      .select('type, title, content, position, pinned')
+    q = spaceId ? q.eq('space_id', spaceId) : q.is('space_id', null)
+    const { data, error } = await q
+      .is('deleted_at', null)
+      .is('archived_at', null)
+      .order('position')
+    if (error) throw error
+    const items = await decryptItems(data || [], cryptoKey)
+    return items.map((it) => ({
+      type: it.type,
+      title: it.title ?? '',
+      content: it.content ?? {},
+      pinned: !!it.pinned,
+    }))
+  }
+
   try {
     const exportedSpaces = await Promise.all(
-      spaces.map(async (c) => {
-        const { data, error } = await supabase
-          .from('space_items')
-          .select('type, title, content, position, pinned')
-          .eq('space_id', c.id)
-          .is('deleted_at', null)
-          .is('archived_at', null)
-          .order('position')
-        if (error) throw error
-
-        const items = await decryptItems(data || [], cryptoKey)
-        return {
-          name: c.name ?? '',
-          description: c.description ?? '',
-          color: typeof c.color === 'string' ? c.color : null,
-          tags: parseTags(c.tags),
-          pinned: !!c.pinned,
-          items: items.map((it) => ({
-            type: it.type,
-            title: it.title ?? '',
-            content: it.content ?? {},
-            pinned: !!it.pinned,
-          })),
-        }
-      })
+      spaces.map(async (c) => ({
+        name: c.name ?? '',
+        description: c.description ?? '',
+        color: typeof c.color === 'string' ? c.color : null,
+        tags: parseTags(c.tags),
+        pinned: !!c.pinned,
+        items: await loadItems(c.id),
+      }))
     )
 
     const payload = {
@@ -69,6 +72,9 @@ export async function exportSpaces(spaces, cryptoKey) {
       version: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
       spaces: exportedSpaces,
+      // Items that live on the dashboard, outside any space. Optional: older
+      // backups don't have it, and older app versions ignore it.
+      items: await loadItems(null),
     }
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -127,8 +133,51 @@ function validateItemContent(type, content) {
 }
 
 /**
+ * Validate, re-encrypt and insert a backup's items into a space, or onto the
+ * dashboard when `spaceId` is null. Items with an unknown type or a malformed
+ * body are skipped rather than failing the import.
+ * @returns {Promise<{ imported: number, skipped: number }>}
+ */
+async function insertImportedItems(items, spaceId, userId, cryptoKey) {
+  let skipped = 0
+  const rows = []
+  for (const item of items) {
+    if (
+      !item ||
+      typeof item !== 'object' ||
+      !ITEM_TYPES.includes(item.type) ||
+      !validateItemContent(item.type, item.content)
+    ) {
+      skipped++
+      continue
+    }
+
+    const title = (typeof item.title === 'string' ? item.title.trim() : '')
+      .slice(0, MAX_TITLE_LENGTH)
+    const encryptedItem = await encryptItem({ title, content: item.content }, cryptoKey)
+
+    rows.push({
+      space_id: spaceId,
+      user_id: userId,
+      type: item.type,
+      title: encryptedItem.title,
+      content: encryptedItem.content,
+      position: rows.length,
+      pinned: !!item.pinned,
+    })
+  }
+
+  if (rows.length > 0) {
+    const { error } = await supabase.from('space_items').insert(rows)
+    if (error) throw error
+  }
+  return { imported: rows.length, skipped }
+}
+
+/**
  * Import spaces from a JSON backup file. Accepts the current `{ version, spaces }`
- * format and the older bare-array format.
+ * format (plus an optional top-level `items` list of dashboard items) and the
+ * older bare-array format.
  *
  * @param {File} file - The .json File object from an <input>
  * @param {string} userId - The authenticated user's UUID
@@ -200,39 +249,19 @@ export async function importSpaces(file, userId, cryptoKey) {
     if (items.length > MAX_IMPORT_ITEMS_PER_SPACE) {
       throw new Error(`Too many items in space "${name}". The maximum allowed is ${MAX_IMPORT_ITEMS_PER_SPACE}.`)
     }
+    const result = await insertImportedItems(items, newCol.id, userId, cryptoKey)
+    itemsImported += result.imported
+    itemsSkipped += result.skipped
+  }
 
-    const itemsToInsert = []
-    for (const item of items) {
-      if (
-        !item ||
-        typeof item !== 'object' ||
-        !ITEM_TYPES.includes(item.type) ||
-        !validateItemContent(item.type, item.content)
-      ) {
-        itemsSkipped++
-        continue
-      }
-
-      const title = (typeof item.title === 'string' ? item.title.trim() : '')
-        .slice(0, MAX_TITLE_LENGTH)
-      const encryptedItem = await encryptItem({ title, content: item.content }, cryptoKey)
-
-      itemsToInsert.push({
-        space_id: newCol.id,
-        user_id: userId,
-        type: item.type,
-        title: encryptedItem.title,
-        content: encryptedItem.content,
-        position: itemsToInsert.length,
-        pinned: !!item.pinned,
-      })
+  // Dashboard items (outside any space), present in newer backups only.
+  if (!Array.isArray(parsed) && Array.isArray(parsed?.items)) {
+    if (parsed.items.length > MAX_IMPORT_ITEMS_PER_SPACE) {
+      throw new Error(`Too many dashboard items. The maximum allowed is ${MAX_IMPORT_ITEMS_PER_SPACE}.`)
     }
-
-    if (itemsToInsert.length > 0) {
-      const { error: itemErr } = await supabase.from('space_items').insert(itemsToInsert)
-      if (itemErr) throw itemErr
-      itemsImported += itemsToInsert.length
-    }
+    const result = await insertImportedItems(parsed.items, null, userId, cryptoKey)
+    itemsImported += result.imported
+    itemsSkipped += result.skipped
   }
 
   await logAudit({

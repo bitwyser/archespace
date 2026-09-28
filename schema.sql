@@ -35,10 +35,11 @@ CREATE TABLE IF NOT EXISTS spaces (
   updated_at  timestamptz NOT NULL DEFAULT now()
 );
 
--- Space Items: individual content blocks inside a space.
+-- Space Items: individual content blocks inside a space, or on the dashboard
+-- when space_id is NULL (a top-level item that belongs to no space).
 CREATE TABLE IF NOT EXISTS space_items (
   id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
-  space_id    uuid        REFERENCES spaces(id) ON DELETE CASCADE NOT NULL,
+  space_id    uuid        REFERENCES spaces(id) ON DELETE CASCADE,
   user_id     uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'richtext', 'code', 'secret', 'draw', 'table', 'authenticator')),
   title       text        NOT NULL DEFAULT '',
@@ -60,6 +61,11 @@ ALTER TABLE space_items ADD CONSTRAINT space_items_type_check
 
 -- Item tags (added later; encrypted client-side like space tags). Safe to re-run.
 ALTER TABLE space_items ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+-- Top-level (dashboard) items (added later): an item may belong to no space.
+-- Ownership and RLS use space_items.user_id, never the space, so this doesn't
+-- widen access. Safe to re-run.
+ALTER TABLE space_items ALTER COLUMN space_id DROP NOT NULL;
 
 -- One-level space nesting (added later; NULL = top-level space). Safe to re-run.
 ALTER TABLE spaces ADD COLUMN IF NOT EXISTS parent_id uuid
@@ -131,6 +137,8 @@ CREATE INDEX IF NOT EXISTS spaces_archived_at_idx ON spaces(archived_at) WHERE a
 CREATE INDEX IF NOT EXISTS items_space_id_idx     ON space_items(space_id);
 CREATE INDEX IF NOT EXISTS items_user_id_idx      ON space_items(user_id);
 CREATE INDEX IF NOT EXISTS items_position_idx     ON space_items(space_id, position);
+-- Dashboard items (no space), listed per user in position order.
+CREATE INDEX IF NOT EXISTS items_top_level_idx    ON space_items(user_id, position) WHERE space_id IS NULL;
 CREATE INDEX IF NOT EXISTS space_items_pinned_idx ON space_items(pinned)      WHERE pinned = true;
 CREATE INDEX IF NOT EXISTS items_deleted_at_idx   ON space_items(deleted_at)  WHERE deleted_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS items_archived_at_idx  ON space_items(archived_at) WHERE archived_at IS NOT NULL;
@@ -168,12 +176,16 @@ CREATE TRIGGER trg_user_settings_updated_at
   BEFORE UPDATE ON user_settings
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- Auto-populate user_id on space_items from the parent space.
+-- Auto-populate user_id on space_items from the parent space, or from the
+-- signed-in user for a dashboard item (no space).
 CREATE OR REPLACE FUNCTION populate_item_user_id()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.user_id IS NULL THEN
+  IF NEW.user_id IS NULL AND NEW.space_id IS NOT NULL THEN
     SELECT user_id INTO NEW.user_id FROM spaces WHERE id = NEW.space_id;
+  END IF;
+  IF NEW.user_id IS NULL THEN
+    NEW.user_id := auth.uid();
   END IF;
   RETURN NEW;
 END;

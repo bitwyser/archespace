@@ -1,15 +1,22 @@
 /**
- * The signed-in home: a searchable, sortable grid or list of the user's spaces,
- * with create/edit/delete, pinning, and links to archive, bin, and settings.
+ * The signed-in home: a searchable, sortable grid or list of the user's spaces
+ * followed by their dashboard items (items that belong to no space), laid out
+ * like the inside of a space. Create/edit/delete, pinning, bulk actions, and
+ * links to archive, bin, and settings.
  */
 
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Plus, Search, Folder,
+  Plus, Search, Folder, FolderPlus,
   Trash2, Archive, Command, CheckSquare, ListChecks, Settings, Lock, Menu, Keyboard, LogOut,
   LayoutGrid, List, Palette,
 } from 'lucide-react'
+import SpaceItem from '../components/SpaceItem'
+import ItemBoardModals from '../components/ItemBoardModals'
+import { useItemBoard } from '../hooks/useItemBoard'
+import { useDualEntitySelection } from '../hooks/useDualEntitySelection'
+import { useShortcut } from '../context/ShortcutsCore'
 import { useTheme } from '../context/ThemeCore'
 import GlobalSearchResults from '../components/GlobalSearchResults'
 import { WordmarkLogo } from '../components/WordmarkLogo'
@@ -39,11 +46,15 @@ export default function DashboardPage() {
   const { signOut } = useAuth()
   const { lock, isUnlocked } = useEncryption()
   const { toast } = useToast()
-  const { openPalette } = useCommandPalette()
+  const { openPalette, registerCommands, closePalette } = useCommandPalette()
   const {
     data: spaces = [], isLoading, create, update, togglePin, remove, reorder,
     archive, duplicate, bulkRemove, bulkArchive, bulkSetPinned, bulkDuplicate,
   } = useSpaces()
+  // Dashboard items: items that belong to no space, shown after the spaces.
+  const board = useItemBoard(null)
+  const { items: dashboardItems, isLoading: itemsLoading } = board
+  const itemsApi = board.api
   const { total: binTotal } = useRecycleBin()
   const { total: archiveTotal } = useArchive()
   const { data: stats = {} } = useSpaceStats()
@@ -67,8 +78,7 @@ export default function DashboardPage() {
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchActive, setSearchActive] = useState(-1)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
-  const [selectMode, setSelectMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  // { spaceIds, itemIds } awaiting the "move to bin" confirmation.
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
@@ -99,27 +109,28 @@ export default function DashboardPage() {
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
+  // One sort for the whole dashboard: spaces by name, items by title.
   const [spaceSort, setSpaceSort] = usePersistedSort('arche-sort-spaces')
 
-  const selectedCount = selectedIds.size
-  const selectedSpaces = useMemo(
-    () => spaces.filter(c => selectedIds.has(c.id)),
-    [spaces, selectedIds]
+  // On small screens grid cards are narrow (two columns), so dashboard items
+  // render denser, as they do inside a space.
+  const [isSmallScreen, setIsSmallScreen] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches,
   )
-
-  const exitSelectMode = useCallback(() => {
-    setSelectMode(false)
-    setSelectedIds(new Set())
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const onChange = (e) => setIsSmallScreen(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
   }, [])
+  const denseItems = viewMode === 'grid' && isSmallScreen
 
-  const toggleSelected = useCallback((id) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
+  // "New item" on the dashboard too: command palette entry + the "I" shortcut.
+  const { openAddItem } = board
+  useShortcut('new-item', openAddItem)
+  useEffect(() => registerCommands([
+    { id: 'new-item', label: 'New item', hint: 'I', icon: Plus, run: () => { closePalette(); openAddItem() } },
+  ]), [registerCommands, closePalette, openAddItem])
 
   const focusMainSearch = useCallback(() => {
     setMobileMenuOpen(false)
@@ -127,20 +138,6 @@ export default function DashboardPage() {
     const ref = isMobile ? mobileSearchInputRef : searchInputRef
     setTimeout(() => ref.current?.focus(), 0)
   }, [])
-
-  const pageActions = useMemo(() => ({
-    onNewSpace: () => setModal({ type: 'create' }),
-    onOpenSearch: () => focusMainSearch(),
-    onEscape: () => {
-      setModal(null)
-      setDeleteConfirm(null)
-      setMobileMenuOpen(false)
-      setBulkDeleteConfirm(null)
-      exitSelectMode()
-    },
-  }), [exitSelectMode, focusMainSearch])
-
-  useRegisterPageActions(pageActions)
 
   useEffect(() => {
     if (!mobileMenuOpen) return
@@ -176,26 +173,82 @@ export default function DashboardPage() {
     return topLevelSpaces.filter(c => matchedSpaceIds.has(c.id))
   }, [topLevelSpaces, globalMatches, search])
 
-  // ── Tag filter ──
-  const [activeTags, setActiveTags] = useState([])
+  // Dashboard items matching the search (the same matching as global search).
+  const searchedItems = useMemo(() => {
+    if (!search.trim()) return dashboardItems
+    return filterGlobalSearch({ spaces: [], items: dashboardItems }, search).items
+  }, [dashboardItems, search])
+  const hasEntries = filtered.length + searchedItems.length > 0
+
+  // ── Tag filter (spaces and dashboard items) ──
+  const [selectedTags, setSelectedTags] = useState([])
   const allTags = useMemo(() => {
     const set = new Set()
     for (const s of topLevelSpaces) for (const t of (s.tags || [])) set.add(t)
+    for (const it of dashboardItems) for (const t of (it.tags || [])) set.add(t)
     return Array.from(set).sort((a, b) => a.localeCompare(b))
-  }, [topLevelSpaces])
+  }, [topLevelSpaces, dashboardItems])
+  // Only selected tags that a space or item still carries take effect, so a tag
+  // removed from its last carrier can't leave the dashboard looking empty.
+  const activeTags = useMemo(
+    () => selectedTags.filter(t => allTags.includes(t)),
+    [selectedTags, allTags]
+  )
   const toggleTagFilter = useCallback((tag) => {
-    setActiveTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
-  }, [])
+    setSelectedTags(prev => {
+      const current = prev.filter(t => allTags.includes(t))
+      return current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag]
+    })
+  }, [allTags])
   const tagFiltered = useMemo(() => {
     if (activeTags.length === 0) return filtered
     return filtered.filter(s => (s.tags || []).some(t => activeTags.includes(t)))
   }, [filtered, activeTags])
+  const tagFilteredItems = useMemo(() => {
+    if (activeTags.length === 0) return searchedItems
+    return searchedItems.filter(it => (it.tags || []).some(t => activeTags.includes(t)))
+  }, [searchedItems, activeTags])
 
   const sortedSpaces = useMemo(
     () => sortEntities(tagFiltered, spaceSort, s => s.name),
     [tagFiltered, spaceSort]
   )
-  // Manual drag order only applies to the default sort.
+  const sortedItems = useMemo(
+    () => sortEntities(tagFilteredItems, spaceSort, i => i.title),
+    [tagFilteredItems, spaceSort]
+  )
+
+  // ── Selection: spaces and dashboard items together ──
+  const {
+    selectMode, setSelectMode, selectedSpaceIds, selectedItemIds,
+    selectedCount, exitSelectMode, selectAll, toggleSpace, toggleItem,
+  } = useDualEntitySelection(sortedSpaces, sortedItems)
+  const selectedSpaces = useMemo(
+    () => spaces.filter(c => selectedSpaceIds.has(c.id)),
+    [spaces, selectedSpaceIds]
+  )
+  const selectedItems = useMemo(
+    () => dashboardItems.filter(i => selectedItemIds.has(i.id)),
+    [dashboardItems, selectedItemIds]
+  )
+
+  const { closeAll: closeItemDialogs } = board
+  const pageActions = useMemo(() => ({
+    onNewSpace: () => setModal({ type: 'create' }),
+    onOpenSearch: () => focusMainSearch(),
+    onEscape: () => {
+      setModal(null)
+      setDeleteConfirm(null)
+      setMobileMenuOpen(false)
+      setBulkDeleteConfirm(null)
+      closeItemDialogs()
+      exitSelectMode()
+    },
+  }), [exitSelectMode, focusMainSearch, closeItemDialogs])
+
+  useRegisterPageActions(pageActions)
+
+  // Manual drag order only applies to the default sort, unfiltered.
   const reorderDisabled = !!search || selectMode || spaceSort !== 'default' || activeTags.length > 0
 
   const showSearchResults = search.trim().length > 0 && searchFocused
@@ -213,7 +266,9 @@ export default function DashboardPage() {
 
   const goItemFromSearch = useCallback((item) => {
     closeSearch()
-    navigate(`/space/${item.space_id}`, { state: { focusItemId: item.id } })
+    // A dashboard item (no space) stays on this page, scrolled to and
+    // highlighted like an item opened inside a space.
+    navigate(item.space_id ? `/space/${item.space_id}` : '/app', { state: { focusItemId: item.id } })
   }, [closeSearch, navigate])
 
   // Flat, ordered list of visible results for keyboard nav - must match
@@ -281,8 +336,8 @@ export default function DashboardPage() {
       layout="grid"
       reorderDisabled={reorderDisabled}
       selectMode={selectMode}
-      selected={selectedIds.has(col.id)}
-      onToggleSelect={() => toggleSelected(col.id)}
+      selected={selectedSpaceIds.has(col.id)}
+      onToggleSelect={() => toggleSpace(col.id)}
       dragIndex={dragIndex}
       dragOverIndex={dragOverIndex}
       handleDragStart={handleDragStart}
@@ -305,6 +360,81 @@ export default function DashboardPage() {
       })}
     />
   )
+
+  // Dashboard items reorder among themselves (separately from spaces).
+  const itemDrag = useDragReorder({
+    disabled: reorderDisabled,
+    onDrop: (fromIndex, toIndex) => {
+      const reordered = [...dashboardItems]
+      const [moved] = reordered.splice(fromIndex, 1)
+      reordered.splice(toIndex, 0, moved)
+      itemsApi.reorder.mutate(reordered, {
+        onError: () => toast.error("Couldn't reorder items."),
+      })
+    },
+  })
+
+  const renderItemCard = (item, index) => (
+    <div
+      key={item.id}
+      data-item-id={item.id}
+      onDragOver={reorderDisabled ? undefined : (e) => itemDrag.handleDragOver(e, index)}
+      onDrop={reorderDisabled ? undefined : () => itemDrag.handleDrop(index)}
+      className={`transition-all duration-300 animate-fade-in-up ${
+        // Only while an item (not a space) is being dragged.
+        !reorderDisabled && itemDrag.dragIndex !== null && itemDrag.dragOverIndex === index && itemDrag.dragIndex !== index
+          ? 'border-t-2 border-accent pt-1'
+          : ''
+      } ${!reorderDisabled && itemDrag.dragIndex === index ? 'opacity-40 scale-95' : ''} ${
+        board.flashItemId === item.id ? 'rounded-2xl ring-2 ring-accent' : ''
+      }`}
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
+      <SpaceItem
+        item={item}
+        index={index}
+        selectMode={selectMode}
+        selected={selectedItemIds.has(item.id)}
+        onSelectedChange={toggleItem}
+        forcedCollapsed={board.collapsedIds.has(item.id)}
+        {...board.cardProps}
+        onDragStart={itemDrag.handleDragStart}
+        onDragEnd={itemDrag.handleDragEnd}
+        dragDisabled={reorderDisabled}
+        dense={denseItems}
+      />
+    </div>
+  )
+
+  // Spaces first, then dashboard items, in one layout (as inside a space).
+  const contentNodes = [
+    ...sortedSpaces.map((space, index) => renderSpaceCard(space, index)),
+    ...sortedItems.map((item, index) => renderItemCard(item, index)),
+  ]
+
+  // "2 spaces", "3 items", or "2 spaces and 3 items" (for bulk-action toasts).
+  const describeSelection = (spaceCount, itemCount) => [
+    spaceCount > 0 && `${spaceCount} ${spaceCount === 1 ? 'space' : 'spaces'}`,
+    itemCount > 0 && `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`,
+  ].filter(Boolean).join(' and ')
+
+  /** Run a bulk action on the selected spaces and items, then leave select mode. */
+  const runBulkAction = async (fn, successMessage, errorMessage) => {
+    if (selectedCount === 0) return
+    if (board.hasDirty([...selectedItemIds])) {
+      toast.error('Save or discard unsaved changes before bulk actions')
+      return
+    }
+    try {
+      await fn([...selectedSpaceIds], [...selectedItemIds])
+      toast.success(successMessage)
+      exitSelectMode()
+    } catch {
+      toast.error(errorMessage)
+    }
+  }
+  const selectionLabel = describeSelection(selectedSpaceIds.size, selectedItemIds.size)
+  const hasSelectedItems = selectedItemIds.size > 0
 
   return (
     <div className="min-h-screen bg-bg-base">
@@ -525,7 +655,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-semibold text-text-primary">Spaces</h2>
           </div>
           <div className="flex items-center gap-2">
-            {filtered.length > 0 && !selectMode && (
+            {hasEntries && !selectMode && (
               <div className="flex items-center gap-1 p-1 rounded-xl border border-bg-border bg-bg-surface">
                 <button
                   type="button"
@@ -557,10 +687,10 @@ export default function DashboardPage() {
                 </button>
               </div>
             )}
-            {selectMode && filtered.length > 0 && (
+            {selectMode && hasEntries && (
               <button
                 type="button"
-                onClick={() => setSelectedIds(new Set(filtered.map(c => c.id)))}
+                onClick={selectAll}
                 title="Select all"
                 aria-label="Select all"
                 className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
@@ -569,7 +699,7 @@ export default function DashboardPage() {
                 <span className="hidden sm:inline">Select all</span>
               </button>
             )}
-            {filtered.length > 0 && (
+            {hasEntries && (
               <button
                 type="button"
                 onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
@@ -580,18 +710,31 @@ export default function DashboardPage() {
                 <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
               </button>
             )}
-            {spaces.length > 1 && !selectMode && (
+            {topLevelSpaces.length + dashboardItems.length > 1 && !selectMode && (
               <SortMenu value={spaceSort} onChange={setSpaceSort} />
+            )}
+            {/* Same pair as inside a space: FolderPlus = space, Plus = item. */}
+            {!selectMode && (
+              <button
+                type="button"
+                onClick={() => setModal({ type: 'create' })}
+                disabled={!online}
+                title={online ? 'New space' : 'Unavailable offline'}
+                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <FolderPlus size={16} />
+                <span className="hidden sm:inline">New space</span>
+              </button>
             )}
             <button
               type="button"
-              onClick={() => setModal({ type: 'create' })}
+              onClick={openAddItem}
               disabled={!online}
-              title={online ? 'New space' : 'Unavailable offline'}
+              title={online ? 'Add item' : 'Unavailable offline'}
               className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
             >
               <Plus size={16} strokeWidth={2.5} />
-              <span className="hidden sm:inline">New space</span>
+              <span className="hidden sm:inline">Add item</span>
             </button>
           </div>
         </div>
@@ -610,7 +753,7 @@ export default function DashboardPage() {
                 <>
                   <button
                     type="button"
-                    onClick={() => setActiveTags([])}
+                    onClick={() => setSelectedTags([])}
                     aria-pressed={activeTags.length === 0}
                     className={pill(activeTags.length === 0)}
                   >
@@ -636,8 +779,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Spaces grid */}
-        {isLoading ? (
+        {/* Spaces, then dashboard items */}
+        {isLoading || itemsLoading ? (
           viewMode === 'list' ? (
             <div className="grid grid-cols-1 gap-2 max-w-[52rem] mx-auto">
               {[...Array(6)].map((_, i) => (
@@ -671,13 +814,13 @@ export default function DashboardPage() {
               ))}
             </div>
           )
-        ) : filtered.length === 0 ? (
+        ) : !hasEntries ? (
           <div className="text-center py-20">
             <div className="w-14 h-14 rounded-2xl bg-bg-surface border border-bg-border flex items-center justify-center mx-auto mb-4">
               <Folder size={24} className="text-text-muted" />
             </div>
-            <p className="text-text-secondary font-medium">{search ? 'No spaces match your search' : 'No spaces yet'}</p>
-            <p className="text-text-muted text-sm mt-1">{search ? `Nothing found for "${search.trim()}"` : 'Create your first space to get started'}</p>
+            <p className="text-text-secondary font-medium">{search ? 'Nothing matches your search' : 'Nothing here yet'}</p>
+            <p className="text-text-muted text-sm mt-1">{search ? `Nothing found for "${search.trim()}"` : 'Create a space or add an item to get started'}</p>
             {search ? (
               <button
                 onClick={closeSearch}
@@ -686,14 +829,24 @@ export default function DashboardPage() {
                 Clear search
               </button>
             ) : (
-              <button
-                onClick={() => setModal({ type: 'create' })}
-                disabled={!online}
-                title={online ? undefined : 'Unavailable offline'}
-                className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Plus size={16} /> New space
-              </button>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  onClick={() => setModal({ type: 'create' })}
+                  disabled={!online}
+                  title={online ? undefined : 'Unavailable offline'}
+                  className="inline-flex items-center gap-2 rounded-xl border border-bg-border bg-bg-surface px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <FolderPlus size={16} /> New space
+                </button>
+                <button
+                  onClick={openAddItem}
+                  disabled={!online}
+                  title={online ? undefined : 'Unavailable offline'}
+                  className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Plus size={16} /> Add item
+                </button>
+              </div>
             )}
           </div>
         ) : (
@@ -702,16 +855,13 @@ export default function DashboardPage() {
               <div className="flex items-start gap-2 sm:gap-3 pb-32">
                 {Array.from({ length: gridCols }, (_, col) => (
                   <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
-                    {sortedSpaces
-                      .map((space, index) => ({ space, index }))
-                      .filter(({ index }) => index % gridCols === col)
-                      .map(({ space, index }) => renderSpaceCard(space, index))}
+                    {contentNodes.filter((_, i) => i % gridCols === col)}
                   </div>
                 ))}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-2 pb-32 max-w-[52rem] mx-auto">
-                {sortedSpaces.map((space, index) => renderSpaceCard(space, index))}
+                {contentNodes}
               </div>
             )}
             <BulkSelectionBar
@@ -722,58 +872,94 @@ export default function DashboardPage() {
                   id: 'pin',
                   label: 'Pin',
                   icon: BULK_ICONS.pin,
-                  onClick: async () => {
-                    try {
-                      await bulkSetPinned.mutateAsync({ ids: [...selectedIds], pinned: true })
-                      toast.success(`Pinned ${selectedCount} spaces`)
-                      exitSelectMode()
-                    } catch { toast.error("Couldn't pin the space.") }
-                  },
+                  onClick: () => runBulkAction(
+                    (spaceIds, itemIds) => Promise.all([
+                      spaceIds.length && bulkSetPinned.mutateAsync({ ids: spaceIds, pinned: true }),
+                      itemIds.length && itemsApi.bulkSetPinned.mutateAsync({ ids: itemIds, pinned: true }),
+                    ]),
+                    `Pinned ${selectionLabel}`,
+                    "Couldn't pin the selection.",
+                  ),
                 },
                 {
                   id: 'unpin',
                   label: 'Unpin',
                   icon: BULK_ICONS.unpin,
-                  onClick: async () => {
-                    try {
-                      await bulkSetPinned.mutateAsync({ ids: [...selectedIds], pinned: false })
-                      toast.success('Unpinned spaces')
-                      exitSelectMode()
-                    } catch { toast.error("Couldn't unpin the space.") }
+                  onClick: () => runBulkAction(
+                    (spaceIds, itemIds) => Promise.all([
+                      spaceIds.length && bulkSetPinned.mutateAsync({ ids: spaceIds, pinned: false }),
+                      itemIds.length && itemsApi.bulkSetPinned.mutateAsync({ ids: itemIds, pinned: false }),
+                    ]),
+                    `Unpinned ${selectionLabel}`,
+                    "Couldn't unpin the selection.",
+                  ),
+                },
+                // Collapse / expand only apply to item cards.
+                hasSelectedItems && {
+                  id: 'collapse',
+                  label: 'Collapse',
+                  icon: BULK_ICONS.collapse,
+                  onClick: () => {
+                    board.setManyCollapsed([...selectedItemIds], true)
+                    toast.info(`Collapsed ${selectedItemIds.size} items`)
+                  },
+                },
+                hasSelectedItems && {
+                  id: 'expand',
+                  label: 'Expand',
+                  icon: BULK_ICONS.expand,
+                  onClick: () => {
+                    board.setManyCollapsed([...selectedItemIds], false)
+                    toast.info('Expanded items')
                   },
                 },
                 {
                   id: 'duplicate',
                   label: 'Duplicate',
                   icon: BULK_ICONS.copy,
-                  onClick: async () => {
-                    try {
-                      await bulkDuplicate.mutateAsync(selectedSpaces)
-                      toast.success(`Duplicated ${selectedCount} spaces`)
-                      exitSelectMode()
-                    } catch { toast.error("Couldn't duplicate the space.") }
-                  },
+                  onClick: () => runBulkAction(
+                    () => Promise.all([
+                      selectedSpaces.length && bulkDuplicate.mutateAsync(selectedSpaces),
+                      selectedItems.length && itemsApi.bulkDuplicate.mutateAsync(selectedItems),
+                    ]),
+                    `Duplicated ${selectionLabel}`,
+                    "Couldn't duplicate the selection.",
+                  ),
+                },
+                // Only items move (into a space); spaces can't.
+                hasSelectedItems && selectedSpaceIds.size === 0 && {
+                  id: 'move',
+                  label: 'Move',
+                  icon: BULK_ICONS.move,
+                  onClick: () => board.openMoveItems([...selectedItemIds], exitSelectMode),
                 },
                 {
                   id: 'archive',
                   label: 'Archive',
                   icon: BULK_ICONS.archive,
-                  onClick: async () => {
-                    try {
-                      await bulkArchive.mutateAsync([...selectedIds])
-                      toast.success(`Archived ${selectedCount} spaces`)
-                      exitSelectMode()
-                    } catch { toast.error("Couldn't archive the space.") }
-                  },
+                  onClick: () => runBulkAction(
+                    (spaceIds, itemIds) => Promise.all([
+                      spaceIds.length && bulkArchive.mutateAsync(spaceIds),
+                      itemIds.length && itemsApi.bulkArchive.mutateAsync(itemIds),
+                    ]),
+                    `Archived ${selectionLabel}`,
+                    "Couldn't archive the selection.",
+                  ),
                 },
                 {
                   id: 'delete',
                   label: 'Delete',
                   icon: BULK_ICONS.trash,
                   variant: 'danger',
-                  onClick: () => setBulkDeleteConfirm([...selectedIds]),
+                  onClick: () => {
+                    if (board.hasDirty([...selectedItemIds])) {
+                      toast.error('Save or discard unsaved changes first')
+                      return
+                    }
+                    setBulkDeleteConfirm({ spaceIds: [...selectedSpaceIds], itemIds: [...selectedItemIds] })
+                  },
                 },
-              ]}
+              ].filter(Boolean)}
             />
           </>
         )}
@@ -805,7 +991,7 @@ export default function DashboardPage() {
       )}
       {bulkDeleteConfirm && (
         <Modal
-          title={`Move ${bulkDeleteConfirm.length} spaces to recycle bin?`}
+          title={`Move ${describeSelection(bulkDeleteConfirm.spaceIds.length, bulkDeleteConfirm.itemIds.length)} to recycle bin?`}
           onClose={() => setBulkDeleteConfirm(null)}
           footer={
             <div className="flex gap-2 justify-end">
@@ -818,15 +1004,19 @@ export default function DashboardPage() {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  bulkRemove.mutate(bulkDeleteConfirm, {
-                    onSuccess: () => {
-                      toast.success(`Moved ${bulkDeleteConfirm.length} spaces to recycle bin`)
-                      setBulkDeleteConfirm(null)
-                      exitSelectMode()
-                    },
-                    onError: () => toast.error("Couldn't delete the space."),
-                  })
+                onClick={async () => {
+                  const { spaceIds, itemIds } = bulkDeleteConfirm
+                  try {
+                    await Promise.all([
+                      spaceIds.length && bulkRemove.mutateAsync(spaceIds),
+                      itemIds.length && itemsApi.bulkRemove.mutateAsync(itemIds),
+                    ])
+                    toast.success(`Moved ${describeSelection(spaceIds.length, itemIds.length)} to recycle bin`)
+                    setBulkDeleteConfirm(null)
+                    exitSelectMode()
+                  } catch {
+                    toast.error("Couldn't delete the selection.")
+                  }
                 }}
                 className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
               >
@@ -835,9 +1025,16 @@ export default function DashboardPage() {
             </div>
           }
         >
-          <p className="text-text-secondary text-sm">All items inside these spaces go to the bin as well.</p>
+          <p className="text-text-secondary text-sm">
+            {bulkDeleteConfirm.spaceIds.length > 0
+              ? 'All items inside these spaces go to the bin as well.'
+              : 'You can restore them later from the recycle bin.'}
+          </p>
         </Modal>
       )}
+
+      {/* ── Dashboard item dialogs: add, move to bin, move, unsaved guard ── */}
+      <ItemBoardModals board={board} spaces={spaces} />
 
       {deleteConfirm && (
         <Modal

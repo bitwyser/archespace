@@ -38,8 +38,11 @@ export function useGlobalSearchData() {
       const decryptedItems = await decryptItems(items || [], cryptoKey)
 
       const colMap = Object.fromEntries(decryptedCols.map(c => [c.id, c.name]))
+      // Items with no space live on the dashboard.
       const itemMeta = Object.fromEntries(
-        decryptedItems.map(i => [i.id, { spaceName: colMap[i.space_id] || 'Unknown' }])
+        decryptedItems.map(i => [i.id, {
+          spaceName: i.space_id ? (colMap[i.space_id] || 'Unknown') : 'Dashboard',
+        }])
       )
 
       // Both queries cap at GLOBAL_SEARCH_RESULT_LIMIT most-recent rows. Hitting

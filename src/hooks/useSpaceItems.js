@@ -1,5 +1,6 @@
 /**
- * useSpaceItems.js - Hook for items within a single space.
+ * useSpaceItems.js - Hook for items within a single space, or - with
+ * `spaceId === null` - the dashboard's items, which belong to no space.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -38,25 +39,34 @@ const defaultContent = {
   authenticator: { entries: [] },
 }
 
+// Query/cache key for the dashboard's items (those with no space).
+export const DASHBOARD_ITEMS_KEY = 'dashboard'
+
+/** Restrict an items query to one space, or to the dashboard for `null`. */
+function whereSpace(q, spaceId) {
+  return spaceId ? q.eq('space_id', spaceId) : q.is('space_id', null)
+}
+
 export function useSpaceItems(spaceId) {
   const qc = useQueryClient()
   const { user } = useAuth()
   const { cryptoKey } = useEncryption()
   const userId = user?.id
-  const cacheKey = `items:${spaceId}`
+  const itemsKey = spaceId ?? DASHBOARD_ITEMS_KEY
+  const cacheKey = `items:${itemsKey}`
 
   const query = useQuery({
-    queryKey: queryKeys.items(spaceId),
-    enabled: !!spaceId && !!cryptoKey,
+    queryKey: queryKeys.items(itemsKey),
+    enabled: spaceId !== undefined && !!cryptoKey,
     // 'always' so the queryFn still runs while offline and can fall back to the
     // encrypted cache (the default 'online' mode would pause it with no data).
     networkMode: 'always',
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from('space_items')
-          .select('*')
-          .eq('space_id', spaceId)
+        const { data, error } = await whereSpace(
+          supabase.from('space_items').select('*'),
+          spaceId
+        )
           .is('deleted_at', null)
           .is('archived_at', null)
           .order('pinned', { ascending: false })
@@ -81,23 +91,27 @@ export function useSpaceItems(spaceId) {
   })
 
   useEffect(() => {
-    if (!spaceId) return
+    if (spaceId === undefined) return
+    // Realtime filters can't express "space_id is null", so the dashboard
+    // listens to all of the user's item changes (debounced below) instead.
+    const filter = spaceId ? `space_id=eq.${spaceId}` : userId ? `user_id=eq.${userId}` : null
+    if (!filter) return
     // Coalesce bursts of row changes (e.g. a reorder updating many rows, or the
     // realtime echo of our own optimistic writes) into a single invalidation.
     let timer
     const channel = supabase
-      .channel(`items-${spaceId}`)
+      .channel(`items-${itemsKey}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'space_items',
-          filter: `space_id=eq.${spaceId}`,
+          filter,
         },
         () => {
           clearTimeout(timer)
-          timer = setTimeout(() => invalidateSpaceItems(qc, spaceId), 250)
+          timer = setTimeout(() => invalidateSpaceItems(qc, itemsKey), 250)
         }
       )
       .subscribe()
@@ -105,7 +119,7 @@ export function useSpaceItems(spaceId) {
       clearTimeout(timer)
       supabase.removeChannel(channel)
     }
-  }, [spaceId, qc])
+  }, [spaceId, itemsKey, userId, qc])
 
   const create = useMutation({
     mutationFn: async ({ type, title, content }) => {
@@ -123,6 +137,8 @@ export function useSpaceItems(spaceId) {
         .from('space_items')
         .insert({
           space_id: spaceId,
+          // Set explicitly: a dashboard item has no space to derive it from.
+          user_id: userId,
           type: plain.type,
           title: encrypted.title,
           content: encrypted.content,
@@ -134,7 +150,7 @@ export function useSpaceItems(spaceId) {
       return decryptItem(data, cryptoKey)
     },
     onSuccess: () => {
-      invalidateSpaceItems(qc, spaceId)
+      invalidateSpaceItems(qc, itemsKey)
     },
   })
 
@@ -150,14 +166,14 @@ export function useSpaceItems(spaceId) {
       if (error) throw error
       return decryptItem(data, cryptoKey)
     },
-    onSuccess: () => invalidateSpaceItems(qc, spaceId),
+    onSuccess: () => invalidateSpaceItems(qc, itemsKey),
   })
 
   const togglePin = useMutation(makeTogglePin({
     table: 'space_items',
     qc,
-    queryKey: queryKeys.items(spaceId),
-    invalidate: () => invalidateSpaceItems(qc, spaceId),
+    queryKey: queryKeys.items(itemsKey),
+    invalidate: () => invalidateSpaceItems(qc, itemsKey),
   }))
 
   // Tags-only update (encrypted like a space's tags). Optimistic so chips update
@@ -174,22 +190,22 @@ export function useSpaceItems(spaceId) {
       if (error) throw error
     },
     onMutate: async ({ id, tags }) => {
-      await qc.cancelQueries({ queryKey: queryKeys.items(spaceId) })
-      const previous = qc.getQueryData(queryKeys.items(spaceId))
-      qc.setQueryData(queryKeys.items(spaceId), (old) =>
+      await qc.cancelQueries({ queryKey: queryKeys.items(itemsKey) })
+      const previous = qc.getQueryData(queryKeys.items(itemsKey))
+      qc.setQueryData(queryKeys.items(itemsKey), (old) =>
         old?.map(it => (it.id === id ? { ...it, tags: parseTags(tags) } : it))
       )
       return { previous }
     },
     onError: (_err, _vars, context) => {
-      if (context?.previous) qc.setQueryData(queryKeys.items(spaceId), context.previous)
+      if (context?.previous) qc.setQueryData(queryKeys.items(itemsKey), context.previous)
     },
-    onSettled: () => invalidateSpaceItems(qc, spaceId),
+    onSettled: () => invalidateSpaceItems(qc, itemsKey),
   })
 
   const remove = useMutation(makeSoftDelete({
     table: 'space_items',
-    invalidate: () => invalidateSpaceItems(qc, spaceId),
+    invalidate: () => invalidateSpaceItems(qc, itemsKey),
   }))
 
   const archive = useMutation({
@@ -202,7 +218,7 @@ export function useSpaceItems(spaceId) {
       if (error) throw error
     },
     onSuccess: () => {
-      invalidateSpaceItems(qc, spaceId)
+      invalidateSpaceItems(qc, itemsKey)
     },
   })
 
@@ -220,6 +236,7 @@ export function useSpaceItems(spaceId) {
         .from('space_items')
         .insert({
           space_id: spaceId,
+          user_id: userId,
           type: plain.type,
           title: encrypted.title,
           content: encrypted.content,
@@ -232,31 +249,33 @@ export function useSpaceItems(spaceId) {
       return decryptItem(data, cryptoKey)
     },
     onSuccess: () => {
-      invalidateSpaceItems(qc, spaceId)
+      invalidateSpaceItems(qc, itemsKey)
     },
   })
 
   const reorder = useMutation(makeReorder({
     qc,
-    queryKey: queryKeys.items(spaceId),
+    queryKey: queryKeys.items(itemsKey),
     rpc: 'update_item_positions',
-    invalidate: () => invalidateSpaceItems(qc, spaceId),
+    invalidate: () => invalidateSpaceItems(qc, itemsKey),
   }))
 
   const bulkRemove = useMutation(makeBulkSoftDelete({
     table: 'space_items',
-    invalidate: () => invalidateSpaceItems(qc, spaceId),
+    invalidate: () => invalidateSpaceItems(qc, itemsKey),
   }))
 
+  // Move items to another space, or to the dashboard when `targetSpaceId` is
+  // null.
   const move = useMutation({
     mutationFn: async ({ ids, targetSpaceId }) => {
-      if (!ids?.length || !targetSpaceId || targetSpaceId === spaceId) return
+      if (!ids?.length || targetSpaceId === undefined || targetSpaceId === spaceId) return
       assertOnline()
 
-      const { count, error: countError } = await supabase
-        .from('space_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('space_id', targetSpaceId)
+      const { count, error: countError } = await whereSpace(
+        supabase.from('space_items').select('id', { count: 'exact', head: true }),
+        targetSpaceId
+      )
         .is('deleted_at', null)
         .is('archived_at', null)
       if (countError) throw countError
@@ -278,8 +297,8 @@ export function useSpaceItems(spaceId) {
       if (failed?.error) throw failed.error
     },
     onSuccess: (_data, variables) => {
-      invalidateSpaceItems(qc, spaceId)
-      invalidateSpaceItems(qc, variables?.targetSpaceId)
+      invalidateSpaceItems(qc, itemsKey)
+      invalidateSpaceItems(qc, variables?.targetSpaceId ?? DASHBOARD_ITEMS_KEY)
     },
   })
 
@@ -293,12 +312,12 @@ export function useSpaceItems(spaceId) {
         .in('id', ids)
       if (error) throw error
     },
-    onSuccess: () => invalidateSpaceItems(qc, spaceId),
+    onSuccess: () => invalidateSpaceItems(qc, itemsKey),
   })
 
   const bulkSetPinned = useMutation(makeBulkSetPinned({
     table: 'space_items',
-    invalidate: () => invalidateSpaceItems(qc, spaceId),
+    invalidate: () => invalidateSpaceItems(qc, itemsKey),
   }))
 
   const bulkDuplicate = useMutation({
@@ -315,6 +334,7 @@ export function useSpaceItems(spaceId) {
           const encrypted = await encryptItem(plain, cryptoKey)
           return {
             space_id: spaceId,
+            user_id: userId,
             type: item.type,
             title: encrypted.title,
             content: encrypted.content,
@@ -326,7 +346,7 @@ export function useSpaceItems(spaceId) {
       const { error } = await supabase.from('space_items').insert(rows)
       if (error) throw error
     },
-    onSuccess: () => invalidateSpaceItems(qc, spaceId),
+    onSuccess: () => invalidateSpaceItems(qc, itemsKey),
   })
 
   return {
