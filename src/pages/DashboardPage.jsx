@@ -703,6 +703,10 @@ export default function DashboardPage() {
                 </button>
               </div>
             )}
+            {/* View, sort, select, then create - the same order as inside a space. */}
+            {topLevelSpaces.length + dashboardItems.length > 1 && !selectMode && (
+              <SortMenu value={spaceSort} onChange={setSpaceSort} />
+            )}
             {selectMode && hasEntries && (
               <button
                 type="button"
@@ -725,9 +729,6 @@ export default function DashboardPage() {
                 <CheckSquare size={14} />
                 <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
               </button>
-            )}
-            {topLevelSpaces.length + dashboardItems.length > 1 && !selectMode && (
-              <SortMenu value={spaceSort} onChange={setSpaceSort} />
             )}
             {/* Same pair as inside a space: FolderPlus = space, Plus = item. */}
             {!selectMode && (
