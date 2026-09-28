@@ -102,16 +102,28 @@ export default function SpacePage() {
   ]), [registerCommands, closePalette, openAddItem])
 
   // ── Tag filter (within this space) ──
-  const [activeTags, setActiveTags] = useState([])
+  const [selectedTags, setSelectedTags] = useState([])
   const allTags = useMemo(() => {
     const set = new Set()
     for (const it of items) for (const t of (it.tags || [])) set.add(t)
     return Array.from(set).sort((a, b) => a.localeCompare(b))
   }, [items])
+  // Only selected tags that some item still carries take effect. A selected
+  // tag that was just removed from every item (its pill disappears) would
+  // otherwise leave the filter matching nothing and the space looking empty.
+  const activeTags = useMemo(
+    () => selectedTags.filter(t => allTags.includes(t)),
+    [selectedTags, allTags]
+  )
   const toggleTagFilter = useCallback((tag) => {
-    setActiveTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]))
-  }, [])
-  // ── In-space search (item title + tags, like mobile) ──
+    setSelectedTags(prev => {
+      // Drop stale selections so a removed tag doesn't come back into effect
+      // if it is re-added later.
+      const current = prev.filter(t => allTags.includes(t))
+      return current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag]
+    })
+  }, [allTags])
+  // ── In-space search (item title + tags) ──
   const [query, setQuery] = useState('')
   const trimmedQuery = query.trim().toLowerCase()
 
@@ -670,7 +682,7 @@ export default function SpacePage() {
                     <>
                       <button
                         type="button"
-                        onClick={() => setActiveTags([])}
+                        onClick={() => setSelectedTags([])}
                         aria-pressed={activeTags.length === 0}
                         className={pill(activeTags.length === 0)}
                       >
