@@ -483,64 +483,9 @@ export default function SpacePage() {
           )}
 
           {/* Header actions */}
+          {/* Header actions: things done to the space itself. The view, sort and
+              select controls live in the search row above the items. */}
           <div className="flex items-center gap-2 shrink-0 relative">
-            {items.length > 0 && !selectMode && (
-              <div className="flex items-center gap-1 p-1 rounded-xl border border-bg-border bg-bg-surface">
-                <button
-                  type="button"
-                  onClick={() => changeViewMode('grid')}
-                  aria-label="Grid view"
-                  aria-pressed={viewMode === 'grid'}
-                  title="Grid view"
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    viewMode === 'grid'
-                      ? 'bg-accent-muted text-accent'
-                      : 'text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  <LayoutGrid size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => changeViewMode('list')}
-                  aria-label="List view"
-                  aria-pressed={viewMode === 'list'}
-                  title="List view"
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-accent-muted text-accent'
-                      : 'text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  <List size={16} />
-                </button>
-              </div>
-            )}
-            {selectMode && items.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setSelectedIds(new Set(items.map(i => i.id)))}
-                title="Select all"
-                aria-label="Select all"
-                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
-              >
-                <ListChecks size={14} />
-                <span className="hidden sm:inline">Select all</span>
-              </button>
-            )}
-            {items.length > 0 && (
-              <button
-                type="button"
-                onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
-              >
-                <CheckSquare size={14} />
-                <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
-              </button>
-            )}
-            {items.length > 1 && !selectMode && (
-              <SortMenu value={itemSort} onChange={setItemSort} />
-            )}
             {items.length > 0 && !selectMode && (
               <button
                 type="button"
@@ -614,36 +559,102 @@ export default function SpacePage() {
         ) : (
           /* Items in list (single column) or grid (round-robin masonry) view */
           <>
-            {/* Compact in-space search (matches item titles and tags). */}
-            {items.length > 0 && !selectMode && (
-              <div className="mb-3 flex h-9 w-full items-center gap-2 rounded-full bg-bg-card pl-3.5 pr-1.5 sm:max-w-md focus-within:ring-1 focus-within:ring-accent-border transition-shadow">
-                <Search size={15} className="shrink-0 text-text-muted" />
-                <input
-                  type="text"
-                  enterKeyHint="search"
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Escape' && query) {
-                      e.stopPropagation()
-                      setQuery('')
-                    }
-                  }}
-                  placeholder="Search items"
-                  aria-label="Search items in this space"
-                  className="min-w-0 flex-1 bg-transparent text-[13.5px] text-text-primary placeholder-text-muted focus:outline-none"
-                />
-                {query && (
+            {/* Search row: compact in-space search (item titles and tags) on the
+                left; the view, sort and select controls right-aligned. In select
+                mode the search gives way to Select all + Done, with Done where
+                Select was. Heights match SortMenu (32px phone, 38px desktop). */}
+            {items.length > 0 && (
+              <div className="mb-3 flex items-center gap-2">
+                {!selectMode && (
+                  <div className="flex h-8 sm:h-[38px] min-w-0 flex-1 sm:max-w-md items-center gap-2 rounded-full bg-bg-card pl-3.5 pr-1.5 focus-within:ring-1 focus-within:ring-accent-border transition-shadow">
+                    <Search size={15} className="shrink-0 text-text-muted" />
+                    <input
+                      type="text"
+                      enterKeyHint="search"
+                      value={query}
+                      onChange={e => setQuery(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Escape' && query) {
+                          e.stopPropagation()
+                          setQuery('')
+                        }
+                      }}
+                      placeholder="Search items"
+                      aria-label="Search items in this space"
+                      className="min-w-0 flex-1 bg-transparent text-[13.5px] text-text-primary placeholder-text-muted focus:outline-none"
+                    />
+                    {query && (
+                      <button
+                        type="button"
+                        onClick={() => setQuery('')}
+                        aria-label="Clear search"
+                        title="Clear"
+                        className="shrink-0 rounded-full p-1.5 text-text-muted hover:bg-bg-elevated hover:text-text-primary transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div className="ml-auto flex shrink-0 items-center gap-2">
+                  {!selectMode && (
+                    <div className="flex items-center gap-1 p-0.5 sm:p-1 rounded-xl border border-bg-border bg-bg-surface">
+                      <button
+                        type="button"
+                        onClick={() => changeViewMode('grid')}
+                        aria-label="Grid view"
+                        aria-pressed={viewMode === 'grid'}
+                        title="Grid view"
+                        className={`p-[5px] sm:p-1.5 rounded-lg transition-colors ${
+                          viewMode === 'grid'
+                            ? 'bg-accent-muted text-accent'
+                            : 'text-text-muted hover:text-text-primary'
+                        }`}
+                      >
+                        <LayoutGrid size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => changeViewMode('list')}
+                        aria-label="List view"
+                        aria-pressed={viewMode === 'list'}
+                        title="List view"
+                        className={`p-[5px] sm:p-1.5 rounded-lg transition-colors ${
+                          viewMode === 'list'
+                            ? 'bg-accent-muted text-accent'
+                            : 'text-text-muted hover:text-text-primary'
+                        }`}
+                      >
+                        <List size={16} />
+                      </button>
+                    </div>
+                  )}
+                  {!selectMode && items.length > 1 && (
+                    <SortMenu value={itemSort} onChange={setItemSort} />
+                  )}
+                  {selectMode && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds(new Set(items.map(i => i.id)))}
+                      title="Select all"
+                      aria-label="Select all"
+                      className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
+                    >
+                      <ListChecks size={14} />
+                      <span className="hidden sm:inline">Select all</span>
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setQuery('')}
-                    aria-label="Clear search"
-                    title="Clear"
-                    className="shrink-0 rounded-full p-1.5 text-text-muted hover:bg-bg-elevated hover:text-text-primary transition-colors"
+                    onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+                    title={selectMode ? 'Done' : 'Select'}
+                    aria-label={selectMode ? 'Done selecting' : 'Select items'}
+                    className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
                   >
-                    <X size={14} />
+                    <CheckSquare size={14} />
+                    <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
                   </button>
-                )}
+                </div>
               </div>
             )}
             {allTags.length > 0 && (
