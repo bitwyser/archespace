@@ -2,7 +2,7 @@
  * App.jsx - Root application component.
  */
 
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useRouteError } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
@@ -13,6 +13,8 @@ import VaultUnlockGate from './components/VaultUnlockGate'
 import MfaGate from './components/MfaGate'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
+import { useToast } from './context/ToastCore'
+import { peekAuthRedirectError, clearAuthRedirectError } from './lib/authRedirectError'
 import { CommandPaletteProvider } from './context/CommandPaletteContext'
 import { ShortcutsProvider } from './context/ShortcutsContext'
 import { PageActionsProvider } from './context/PageActionsContext'
@@ -136,10 +138,28 @@ function HomeRoute() {
   )
 }
 
+/**
+ * Show a failed email link (expired, already used) to a signed-in user as a
+ * toast. Signed-out users see it inline on the login page instead.
+ */
+function AuthLinkErrorToast() {
+  const { user, loading } = useAuth()
+  const { toast } = useToast()
+  useEffect(() => {
+    if (loading || !user) return
+    const message = peekAuthRedirectError()
+    if (!message) return
+    clearAuthRedirectError()
+    toast.error(message)
+  }, [loading, user, toast])
+  return null
+}
+
 /** Shell rendered inside RouterProvider so hooks like useNavigate() work in AppChrome. */
 function RootLayout() {
   return (
     <>
+      <AuthLinkErrorToast />
       <OfflineBanner />
       <AppChrome />
       <Outlet />

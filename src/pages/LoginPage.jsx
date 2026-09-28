@@ -12,6 +12,7 @@ import { TERMS_VERSION } from '../lib/legal'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
 import { setRememberMe } from '../lib/supabase'
+import { peekAuthRedirectError, clearAuthRedirectError } from '../lib/authRedirectError'
 import {
   recordClientRateLimitFailure,
   clearClientRateLimit,
@@ -94,8 +95,12 @@ export default function LoginPage() {
     }
   }
   const [resetSent, setResetSent] = useState(false)
-  const [error, setError] = useState('')
+  // A failed email link (e.g. expired sign-up confirmation) captured at startup.
+  const [error, setError] = useState(() => peekAuthRedirectError() || '')
   const [info, setInfo] = useState(() => getInitialInfo(searchParams))
+  // Show that link error only once (cleared after mount, which keeps the lazy
+  // initializer pure under StrictMode's double call).
+  useEffect(() => { clearAuthRedirectError() }, [])
   const [loading, setLoading] = useState(false)
 
   const [, setCooldownTick] = useState(0)
@@ -142,14 +147,14 @@ export default function LoginPage() {
   }, [pathMode, navigate])
 
   // Reset the form when switching between sign in and create account, so fields
-  // and messages don't carry over. Skip the first render to keep any initial
-  // info message (e.g. after a password reset redirect).
-  const modeInitialized = useRef(false)
+  // and messages don't carry over. Only on an actual mode change, so any initial
+  // message (e.g. after a password reset redirect, or a failed email link) is
+  // kept - a "skip the first run" flag isn't enough, since StrictMode runs
+  // effects twice in development and the second run would wipe it.
+  const lastMode = useRef(pathMode)
   useEffect(() => {
-    if (!modeInitialized.current) {
-      modeInitialized.current = true
-      return
-    }
+    if (lastMode.current === pathMode) return
+    lastMode.current = pathMode
     setEmail('')
     setPassword('')
     setConfirmPassword('')
