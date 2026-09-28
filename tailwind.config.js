@@ -24,6 +24,8 @@ export default {
           muted: 'var(--accent-muted)',
           // Pre-mixed softer accent (rgba) for pinned/selected borders.
           border: 'var(--accent-border)',
+          // Text/icon colour on a solid accent fill.
+          fg: 'var(--accent-fg)',
         },
         text: {
           primary: 'var(--text-primary)',

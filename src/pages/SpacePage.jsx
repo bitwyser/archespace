@@ -526,7 +526,7 @@ export default function SpacePage() {
               type="button"
               onClick={() => setAddModal(true)}
               disabled={!online}
-              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-white rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
               title={online ? 'Add item' : 'Unavailable offline'}
             >
               <Plus size={16} strokeWidth={2.5} />
@@ -563,7 +563,7 @@ export default function SpacePage() {
               onClick={() => setAddModal(true)}
               disabled={!online}
               title={online ? undefined : 'Unavailable offline'}
-              className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus size={16} /> Add first item
             </button>

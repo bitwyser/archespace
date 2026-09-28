@@ -122,7 +122,7 @@ export default function PasskeyManager() {
           <button
             type="submit"
             disabled={adding || unlocking || pin.length < VAULT_PIN_MIN_LENGTH}
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
           >
             <Fingerprint size={16} />
             {adding ? 'Waiting for device…' : 'Enable biometric unlock'}

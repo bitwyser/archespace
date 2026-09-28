@@ -188,7 +188,7 @@ export function AuthenticatorEditor({ content, onChange }) {
             <button
               type="button"
               onClick={addEntry}
-              className="rounded-lg bg-accent hover:bg-accent-hover text-white px-3 py-2 text-xs font-semibold transition-colors"
+              className="rounded-lg bg-accent hover:bg-accent-hover text-accent-fg px-3 py-2 text-xs font-semibold transition-colors"
             >
               Add account
             </button>

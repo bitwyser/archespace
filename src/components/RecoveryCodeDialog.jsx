@@ -59,7 +59,7 @@ export default function RecoveryCodeDialog({
             type="button"
             onClick={finish}
             disabled={busy || !confirmed}
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
           >
             {acknowledgeLabel}
           </button>

@@ -510,7 +510,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={emailLoading}
-                className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 {emailLoading ? 'Sending code…' : 'Change email'}
               </button>
@@ -588,7 +588,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={passwordLoading}
-                className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 {passwordLoading ? 'Updating…' : 'Change login password'}
               </button>
@@ -785,7 +785,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={pinLoading || unlocking}
-                className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 {pinLoading || unlocking ? 'Updating...' : 'Change vault PIN'}
               </button>
@@ -835,7 +835,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={pinRecoveryLoading || unlocking}
-                className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 {pinRecoveryLoading || unlocking ? 'Updating...' : 'Reset PIN with recovery code'}
               </button>
@@ -858,7 +858,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={recoverySetupLoading || unlocking || recoverySetupPin.length < VAULT_PIN_MIN_LENGTH}
-                className="w-full bg-accent hover:bg-accent-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 {recoverySetupLoading || unlocking ? 'Creating...' : 'Create recovery code'}
               </button>

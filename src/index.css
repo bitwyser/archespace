@@ -89,6 +89,10 @@
      apply an /opacity modifier to a bare var() colour, so it needs its own
      token). */
   --accent-border: rgba(50,211,170,0.5);
+  /* Text/icon colour on a solid accent fill (buttons, checked boxes, badges).
+     Every accent is a bright-to-mid tone, so dark text stays readable on all
+     of them (and on their lighter hover shades) where white does not. */
+  --accent-fg:     #0c1a16;
 }
 
 [data-accent="lavender"] {

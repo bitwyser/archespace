@@ -474,10 +474,10 @@ function SpaceItem({
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-accent hover:bg-accent-hover text-white transition-colors disabled:opacity-60"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-accent hover:bg-accent-hover text-accent-fg transition-colors disabled:opacity-60"
               >
                 {saving
-                  ? <span className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin" />
+                  ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
                   : <Save size={14} />}
                 Save
               </button>
@@ -613,7 +613,7 @@ function SpaceItem({
             aria-label={selected ? 'Deselect' : 'Select'}
             aria-pressed={selected}
             className={`shrink-0 ml-auto flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
-              selected ? 'bg-accent border-accent text-white' : 'border-bg-border text-transparent'
+              selected ? 'bg-accent border-accent text-accent-fg' : 'border-bg-border text-transparent'
             }`}
           >
             <Check size={14} />
@@ -649,7 +649,7 @@ function SpaceItem({
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent hover:bg-accent-hover text-white transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent hover:bg-accent-hover text-accent-fg transition-colors"
             >
               <Save size={14} /> Save & collapse
             </button>

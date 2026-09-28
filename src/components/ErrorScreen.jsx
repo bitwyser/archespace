@@ -40,7 +40,7 @@ export default function ErrorScreen({ variant = 'error', title, message, errorMe
         <div className="flex gap-3 justify-center pt-2">
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors bg-accent text-[#0c1a16]"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors bg-accent text-accent-fg"
           >
             Reload page
           </button>

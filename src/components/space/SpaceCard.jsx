@@ -181,7 +181,7 @@ export function SpaceCard({
         {selectMode ? (
           <span
             className={`shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
-              selected ? 'bg-accent border-accent text-white' : 'border-bg-border text-transparent'
+              selected ? 'bg-accent border-accent text-accent-fg' : 'border-bg-border text-transparent'
             }`}
           >
             <Check size={14} />

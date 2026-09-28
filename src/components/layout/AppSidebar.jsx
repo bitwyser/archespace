@@ -45,7 +45,7 @@ function NavItem({ icon: Icon, label, active, count, badge, badgeColor = 'bg-acc
         <span className={`text-xs tabular-nums ${active ? 'text-accent' : 'text-text-muted'}`}>{count}</span>
       )}
       {!collapsed && badge > 0 && (
-        <span className={`min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${badgeColor} text-white text-[10px] font-bold px-1 leading-none`}>
+        <span className={`min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${badgeColor} text-accent-fg text-[10px] font-bold px-1 leading-none`}>
           {badge > 99 ? '99+' : badge}
         </span>
       )}

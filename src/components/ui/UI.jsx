@@ -187,7 +187,7 @@ export function ConfirmDialog({
             className={`px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent transition-colors disabled:opacity-50 ${
               destructive
                 ? 'bg-danger hover:bg-danger-hover text-white'
-                : 'bg-accent hover:bg-accent-hover text-white'
+                : 'bg-accent hover:bg-accent-hover text-accent-fg'
             }`}
           >
             {busy ? 'Working…' : confirmLabel}

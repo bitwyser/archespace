@@ -109,7 +109,7 @@ export const SecretEditor = forwardRef(function SecretEditor({ content, onChange
           <button
             type="submit"
             disabled={busy || !pin}
-            className="rounded-lg bg-accent hover:bg-accent-hover text-white px-3 py-2 text-xs font-semibold disabled:opacity-50 transition-colors"
+            className="rounded-lg bg-accent hover:bg-accent-hover text-accent-fg px-3 py-2 text-xs font-semibold disabled:opacity-50 transition-colors"
           >
             {busy ? 'Checking…' : 'Unlock'}
           </button>

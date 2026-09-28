@@ -325,7 +325,7 @@ export default function VaultUnlockGate({ children }) {
             <button
               type="button"
               onClick={() => setRecoverySetupWarning('')}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold"
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold"
             >
               Continue
             </button>
@@ -360,7 +360,7 @@ export default function VaultUnlockGate({ children }) {
               type="button"
               onClick={handleEnableBiometric}
               disabled={unlocking}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
             >
               <Fingerprint size={14} />
               {unlocking ? 'Waiting for device…' : 'Enable biometric unlock'}
@@ -538,7 +538,7 @@ export default function VaultUnlockGate({ children }) {
                 type="button"
                 onClick={handlePasskeyUnlock}
                 disabled={unlocking}
-                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
               >
                 <Fingerprint size={16} />
                 {pendingAction === 'passkey' ? 'Waiting…' : 'Unlock with passkey'}
@@ -619,7 +619,7 @@ export default function VaultUnlockGate({ children }) {
           <button
             type="submit"
             disabled={unlocking || !canSubmit}
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
           >
             <Lock size={14} />
             {pendingAction === 'pin'

@@ -82,7 +82,7 @@ export default function MfaChallenge({ onVerified }) {
           <button
             type="submit"
             disabled={loading || !code.trim()}
-            className="w-full px-4 py-3 rounded-xl bg-accent hover:bg-accent-hover text-[#0c1a16] text-sm font-semibold transition-colors disabled:opacity-50"
+            className="w-full px-4 py-3 rounded-xl bg-accent hover:bg-accent-hover text-accent-fg text-sm font-semibold transition-colors disabled:opacity-50"
           >
             {loading ? 'Verifying…' : 'Verify'}
           </button>

@@ -183,7 +183,7 @@ export default function MfaSettings() {
               type="button"
               onClick={startEnroll}
               disabled={busy}
-              className="shrink-0 px-3 py-2 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-semibold transition-colors disabled:opacity-50"
+              className="shrink-0 px-3 py-2 rounded-xl bg-accent hover:bg-accent-hover text-accent-fg text-sm font-semibold transition-colors disabled:opacity-50"
             >
               Enable
             </button>
@@ -230,7 +230,7 @@ export default function MfaSettings() {
             {error && <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{error}</p>}
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={cancelEnroll} disabled={busy} className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors disabled:opacity-50">Cancel</button>
-              <button type="button" onClick={confirmEnroll} disabled={busy || !code.trim()} className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent bg-accent hover:bg-accent-hover text-white transition-colors disabled:opacity-50">{busy ? 'Verifying…' : 'Verify & enable'}</button>
+              <button type="button" onClick={confirmEnroll} disabled={busy || !code.trim()} className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent bg-accent hover:bg-accent-hover text-accent-fg transition-colors disabled:opacity-50">{busy ? 'Verifying…' : 'Verify & enable'}</button>
             </div>
           </div>
         </Modal>
@@ -250,7 +250,7 @@ export default function MfaSettings() {
               <button type="button" onClick={copyCodes} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors">
                 {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy'}
               </button>
-              <button type="button" onClick={() => setBackupCodes(null)} className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent bg-accent hover:bg-accent-hover text-white transition-colors">Done</button>
+              <button type="button" onClick={() => setBackupCodes(null)} className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent bg-accent hover:bg-accent-hover text-accent-fg transition-colors">Done</button>
             </div>
           </div>
         </Modal>

@@ -105,7 +105,7 @@ export default function PasswordResetPage() {
               <button
                 type="button"
                 onClick={() => navigate('/login', { replace: true })}
-                className="w-full bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
               >
                 <ArrowLeft size={14} /> Back to sign in
               </button>
@@ -192,7 +192,7 @@ export default function PasswordResetPage() {
               <button
                 type="submit"
                 disabled={saving || !canSubmit}
-                className="w-full bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-1 active:scale-[0.98] shadow-lg shadow-accent/20"
+                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-1 active:scale-[0.98] shadow-lg shadow-accent/20"
               >
                 <KeyRound size={14} />
                 {saving ? 'Updating password...' : 'Update password'}

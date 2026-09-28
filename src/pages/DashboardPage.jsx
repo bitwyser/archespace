@@ -362,7 +362,7 @@ export default function DashboardPage() {
               <Archive size={16} />
               Archive
               {archiveTotal > 0 && (
-                <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-accent text-white text-[10px] font-bold px-1">
+                <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-accent text-accent-fg text-[10px] font-bold px-1">
                   {archiveTotal > 99 ? '99+' : archiveTotal}
                 </span>
               )}
@@ -588,7 +588,7 @@ export default function DashboardPage() {
               onClick={() => setModal({ type: 'create' })}
               disabled={!online}
               title={online ? 'New space' : 'Unavailable offline'}
-              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
             >
               <Plus size={16} strokeWidth={2.5} />
               <span className="hidden sm:inline">New space</span>
@@ -690,7 +690,7 @@ export default function DashboardPage() {
                 onClick={() => setModal({ type: 'create' })}
                 disabled={!online}
                 title={online ? undefined : 'Unavailable offline'}
-                className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-[#0c1a16] rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus size={16} /> New space
               </button>
