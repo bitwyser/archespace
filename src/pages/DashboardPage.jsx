@@ -406,11 +406,27 @@ export default function DashboardPage() {
     </div>
   )
 
-  // Spaces first, then dashboard items, in one layout (as inside a space).
-  const contentNodes = [
-    ...sortedSpaces.map((space, index) => renderSpaceCard(space, index)),
-    ...sortedItems.map((item, index) => renderItemCard(item, index)),
-  ]
+  // Spaces and items are separate sections under the shared controls. The page
+  // heading names the first section; a matching "Items" heading starts the
+  // second, only when both show.
+  const showSpacesSection = sortedSpaces.length > 0
+  const showItemsSection = sortedItems.length > 0
+  const firstSectionLabel = showSpacesSection || !showItemsSection ? 'Spaces' : 'Items'
+
+  // One section's cards: round-robin masonry in grid view, one column in list.
+  const renderSection = (nodes) => (viewMode === 'grid' ? (
+    <div className="flex items-start gap-2 sm:gap-3">
+      {Array.from({ length: gridCols }, (_, col) => (
+        <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
+          {nodes.filter((_, i) => i % gridCols === col)}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="grid grid-cols-1 gap-2 max-w-[52rem] mx-auto">
+      {nodes}
+    </div>
+  ))
 
   // "2 spaces", "3 items", or "2 spaces and 3 items" (for bulk-action toasts).
   const describeSelection = (spaceCount, itemCount) => [
@@ -652,7 +668,7 @@ export default function DashboardPage() {
         {/* Page heading */}
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <div>
-            <h2 className="text-xl font-semibold text-text-primary">Spaces</h2>
+            <h2 className="text-xl font-semibold text-text-primary">{firstSectionLabel}</h2>
           </div>
           <div className="flex items-center gap-2">
             {hasEntries && !selectMode && (
@@ -851,19 +867,17 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            {viewMode === 'grid' ? (
-              <div className="flex items-start gap-2 sm:gap-3 pb-32">
-                {Array.from({ length: gridCols }, (_, col) => (
-                  <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
-                    {contentNodes.filter((_, i) => i % gridCols === col)}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-2 pb-32 max-w-[52rem] mx-auto">
-                {contentNodes}
-              </div>
-            )}
+            <div className="pb-32">
+              {showSpacesSection && renderSection(sortedSpaces.map(renderSpaceCard))}
+              {showItemsSection && (
+                <>
+                  {showSpacesSection && (
+                    <h2 className="mt-8 mb-4 text-xl font-semibold text-text-primary">Items</h2>
+                  )}
+                  {renderSection(sortedItems.map(renderItemCard))}
+                </>
+              )}
+            </div>
             <BulkSelectionBar
               count={selectedCount}
               onClear={exitSelectMode}

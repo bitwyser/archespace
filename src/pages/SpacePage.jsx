@@ -311,11 +311,27 @@ export default function SpacePage() {
     />
   )
 
-  // Sub-spaces first, then items, in one combined layout.
-  const contentNodes = [
-    ...(selectMode ? [] : subSpaces.map((sub, i) => renderSubSpaceCard(sub, i))),
-    ...sortedItems.map((item, index) => renderItemCard(item, index)),
-  ]
+  // Sub-spaces, then items, as separate sections (sub-spaces hide while
+  // selecting items). Each is labelled only when both show.
+  const subSpaceNodes = selectMode ? [] : subSpaces.map((sub, i) => renderSubSpaceCard(sub, i))
+  const itemNodes = sortedItems.map((item, index) => renderItemCard(item, index))
+  const labelSections = subSpaceNodes.length > 0 && itemNodes.length > 0
+  const sectionLabelClass = 'mb-3 px-1 text-base font-semibold text-text-primary'
+
+  // One section's cards: round-robin masonry in grid view, one column in list.
+  const renderSection = (nodes) => (viewMode === 'grid' ? (
+    <div className="flex items-start gap-2 sm:gap-3">
+      {Array.from({ length: gridCols }, (_, col) => (
+        <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
+          {nodes.filter((_, i) => i % gridCols === col)}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="space-y-3">
+      {nodes}
+    </div>
+  ))
 
   return (
     <div className="min-h-screen bg-bg-base flex flex-col">
@@ -572,19 +588,10 @@ export default function SpacePage() {
                 </p>
               </div>
             )}
-            {viewMode === 'grid' ? (
-              <div className="flex items-start gap-2 sm:gap-3">
-                {Array.from({ length: gridCols }, (_, col) => (
-                  <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
-                    {contentNodes.filter((_, i) => i % gridCols === col)}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {contentNodes}
-              </div>
-            )}
+            {labelSections && <h2 className={sectionLabelClass}>Spaces</h2>}
+            {subSpaceNodes.length > 0 && renderSection(subSpaceNodes)}
+            {labelSections && <h2 className={`${sectionLabelClass} mt-6`}>Items</h2>}
+            {itemNodes.length > 0 && renderSection(itemNodes)}
 
             <BulkSelectionBar
               count={selectedCount}
