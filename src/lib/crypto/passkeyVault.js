@@ -31,6 +31,7 @@ export async function listPasskeys(userId) {
     credentialId: r.credentialId,
     prfSalt: r.prfSalt,
     wrappedKey: r.wrappedKey,
+    transports: r.transports || [],
     label: r.label,
     createdAt: r.createdAt,
     lastUsedAt: r.lastUsedAt,
@@ -44,7 +45,7 @@ export async function listPasskeys(userId) {
  */
 export async function enrollPasskey(userId, pin, userName, label) {
   const masterKey = await unlockUserVault(userId, pin)
-  const { credentialId, prfSalt, wrappedKey } = await enrollPasskeyCredential({
+  const { credentialId, prfSalt, wrappedKey, transports } = await enrollPasskeyCredential({
     userId,
     userName,
     masterKey,
@@ -58,6 +59,7 @@ export async function enrollPasskey(userId, pin, userName, label) {
     credentialId,
     prfSalt,
     wrappedKey,
+    transports,
     label: label?.trim() || null,
     createdAt: new Date().toISOString(),
     lastUsedAt: null,

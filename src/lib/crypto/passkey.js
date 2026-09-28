@@ -81,6 +81,25 @@ async function wrapKeyFromPrf(prfBytes) {
   )
 }
 
+/**
+ * allowCredentials entry for an enrolled passkey. Listing its transports tells
+ * the browser the passkey is on this device, so it goes straight to the local
+ * authenticator instead of offering a phone or security key when the lookup is
+ * slow (e.g. right after the computer starts). Enrollment always uses a
+ * platform authenticator, so records saved before transports were stored
+ * default to 'internal'.
+ */
+function credentialDescriptor(credentialId, transports) {
+  return {
+    type: 'public-key',
+    id: b64urlToBytes(credentialId),
+    transports: transports?.length ? transports : ['internal'],
+  }
+}
+
+// WebAuthn hint: prefer the authenticator built into this device.
+const LOCAL_DEVICE_HINTS = ['client-device']
+
 function extractPrfFirst(credential) {
   const results = credential?.getClientExtensionResults?.()
   const first = results?.prf?.results?.first
@@ -111,7 +130,7 @@ function webAuthnErrorMessage(err, fallback) {
 /**
  * Register a new platform passkey and wrap `masterKey` with its PRF secret.
  * @param {{ userId: string, userName: string, masterKey: CryptoKey }} params
- * @returns {Promise<{ credentialId: string, prfSalt: string, wrappedKey: string }>}
+ * @returns {Promise<{ credentialId: string, prfSalt: string, wrappedKey: string, transports: string[] }>}
  */
 export async function enrollPasskeyCredential({ userId, userName, masterKey }) {
   const prfSalt = newPrfSalt()
@@ -148,6 +167,9 @@ export async function enrollPasskeyCredential({ userId, userName, masterKey }) {
   if (!credential) throw new Error('Biometric setup was cancelled. Use your PIN.')
 
   const credentialId = bytesToB64url(new Uint8Array(credential.rawId))
+  // Where the passkey lives (usually 'internal'), stored so unlock can point
+  // the browser straight at it.
+  const transports = credential.response?.getTransports?.() || []
 
   // Some browsers return the PRF output at creation time; others only expose
   // `prf.enabled` and require a follow-up assertion to actually evaluate it.
@@ -157,27 +179,28 @@ export async function enrollPasskeyCredential({ userId, userName, masterKey }) {
     if (ext?.prf?.enabled === false || ext?.prf === undefined) {
       throw new Error('This device does not support passkey PRF, which biometric vault unlock requires.')
     }
-    prf = await evaluatePrf(credentialId, prfSalt)
+    prf = await evaluatePrf(credentialId, prfSalt, transports)
   }
   if (!prf) throw new Error('Could not derive a key from this passkey (PRF unavailable).')
 
   const wrapKey = await wrapKeyFromPrf(prf)
   const raw = await exportRawAesKey(masterKey)
   const wrappedKey = await encryptString(bytesToBase64(raw), wrapKey)
-  return { credentialId, prfSalt: bytesToBase64(prfSalt), wrappedKey }
+  return { credentialId, prfSalt: bytesToBase64(prfSalt), wrappedKey, transports }
 }
 
 /** Assert a single credential to read its PRF output (fallback after create). */
-async function evaluatePrf(credentialId, prfSalt) {
+async function evaluatePrf(credentialId, prfSalt, transports) {
   const challenge = crypto.getRandomValues(new Uint8Array(32))
   let assertion
   try {
     assertion = await navigator.credentials.get({
       publicKey: {
         challenge,
-        allowCredentials: [{ type: 'public-key', id: b64urlToBytes(credentialId) }],
+        allowCredentials: [credentialDescriptor(credentialId, transports)],
         userVerification: 'required',
         timeout: 60000,
+        hints: LOCAL_DEVICE_HINTS,
         extensions: { prf: { eval: { first: prfSalt } } },
       },
     })
@@ -210,13 +233,23 @@ export async function unlockWithPasskeyCredentials(rows) {
     assertion = await navigator.credentials.get({
       publicKey: {
         challenge,
-        allowCredentials: rows.map(r => ({ type: 'public-key', id: b64urlToBytes(r.credentialId) })),
+        allowCredentials: rows.map(r => credentialDescriptor(r.credentialId, r.transports)),
         userVerification: 'required',
         timeout: 60000,
+        hints: LOCAL_DEVICE_HINTS,
         extensions: { prf: { evalByCredential } },
       },
     })
   } catch (err) {
+    // NotAllowedError also covers closing the "use another device" dialog the
+    // browser falls back to when it can't find the passkey yet (common right
+    // after the computer starts), so don't claim the user cancelled.
+    if (err?.name === 'NotAllowedError') {
+      throw new Error(
+        'Passkey not found, or the prompt was closed. If your computer just started, wait a moment and try again, or use your PIN.',
+        { cause: err }
+      )
+    }
     throw new Error(webAuthnErrorMessage(err, 'Could not unlock with biometrics. Use your PIN instead.'), { cause: err })
   }
   if (!assertion) throw new Error('Biometric unlock was cancelled. Use your PIN instead.')
