@@ -672,20 +672,6 @@ export default function SpacePage() {
             />
           </>
         )}
-
-        {/* "Add another" button, anchored to the bottom of the page */}
-        {items.length > 0 && (
-          <div className="mt-auto pt-4">
-            <button
-              onClick={openAddItem}
-              disabled={!online}
-              title={online ? undefined : 'Unavailable offline'}
-              className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-bg-border rounded-2xl text-text-muted hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-all text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-text-muted disabled:hover:border-bg-border disabled:hover:bg-transparent"
-            >
-              <Plus size={16} /> Add another item
-            </button>
-          </div>
-        )}
       </main>
 
       {/* ── Sub-space create / edit modal ────────────── */}
