@@ -386,9 +386,9 @@ export default function SpacePage() {
                 onClick={() => setSpaceModal({ type: 'create' })}
                 disabled={!online}
                 title={online ? 'New sub-space' : 'Unavailable offline'}
-                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
               >
-                <FolderPlus size={16} />
+                <FolderPlus size={16} strokeWidth={2.5} />
                 <span className="hidden sm:inline">New space</span>
               </button>
             )}
