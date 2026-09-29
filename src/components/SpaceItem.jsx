@@ -375,7 +375,10 @@ function SpaceItem({
         ? 'fixed inset-0 z-[80] flex flex-col rounded-none border-0 bg-bg-base'
         : 'relative rounded-2xl bg-bg-card shadow-sm hover:shadow-xl hover:shadow-accent/5 transition-shadow duration-200'
     } ${denseView ? 'text-[13px]' : ''} ${
-      !isFullscreen && selected ? 'ring-[1.5px] ring-accent-border' : ''
+      isFullscreen ? '' : selected ? 'ring-[1.5px] ring-accent-border'
+        // Soft ring + lift while one of its text fields has the cursor
+        // (index.css), marking the item being edited.
+        : 'item-card-editable'
     }`}
     >
       {/* ── Header ────────────────────────────────────── */}
