@@ -17,6 +17,7 @@ import { queryKeys } from '../lib/queryKeys'
 import {
   makeBulkSetPinned,
   makeTogglePin,
+  makeToggleStar,
   makeReorder,
 } from './entityMutations'
 
@@ -158,6 +159,14 @@ export function useSpaces() {
     invalidate: () => qc.invalidateQueries({ queryKey: queryKeys.spaces() }),
   }))
 
+  // Star / unstar (the Starred view reads starred spaces from this list).
+  const toggleStar = useMutation(makeToggleStar({
+    table: 'spaces',
+    qc,
+    queryKey: queryKeys.spaces(),
+    invalidate: () => qc.invalidateQueries({ queryKey: queryKeys.spaces() }),
+  }))
+
   const reorder = useMutation(makeReorder({
     qc,
     queryKey: queryKeys.spaces(),
@@ -273,6 +282,7 @@ export function useSpaces() {
     create,
     update,
     togglePin,
+    toggleStar,
     remove,
     reorder,
     archive,

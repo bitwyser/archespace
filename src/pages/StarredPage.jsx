@@ -1,0 +1,226 @@
+/**
+ * StarredPage.jsx - Quick access to starred spaces and items from anywhere.
+ *
+ * Starring never moves anything: spaces and items keep their place in their
+ * own lists; this view only gathers what's starred. Spaces show as space cards
+ * and items as full item cards (editable here, like inside a space), each
+ * labelled with where it lives.
+ */
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, Star } from 'lucide-react'
+import { useSpaces } from '../hooks/useSpaces'
+import { useSpaceStats } from '../hooks/useSpaceStats'
+import { useItemBoard } from '../hooks/useItemBoard'
+import { STARRED_ITEMS } from '../hooks/useSpaceItems'
+import { useToast } from '../context/ToastCore'
+import { useRegisterPageActions } from '../context/PageActionsCore'
+import SpaceItem from '../components/SpaceItem'
+import ItemBoardModals from '../components/ItemBoardModals'
+import { SpaceCard } from '../components/space/SpaceCard'
+import { SpaceModal } from '../components/space/SpaceModal'
+import { ConfirmDialog, Spinner } from '../components/ui/UI'
+
+/** Columns for the masonry layout: 1 on phones, 2 on tablets, 3 on desktop. */
+function useColumnCount() {
+  const query = () => {
+    if (typeof window === 'undefined') return 2
+    if (window.matchMedia('(max-width: 639px)').matches) return 1
+    return window.matchMedia('(min-width: 1024px)').matches ? 3 : 2
+  }
+  const [cols, setCols] = useState(query)
+  useEffect(() => {
+    const small = window.matchMedia('(max-width: 639px)')
+    const large = window.matchMedia('(min-width: 1024px)')
+    const onChange = () => setCols(query())
+    small.addEventListener('change', onChange)
+    large.addEventListener('change', onChange)
+    return () => {
+      small.removeEventListener('change', onChange)
+      large.removeEventListener('change', onChange)
+    }
+  }, [])
+  return cols
+}
+
+export default function StarredPage() {
+  const navigate = useNavigate()
+  const { toast } = useToast()
+  const {
+    data: spaces = [], isLoading: spacesLoading,
+    update, togglePin, toggleStar, remove, archive, duplicate,
+  } = useSpaces()
+  const { data: spaceStats = {} } = useSpaceStats()
+  // Starred items from every space (and the dashboard).
+  const board = useItemBoard(STARRED_ITEMS)
+  const { items, isLoading: itemsLoading } = board
+  const cols = useColumnCount()
+
+  const [spaceModal, setSpaceModal] = useState(null) // { type: 'edit', col }
+  const [spaceDeleteConfirm, setSpaceDeleteConfirm] = useState(null)
+
+  const starredSpaces = useMemo(() => spaces.filter(s => s.starred), [spaces])
+  const spaceNames = useMemo(
+    () => Object.fromEntries(spaces.map(s => [s.id, s.name || 'Untitled'])),
+    [spaces]
+  )
+
+  const { closeAll: closeItemDialogs } = board
+  const pageActions = useMemo(() => ({
+    onEscape: () => {
+      closeItemDialogs()
+      setSpaceModal(null)
+      setSpaceDeleteConfirm(null)
+    },
+  }), [closeItemDialogs])
+  useRegisterPageActions(pageActions)
+
+  const total = starredSpaces.length + items.length
+  const isLoading = spacesLoading || itemsLoading
+
+  const renderSpaceCard = (space, index) => (
+    <SpaceCard
+      key={space.id}
+      col={space}
+      index={index}
+      search=""
+      layout="grid"
+      stats={spaceStats}
+      reorderDisabled
+      dragIndex={-1}
+      dragOverIndex={-1}
+      handleDragStart={() => {}}
+      handleDragOver={() => {}}
+      handleDrop={() => {}}
+      handleDragEnd={() => {}}
+      navigate={navigate}
+      togglePin={togglePin}
+      toggleStar={toggleStar}
+      setModal={setSpaceModal}
+      setDeleteConfirm={setSpaceDeleteConfirm}
+      onDuplicate={(id) => duplicate.mutate(id, {
+        onSuccess: () => toast.success('Space duplicated'),
+        onError: () => toast.error("Couldn't duplicate the space."),
+      })}
+      onArchive={(id) => archive.mutate(id, {
+        onSuccess: () => toast.success('Space archived'),
+        onError: () => toast.error("Couldn't archive the space."),
+      })}
+    />
+  )
+
+  const renderItemCard = (item, index) => (
+    <div
+      key={item.id}
+      data-item-id={item.id}
+      className={`transition-all duration-300 animate-fade-in-up ${
+        board.flashItemId === item.id ? 'rounded-2xl ring-2 ring-accent' : ''
+      }`}
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
+      <SpaceItem
+        item={item}
+        index={index}
+        forcedCollapsed={board.collapsedIds.has(item.id)}
+        {...board.cardProps}
+        // Starred items come from many spaces, so there's no one order to drag.
+        dragDisabled
+        contextLabel={item.space_id ? spaceNames[item.space_id] || 'Space' : 'Dashboard'}
+      />
+    </div>
+  )
+
+  // One section's cards: round-robin masonry across the columns.
+  const renderSection = (nodes) => (
+    <div className="flex items-start gap-2 sm:gap-3">
+      {Array.from({ length: cols }, (_, col) => (
+        <div key={col} className="min-w-0 flex-1 flex flex-col gap-2 sm:gap-3">
+          {nodes.filter((_, i) => i % cols === col)}
+        </div>
+      ))}
+    </div>
+  )
+
+  const showSpaces = starredSpaces.length > 0
+  const showItems = items.length > 0
+  const sectionLabel = 'mb-3 px-1 text-base font-semibold text-text-primary'
+
+  return (
+    <div className="min-h-screen bg-bg-base pb-24">
+      <header className="sticky top-0 z-20 glass">
+        <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/app')}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+          >
+            <ArrowLeft size={16} />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-sm font-semibold text-text-primary">Starred</h1>
+            <p className="text-xs text-text-muted mt-0.5">
+              {total} starred - quick access, kept in place
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <main className="px-2 sm:px-4 py-6">
+        {isLoading ? (
+          <div className="flex justify-center py-20"><Spinner size={24} /></div>
+        ) : total === 0 ? (
+          <div className="text-center py-20 px-4">
+            <div className="w-14 h-14 rounded-2xl bg-bg-surface border border-bg-border flex items-center justify-center mx-auto mb-4">
+              <Star size={20} className="text-text-muted" />
+            </div>
+            <p className="text-text-secondary font-medium">Nothing starred yet</p>
+            <p className="text-text-muted text-sm mt-1">
+              Star a space or an item from its menu to keep it here for quick access.
+            </p>
+          </div>
+        ) : (
+          <>
+            {showSpaces && showItems && <h2 className={sectionLabel}>Spaces</h2>}
+            {showSpaces && renderSection(starredSpaces.map(renderSpaceCard))}
+            {showSpaces && showItems && <h2 className={`${sectionLabel} mt-6`}>Items</h2>}
+            {showItems && renderSection(items.map(renderItemCard))}
+          </>
+        )}
+      </main>
+
+      {/* ── Space edit / delete ────────────────────────── */}
+      {spaceModal?.type === 'edit' && (
+        <SpaceModal
+          initial={spaceModal.col}
+          onSave={({ name, description, color, tags }) => {
+            update.mutate({ id: spaceModal.col.id, name, description, color, tags }, {
+              onSuccess: () => toast.success('Space updated'),
+              onError: () => toast.error("Couldn't update space."),
+            })
+          }}
+          onClose={() => setSpaceModal(null)}
+        />
+      )}
+      {spaceDeleteConfirm && (
+        <ConfirmDialog
+          title="Move space to recycle bin?"
+          message="This space and all its items will be moved to the recycle bin."
+          confirmLabel="Move to recycle bin"
+          destructive
+          onConfirm={() => {
+            remove.mutate(spaceDeleteConfirm, {
+              onSuccess: () => toast.success('Space moved to recycle bin'),
+              onError: () => toast.error("Couldn't delete space."),
+            })
+            setSpaceDeleteConfirm(null)
+          }}
+          onClose={() => setSpaceDeleteConfirm(null)}
+        />
+      )}
+
+      {/* ── Item dialogs: move to bin, move, unsaved guard ── */}
+      <ItemBoardModals board={board} spaces={spaces} />
+    </div>
+  )
+}

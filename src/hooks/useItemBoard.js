@@ -21,7 +21,7 @@ export function useItemBoard(spaceId) {
   const { toast } = useToast()
   const itemsApi = useSpaceItems(spaceId)
   const { data: items = [], isLoading } = itemsApi
-  const { update, togglePin, setTags, duplicate, archive, create, move } = itemsApi
+  const { update, togglePin, toggleStar, setTags, duplicate, archive, create, move } = itemsApi
 
   // ── Dialog + card state ──
   const [addModal, setAddModal] = useState(false)
@@ -85,6 +85,7 @@ export function useItemBoard(spaceId) {
 
   const updateAsync = update.mutateAsync
   const togglePinMutate = togglePin.mutate
+  const toggleStarMutate = toggleStar.mutate
   const duplicateMutate = duplicate.mutate
   const archiveMutate = archive.mutate
 
@@ -93,6 +94,13 @@ export function useItemBoard(spaceId) {
   const handleTogglePin = useCallback(
     (itemId, pinned) => togglePinMutate({ id: itemId, pinned }),
     [togglePinMutate]
+  )
+  const handleToggleStar = useCallback(
+    (itemId, starred) => toggleStarMutate({ id: itemId, starred }, {
+      onSuccess: () => toastRef.current.success(starred ? 'Removed from Starred' : 'Added to Starred'),
+      onError: () => toastRef.current.error("Couldn't update the star."),
+    }),
+    [toggleStarMutate]
   )
   const handleDuplicateItem = useCallback((it) => duplicateMutate(it, {
     onSuccess: () => toastRef.current.success('Item duplicated'),
@@ -127,13 +135,14 @@ export function useItemBoard(spaceId) {
     onUpdate: handleItemUpdate,
     onSetTags: handleSetTags,
     onTogglePin: handleTogglePin,
+    onToggleStar: handleToggleStar,
     onDelete: setDeleteConfirm,
     onDuplicate: handleDuplicateItem,
     onMove: handleMoveOne,
     onArchive: handleArchiveItem,
     onDirtyChange: handleDirtyChange,
   }), [
-    setItemCollapsed, handleItemUpdate, handleSetTags, handleTogglePin,
+    setItemCollapsed, handleItemUpdate, handleSetTags, handleTogglePin, handleToggleStar,
     handleDuplicateItem, handleMoveOne, handleArchiveItem, handleDirtyChange,
   ])
 

@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, Folder, FolderPlus,
   Trash2, Archive, Command, CheckSquare, ListChecks, Settings, Lock, Menu, Keyboard, LogOut,
-  LayoutGrid, List, Palette,
+  LayoutGrid, List, Palette, Star,
 } from 'lucide-react'
 import SpaceItem from '../components/SpaceItem'
 import ItemBoardModals from '../components/ItemBoardModals'
@@ -31,6 +31,7 @@ import { useRegisterPageActions } from '../context/PageActionsCore'
 import { useSpaces } from '../hooks/useSpaces'
 import { useRecycleBin } from '../hooks/useRecycleBin'
 import { useArchive } from '../hooks/useArchive'
+import { useStarredItemCount } from '../hooks/useStarredItemCount'
 import { useSpaceStats } from '../hooks/useSpaceStats'
 import { useGlobalSearchData } from '../hooks/useGlobalSearch'
 import { filterGlobalSearch, searchOptionId, SEARCH_ITEM_DISPLAY_LIMIT } from '../lib/search'
@@ -48,7 +49,7 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const { openPalette, registerCommands, closePalette } = useCommandPalette()
   const {
-    data: spaces = [], isLoading, create, update, togglePin, remove, reorder,
+    data: spaces = [], isLoading, create, update, togglePin, toggleStar, remove, reorder,
     archive, duplicate, bulkRemove, bulkArchive, bulkSetPinned, bulkDuplicate,
   } = useSpaces()
   // Dashboard items: items that belong to no space, shown after the spaces.
@@ -57,6 +58,7 @@ export default function DashboardPage() {
   const itemsApi = board.api
   const { total: binTotal } = useRecycleBin()
   const { total: archiveTotal } = useArchive()
+  const { data: starredItemCount = 0 } = useStarredItemCount()
   const { data: stats = {} } = useSpaceStats()
   const { data: globalSearchData } = useGlobalSearchData()
   const navigate = useNavigate()
@@ -161,6 +163,8 @@ export default function DashboardPage() {
 
   // Only top-level spaces on the dashboard; sub-spaces live inside their parent.
   const topLevelSpaces = useMemo(() => spaces.filter(s => !s.parent_id), [spaces])
+  // Sidebar-style Starred count for the phone menu (the sidebar is hidden there).
+  const starredTotal = spaces.filter(s => s.starred).length + starredItemCount
 
   const filtered = useMemo(() => {
     const q = search.trim()
@@ -348,6 +352,7 @@ export default function DashboardPage() {
       activeTags={activeTags}
       onTagClick={toggleTagFilter}
       togglePin={togglePin}
+      toggleStar={toggleStar}
       setModal={setModal}
       setDeleteConfirm={setDeleteConfirm}
       onDuplicate={(id) => duplicate.mutate(id, {
@@ -500,6 +505,17 @@ export default function DashboardPage() {
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-bg-border bg-bg-surface px-4 py-3 flex flex-col gap-2">
             {/* Navigation first (Serial Position: most-used destinations lead). */}
+            <button
+              type="button"
+              onClick={() => { navigate('/starred'); setMobileMenuOpen(false) }}
+              className="relative flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+            >
+              <Star size={16} />
+              Starred
+              {starredTotal > 0 && (
+                <span className="ml-auto text-xs tabular-nums text-text-muted">{starredTotal}</span>
+              )}
+            </button>
             <button
               type="button"
               onClick={() => { navigate('/archive'); setMobileMenuOpen(false) }}

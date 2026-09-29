@@ -67,6 +67,11 @@ ALTER TABLE space_items ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]
 -- widen access. Safe to re-run.
 ALTER TABLE space_items ALTER COLUMN space_id DROP NOT NULL;
 
+-- Starred (added later): a quick-access flag for the Starred view. Plain
+-- metadata like `pinned`, but it never affects ordering. Safe to re-run.
+ALTER TABLE spaces      ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
+ALTER TABLE space_items ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
+
 -- One-level space nesting (added later; NULL = top-level space). Safe to re-run.
 ALTER TABLE spaces ADD COLUMN IF NOT EXISTS parent_id uuid
   REFERENCES spaces(id) ON DELETE CASCADE DEFAULT NULL;
@@ -139,6 +144,9 @@ CREATE INDEX IF NOT EXISTS items_user_id_idx      ON space_items(user_id);
 CREATE INDEX IF NOT EXISTS items_position_idx     ON space_items(space_id, position);
 -- Dashboard items (no space), listed per user in position order.
 CREATE INDEX IF NOT EXISTS items_top_level_idx    ON space_items(user_id, position) WHERE space_id IS NULL;
+-- Starred view: the user's starred spaces and items.
+CREATE INDEX IF NOT EXISTS spaces_starred_idx     ON spaces(user_id)      WHERE starred = true;
+CREATE INDEX IF NOT EXISTS items_starred_idx      ON space_items(user_id) WHERE starred = true;
 CREATE INDEX IF NOT EXISTS space_items_pinned_idx ON space_items(pinned)      WHERE pinned = true;
 CREATE INDEX IF NOT EXISTS items_deleted_at_idx   ON space_items(deleted_at)  WHERE deleted_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS items_archived_at_idx  ON space_items(archived_at) WHERE archived_at IS NOT NULL;

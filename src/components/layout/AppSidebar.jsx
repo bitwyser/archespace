@@ -7,7 +7,7 @@
  * current section ('spaces' | 'archive' | 'bin' | 'settings').
  */
 import {
-  LayoutGrid, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
+  LayoutGrid, Star, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
   ChevronsLeft, ChevronsRight,
 } from 'lucide-react'
 import { BrandGlyph } from '../BrandGlyph'
@@ -58,7 +58,7 @@ function NavItem({ icon: Icon, label, active, count, badge, badgeColor = 'bg-acc
 
 export default function AppSidebar({
   collapsed, onToggleCollapsed, active,
-  isUnlocked, spacesCount, archiveTotal, binTotal,
+  isUnlocked, spacesCount, starredTotal, archiveTotal, binTotal,
   onLock, onSignOut, onCommands, onShortcuts, navigate,
 }) {
   return (
@@ -88,6 +88,7 @@ export default function AppSidebar({
       <nav className="flex-1 overflow-y-auto px-2">
         <SectionLabel collapsed={collapsed}>Library</SectionLabel>
         <NavItem icon={LayoutGrid} label="Spaces" active={active === 'spaces'} count={spacesCount} collapsed={collapsed} onClick={() => navigate('/app')} />
+        <NavItem icon={Star} label="Starred" active={active === 'starred'} count={starredTotal} collapsed={collapsed} onClick={() => navigate('/starred')} />
         <NavItem icon={Archive} label="Archive" active={active === 'archive'} count={archiveTotal} collapsed={collapsed} onClick={() => navigate('/archive')} />
         <NavItem icon={Trash2} label="Bin" active={active === 'bin'} count={binTotal} collapsed={collapsed} onClick={() => navigate('/recycle-bin')} />
 

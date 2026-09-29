@@ -13,4 +13,7 @@ export const queryKeys = {
   archive: () => ['archive'],
   spaceStats: () => ['space-stats'],
   globalSearch: () => ['global-search-data'],
+  // Starred items across all spaces (the Starred view), and the sidebar count.
+  starredItems: () => ['items', 'starred'],
+  starredCount: () => ['starred-count'],
 }

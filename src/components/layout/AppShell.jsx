@@ -14,10 +14,12 @@ import { useToast } from '../../context/ToastCore'
 import { useSpaces } from '../../hooks/useSpaces'
 import { useArchive } from '../../hooks/useArchive'
 import { useRecycleBin } from '../../hooks/useRecycleBin'
+import { useStarredItemCount } from '../../hooks/useStarredItemCount'
 import { ConfirmDialog } from '../ui/UI'
 import AppSidebar from './AppSidebar'
 
 function activeFromPath(pathname) {
+  if (pathname.startsWith('/starred')) return 'starred'
   if (pathname.startsWith('/archive')) return 'archive'
   if (pathname.startsWith('/recycle-bin')) return 'bin'
   if (pathname.startsWith('/settings')) return 'settings'
@@ -38,6 +40,8 @@ export default function AppShell() {
   const { data: spaces = [] } = useSpaces()
   const { total: archiveTotal = 0 } = useArchive()
   const { total: binTotal = 0 } = useRecycleBin()
+  const { data: starredItemCount = 0 } = useStarredItemCount()
+  const starredTotal = spaces.filter(s => s.starred).length + starredItemCount
 
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem('arche:sidebar-collapsed') === '1' } catch { return false }
@@ -62,6 +66,7 @@ export default function AppShell() {
         user={user}
         isUnlocked={isUnlocked}
         spacesCount={spaces.length}
+        starredTotal={starredTotal}
         archiveTotal={archiveTotal}
         binTotal={binTotal}
         onLock={() => { lock(); toast.info('Vault locked') }}

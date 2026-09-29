@@ -80,6 +80,35 @@ export function makeTogglePin({ table, qc, queryKey, invalidate }) {
   }
 }
 
+/**
+ * Optimistic single-row star toggle. Starring is a quick-access flag only: it
+ * never changes a row's position or sort order.
+ */
+export function makeToggleStar({ table, qc, queryKey, invalidate }) {
+  return {
+    mutationFn: async ({ id, starred }) => {
+      assertOnline()
+      const { error } = await supabase
+        .from(table)
+        .update({ starred: !starred })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onMutate: async ({ id, starred }) => {
+      await qc.cancelQueries({ queryKey })
+      const previous = qc.getQueryData(queryKey)
+      qc.setQueryData(queryKey, (old) =>
+        old?.map(row => (row.id === id ? { ...row, starred: !starred } : row))
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(queryKey, context.previous)
+    },
+    onSettled: invalidate,
+  }
+}
+
 /** Optimistic reorder via an RPC taking { updates: [{ id, position }] }. */
 export function makeReorder({ qc, queryKey, rpc, invalidate }) {
   return {

@@ -39,6 +39,7 @@ export default function SpacePage() {
     create: createSpace,
     update: updateSpace,
     togglePin: toggleSpacePin,
+    toggleStar: toggleSpaceStar,
     remove: removeSpace,
     archive: archiveSpace,
     duplicate: duplicateSpace,
@@ -298,6 +299,7 @@ export default function SpacePage() {
       handleDragEnd={() => {}}
       navigate={navigate}
       togglePin={toggleSpacePin}
+      toggleStar={toggleSpaceStar}
       setModal={setSpaceModal}
       setDeleteConfirm={setSpaceDeleteConfirm}
       onDuplicate={(sid) => duplicateSpace.mutate(sid, {

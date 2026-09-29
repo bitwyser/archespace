@@ -20,7 +20,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, memo } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  Trash2, ChevronDown, ChevronUp, Pencil, Check, X,
+  Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Star, StarOff,
   Pin, PinOff, Save, AlertTriangle, GripVertical, Copy, Archive,
   Maximize2, Minimize2, MoveRight, MoreVertical,
   ClipboardCopy, ClipboardCheck, FileDown, Eye, EyeOff,
@@ -58,6 +58,7 @@ function SpaceItem({
   onUpdate,
   onSetTags,
   onTogglePin,
+  onToggleStar,
   onDelete,
   onDuplicate,
   onArchive,
@@ -73,6 +74,8 @@ function SpaceItem({
   selected = false,
   onSelectedChange,
   dense = false,
+  // Where the item lives, shown beside the title outside its space (Starred).
+  contextLabel,
 }) {
   const { cryptoKey } = useEncryption()
 
@@ -401,7 +404,6 @@ function SpaceItem({
 
         {/* Pin indicator */}
         {item.pinned && <Pin size={14} className="text-accent shrink-0 fill-accent" />}
-
         {/* Type badge: the type's colored icon in a tinted pill. */}
         {(() => {
           const TypeIcon = TYPE_ICONS[item.type]
@@ -416,8 +418,9 @@ function SpaceItem({
           )
         })()}
 
-        {/* Title (inline editable) */}
-        <div className="flex-1 min-w-0">
+        {/* Title (inline editable), plus where the item lives when shown
+            outside its space (the Starred view). */}
+        <div className="flex-1 min-w-0 flex items-baseline gap-1.5">
           {editingTitle ? (
             <input
               autoFocus
@@ -431,8 +434,18 @@ function SpaceItem({
               className="w-full bg-bg-elevated border border-accent rounded-lg px-2.5 py-1 text-sm font-medium text-text-primary focus:outline-none"
             />
           ) : (
-            <span className={`text-sm font-medium truncate block ${item.title ? 'text-text-primary' : 'text-text-muted italic'}`}>
+            <span className={`min-w-0 text-sm font-medium truncate block ${item.title ? 'text-text-primary' : 'text-text-muted italic'}`}>
               {item.title || 'Untitled'}
+            </span>
+          )}
+          {/* Starred, right after the name: gold, so it never reads as the
+              (accent) pin. */}
+          {item.starred && !editingTitle && (
+            <Star size={13} className="shrink-0 self-center text-amber-400 fill-amber-400" aria-label="Starred" />
+          )}
+          {contextLabel && !editingTitle && (
+            <span className="shrink-0 max-w-[45%] truncate text-xs text-text-muted" title={contextLabel}>
+              {contextLabel}
             </span>
           )}
         </div>
@@ -579,6 +592,14 @@ function SpaceItem({
                         active: item.pinned,
                         disabled: !online,
                         onClick: () => onTogglePin(item.id, item.pinned),
+                      },
+                      onToggleStar && {
+                        id: 'star',
+                        label: item.starred ? 'Unstar' : 'Star',
+                        icon: item.starred ? StarOff : Star,
+                        active: item.starred,
+                        disabled: !online,
+                        onClick: () => onToggleStar(item.id, item.starred),
                       },
                       // Copy is a direct header button on larger screens; on
                       // mobile it lives here instead to keep the header compact.

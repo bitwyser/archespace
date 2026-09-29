@@ -1,6 +1,7 @@
 /**
- * useSpaceItems.js - Hook for items within a single space, or - with
- * `spaceId === null` - the dashboard's items, which belong to no space.
+ * useSpaceItems.js - Hook for items within a single space; with
+ * `spaceId === null`, the dashboard's items, which belong to no space; or with
+ * `STARRED_ITEMS`, the starred items from every space (the Starred view).
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -19,6 +20,7 @@ import {
   makeBulkSoftDelete,
   makeBulkSetPinned,
   makeTogglePin,
+  makeToggleStar,
   makeReorder,
 } from './entityMutations'
 
@@ -41,9 +43,15 @@ const defaultContent = {
 
 // Query/cache key for the dashboard's items (those with no space).
 export const DASHBOARD_ITEMS_KEY = 'dashboard'
+// Pass as the `spaceId` for the starred items of every space. Also its key.
+export const STARRED_ITEMS = 'starred'
 
-/** Restrict an items query to one space, or to the dashboard for `null`. */
+/**
+ * Restrict an items query to one space, to the dashboard for `null`, or to the
+ * starred items for `STARRED_ITEMS`.
+ */
 function whereSpace(q, spaceId) {
+  if (spaceId === STARRED_ITEMS) return q.eq('starred', true)
   return spaceId ? q.eq('space_id', spaceId) : q.is('space_id', null)
 }
 
@@ -92,9 +100,11 @@ export function useSpaceItems(spaceId) {
 
   useEffect(() => {
     if (spaceId === undefined) return
-    // Realtime filters can't express "space_id is null", so the dashboard
-    // listens to all of the user's item changes (debounced below) instead.
-    const filter = spaceId ? `space_id=eq.${spaceId}` : userId ? `user_id=eq.${userId}` : null
+    // Realtime filters can't express "space_id is null" (or span spaces), so
+    // the dashboard and Starred view listen to all of the user's item changes
+    // (debounced below) instead.
+    const inOneSpace = spaceId && spaceId !== STARRED_ITEMS
+    const filter = inOneSpace ? `space_id=eq.${spaceId}` : userId ? `user_id=eq.${userId}` : null
     if (!filter) return
     // Coalesce bursts of row changes (e.g. a reorder updating many rows, or the
     // realtime echo of our own optimistic writes) into a single invalidation.
@@ -123,6 +133,8 @@ export function useSpaceItems(spaceId) {
 
   const create = useMutation({
     mutationFn: async ({ type, title, content }) => {
+      // The Starred view spans spaces, so it has no space to add into.
+      if (spaceId === STARRED_ITEMS) throw new Error('Add items from a space or the dashboard.')
       assertOnline()
       const items = query.data || []
       const position = items.length
@@ -170,6 +182,14 @@ export function useSpaceItems(spaceId) {
   })
 
   const togglePin = useMutation(makeTogglePin({
+    table: 'space_items',
+    qc,
+    queryKey: queryKeys.items(itemsKey),
+    invalidate: () => invalidateSpaceItems(qc, itemsKey),
+  }))
+
+  // Star / unstar: a quick-access flag that never changes the item's position.
+  const toggleStar = useMutation(makeToggleStar({
     table: 'space_items',
     qc,
     queryKey: queryKeys.items(itemsKey),
@@ -235,7 +255,7 @@ export function useSpaceItems(spaceId) {
       const { data, error } = await supabase
         .from('space_items')
         .insert({
-          space_id: spaceId,
+          space_id: spaceId === STARRED_ITEMS ? item.space_id : spaceId,
           user_id: userId,
           type: plain.type,
           title: encrypted.title,
@@ -333,7 +353,7 @@ export function useSpaceItems(spaceId) {
           }
           const encrypted = await encryptItem(plain, cryptoKey)
           return {
-            space_id: spaceId,
+            space_id: spaceId === STARRED_ITEMS ? item.space_id : spaceId,
             user_id: userId,
             type: item.type,
             title: encrypted.title,
@@ -354,6 +374,7 @@ export function useSpaceItems(spaceId) {
     create,
     update,
     togglePin,
+    toggleStar,
     setTags,
     remove,
     reorder,

@@ -7,7 +7,7 @@
  * by their surface, a soft space-colour strip, tags coloured by name shown
  * inline with the item count, and a vertical 3-dot menu in the top-right.
  */
-import { Check, Pin, PinOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square, MoreVertical } from 'lucide-react'
+import { Check, Pin, PinOff, Star, StarOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square, MoreVertical } from 'lucide-react'
 import { getColorPreset, softColorValue, tagColorValue } from '../../lib/spaceColors'
 import { ActionMenu } from '../ui/ActionMenu'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
@@ -36,7 +36,7 @@ function TagPill({ tag, active, onClick }) {
 export function SpaceCard({
   col, index, search, dragIndex, dragOverIndex,
   handleDragStart, handleDragOver, handleDrop, handleDragEnd,
-  navigate, togglePin, setModal, setDeleteConfirm, onDuplicate, onArchive,
+  navigate, togglePin, toggleStar, setModal, setDeleteConfirm, onDuplicate, onArchive,
   stats,
   onTagClick,
   activeTags = [],
@@ -77,6 +77,15 @@ export function SpaceCard({
       active: col.pinned,
       disabled: !online,
       onClick: () => togglePin.mutate({ id: col.id, pinned: col.pinned }),
+    },
+    // Starring never moves the space; it adds it to the Starred view.
+    toggleStar && {
+      id: 'star',
+      label: col.starred ? 'Unstar' : 'Star',
+      icon: col.starred ? StarOff : Star,
+      active: col.starred,
+      disabled: !online,
+      onClick: () => toggleStar.mutate({ id: col.id, starred: col.starred }),
     },
     { id: 'edit', label: 'Edit', icon: Pencil, disabled: !online, onClick: () => setModal({ type: 'edit', col }) },
     { id: 'duplicate', label: 'Duplicate', icon: Copy, disabled: !online, onClick: () => onDuplicate?.(col.id) },
@@ -124,8 +133,12 @@ export function SpaceCard({
           </span>
         )}
         {col.pinned && <Pin size={14} className="shrink-0 text-accent fill-accent" />}
-
-        <h3 className="font-semibold text-text-primary truncate shrink-0 w-32 sm:w-44">{col.name}</h3>
+        {/* The name column, with the star (gold, unlike the accent pin) right
+            after the name inside the same fixed width. */}
+        <div className="shrink-0 w-32 sm:w-44 min-w-0 flex items-center gap-1">
+          <h3 className="min-w-0 font-semibold text-text-primary truncate">{col.name}</h3>
+          {col.starred && <Star size={14} className="shrink-0 text-amber-400 fill-amber-400" aria-label="Starred" />}
+        </div>
 
         {col.description
           ? <p className="text-text-secondary text-sm truncate flex-1 min-w-0">{col.description}</p>
@@ -172,7 +185,9 @@ export function SpaceCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             {col.pinned && <Pin size={14} className="shrink-0 text-accent fill-accent" />}
-            <h3 className="font-semibold text-text-primary truncate">{col.name}</h3>
+            <h3 className="min-w-0 font-semibold text-text-primary truncate">{col.name}</h3>
+            {/* Gold, so it never reads as the (accent) pin. */}
+            {col.starred && <Star size={14} className="shrink-0 text-amber-400 fill-amber-400" aria-label="Starred" />}
           </div>
           {col.description && (
             <p className="text-text-secondary text-sm mt-1 line-clamp-2 leading-relaxed">{col.description}</p>

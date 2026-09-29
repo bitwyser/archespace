@@ -61,6 +61,7 @@ const DashboardPage = lazyWithRetry(() => import('./pages/DashboardPage'))
 const SpacePage = lazyWithRetry(() => import('./pages/SpacePage'))
 const RecycleBinPage = lazyWithRetry(() => import('./pages/RecycleBinPage'))
 const ArchivePage = lazyWithRetry(() => import('./pages/ArchivePage'))
+const StarredPage = lazyWithRetry(() => import('./pages/StarredPage'))
 const SettingsPage = lazyWithRetry(() => import('./pages/SettingsPage'))
 const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'))
 const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'))
@@ -205,6 +206,7 @@ const router = createBrowserRouter([
           { path: '/app', element: <ProtectedRoute title="Your spaces"><DashboardPage /></ProtectedRoute> },
           { path: '/space/:id', element: <ProtectedRoute><SpacePage /></ProtectedRoute> },
           { path: '/recycle-bin', element: <ProtectedRoute title="Recycle bin"><RecycleBinPage /></ProtectedRoute> },
+          { path: '/starred', element: <ProtectedRoute title="Starred"><StarredPage /></ProtectedRoute> },
           { path: '/archive', element: <ProtectedRoute title="Archive"><ArchivePage /></ProtectedRoute> },
           { path: '/settings', element: <ProtectedRoute title="Settings"><SettingsPage /></ProtectedRoute> },
         ],
