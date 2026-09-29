@@ -20,7 +20,7 @@ function normalise(content) {
   return { columns, rows }
 }
 
-export function TableEditor({ content, onChange }) {
+export function TableEditor({ content, onChange, readOnly = false }) {
   const [state, setState] = useState(() => normalise(content))
   const { columns, rows } = state
 
@@ -72,11 +72,12 @@ export function TableEditor({ content, onChange }) {
                     <input
                       value={col}
                       onChange={e => setHeader(c, e.target.value)}
-                      placeholder={`Column ${c + 1}`}
+                      readOnly={readOnly}
+                      placeholder={readOnly ? '' : `Column ${c + 1}`}
                       aria-label={`Column ${c + 1} header`}
                       className={`${cellClass} font-semibold`}
                     />
-                    {columns.length > 1 && (
+                    {!readOnly && columns.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeColumn(c)}
@@ -90,6 +91,7 @@ export function TableEditor({ content, onChange }) {
                   </div>
                 </th>
               ))}
+              {!readOnly && (
               <th className="border-b border-bg-border bg-bg-elevated p-0 w-9">
                 <button
                   type="button"
@@ -101,6 +103,7 @@ export function TableEditor({ content, onChange }) {
                   <Plus size={15} />
                 </button>
               </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -111,11 +114,13 @@ export function TableEditor({ content, onChange }) {
                     <input
                       value={cell}
                       onChange={e => setCell(r, c, e.target.value)}
+                      readOnly={readOnly}
                       aria-label={`Row ${r + 1} column ${c + 1}`}
                       className={cellClass}
                     />
                   </td>
                 ))}
+                {!readOnly && (
                 <td className="border-b border-bg-border p-0 w-9">
                   <button
                     type="button"
@@ -128,19 +133,22 @@ export function TableEditor({ content, onChange }) {
                     <Trash2 size={14} />
                   </button>
                 </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <button
-        type="button"
-        onClick={addRow}
-        className="flex items-center gap-2 text-text-muted hover:text-accent text-sm transition-colors py-1"
-      >
-        <Plus size={14} /> Add row
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={addRow}
+          className="flex items-center gap-2 text-text-muted hover:text-accent text-sm transition-colors py-1"
+        >
+          <Plus size={14} /> Add row
+        </button>
+      )}
     </div>
   )
 }

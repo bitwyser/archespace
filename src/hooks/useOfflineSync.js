@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { flushOfflineQueue, getOfflineQueue } from '../lib/offlineQueue'
 import { useToast } from '../context/ToastCore'
 import { queryKeys } from '../lib/queryKeys'
+import { isReadOnlyError } from '../lib/readOnly'
 
 export function useOfflineSync() {
   const qc = useQueryClient()
@@ -17,6 +18,9 @@ export function useOfflineSync() {
       const pending = getOfflineQueue().length
       if (pending === 0) return
 
+      // Edits to a space made read-only meanwhile can never apply: drop them
+      // (rather than retrying forever) and say so.
+      let refused = 0
       const flushed = await flushOfflineQueue(async (entry) => {
         if (entry.type === 'item-update') {
           const { id, title, content } = entry.payload
@@ -24,15 +28,23 @@ export function useOfflineSync() {
             .from('space_items')
             .update({ title, content })
             .eq('id', id)
+          if (isReadOnlyError(error)) {
+            refused++
+            return true
+          }
           return !error
         }
         return false
       })
 
-      if (flushed > 0) {
-        toast.success(`Back online - synced ${flushed} change${flushed === 1 ? '' : 's'}.`)
-        qc.invalidateQueries({ queryKey: queryKeys.items() })
+      const synced = flushed - refused
+      if (synced > 0) {
+        toast.success(`Back online - synced ${synced} change${synced === 1 ? '' : 's'}.`)
       }
+      if (refused > 0) {
+        toast.error(`${refused} offline change${refused === 1 ? " wasn't" : "s weren't"} saved: the space is read-only.`)
+      }
+      if (flushed > 0) qc.invalidateQueries({ queryKey: queryKeys.items() })
     }
 
     const onOnline = () => processQueue()

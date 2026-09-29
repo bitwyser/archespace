@@ -26,7 +26,7 @@ const METRICS = {
   boxSizing: 'border-box',
 }
 
-export function CodeEditor({ content, onChange }) {
+export function CodeEditor({ content, onChange, readOnly = false }) {
   const [code, setCode] = useState(content?.code || '')
   const taRef = useRef(null)
 
@@ -72,10 +72,11 @@ export function CodeEditor({ content, onChange }) {
         ref={taRef}
         value={code}
         onChange={e => update(e.target.value)}
-        onKeyDown={handleKeyDown}
+        onKeyDown={readOnly ? undefined : handleKeyDown}
+        readOnly={readOnly}
         rows={3}
         spellCheck={false}
-        placeholder="Paste or write code…"
+        placeholder={readOnly ? 'Empty' : 'Paste or write code…'}
         className="relative z-10 block w-full resize-none overflow-hidden bg-transparent caret-text-primary placeholder-text-muted focus:outline-none"
         style={{
           ...METRICS,

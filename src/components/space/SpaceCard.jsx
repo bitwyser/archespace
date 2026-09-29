@@ -7,10 +7,11 @@
  * by their surface, a soft space-colour strip, tags coloured by name shown
  * inline with the item count, and a vertical 3-dot menu in the top-right.
  */
-import { Check, Pin, PinOff, Star, StarOff, Pencil, Trash2, Copy, Archive, CheckSquare, Square, MoreVertical } from 'lucide-react'
+import { Check, Pin, PinOff, Star, StarOff, Pencil, PencilOff, PencilLine, Trash2, Copy, Archive, CheckSquare, Square, MoreVertical } from 'lucide-react'
 import { getColorPreset, softColorValue, tagColorValue } from '../../lib/spaceColors'
 import { ActionMenu } from '../ui/ActionMenu'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
+import { useToast } from '../../context/ToastCore'
 
 /** A tag chip tinted by the tag's own stable colour; brighter when it's an
  * active filter. Consumes its own click so it filters instead of opening. */
@@ -33,10 +34,19 @@ function TagPill({ tag, active, onClick }) {
   )
 }
 
+/** Muted marker after the name of a read-only space. */
+function ReadOnlyMark() {
+  return (
+    <span className="shrink-0 text-text-muted" title="Read-only">
+      <PencilOff size={13} aria-label="Read-only" />
+    </span>
+  )
+}
+
 export function SpaceCard({
   col, index, search, dragIndex, dragOverIndex,
   handleDragStart, handleDragOver, handleDrop, handleDragEnd,
-  navigate, togglePin, toggleStar, setModal, setDeleteConfirm, onDuplicate, onArchive,
+  navigate, togglePin, toggleStar, toggleReadOnly, setModal, setDeleteConfirm, onDuplicate, onArchive,
   stats,
   onTagClick,
   activeTags = [],
@@ -47,6 +57,7 @@ export function SpaceCard({
   reorderDisabled = false,
 }) {
   const online = useOnlineStatus()
+  const { toast } = useToast()
   const colorPreset = getColorPreset(col.color)
   // Softer, thinner space-colour strip (~50% alpha) than the picker's vivid value.
   const softColor = softColorValue(col.color, '80')
@@ -87,7 +98,19 @@ export function SpaceCard({
       disabled: !online,
       onClick: () => toggleStar.mutate({ id: col.id, starred: col.starred }),
     },
-    { id: 'edit', label: 'Edit', icon: Pencil, disabled: !online, onClick: () => setModal({ type: 'edit', col }) },
+    // Read-only locks the space's content (its details and items); managing
+    // the space itself (pin, duplicate, archive, delete) stays available.
+    toggleReadOnly && {
+      id: 'read-only',
+      label: col.read_only ? 'Allow editing' : 'Make read-only',
+      icon: col.read_only ? PencilLine : PencilOff,
+      disabled: !online,
+      onClick: () => toggleReadOnly.mutate({ id: col.id, read_only: col.read_only }, {
+        onSuccess: () => toast.success(col.read_only ? 'Editing allowed' : 'Space is now read-only'),
+        onError: () => toast.error("Couldn't change read-only."),
+      }),
+    },
+    !col.read_only && { id: 'edit', label: 'Edit', icon: Pencil, disabled: !online, onClick: () => setModal({ type: 'edit', col }) },
     { id: 'duplicate', label: 'Duplicate', icon: Copy, disabled: !online, onClick: () => onDuplicate?.(col.id) },
     { id: 'archive', label: 'Archive', icon: Archive, disabled: !online, onClick: () => onArchive?.(col.id) },
     { id: 'delete', label: 'Delete', icon: Trash2, variant: 'danger', disabled: !online, onClick: () => setDeleteConfirm(col.id) },
@@ -138,6 +161,7 @@ export function SpaceCard({
         <div className="shrink-0 w-32 sm:w-44 min-w-0 flex items-center gap-1">
           <h3 className="min-w-0 font-semibold text-text-primary truncate">{col.name}</h3>
           {col.starred && <Star size={14} className="shrink-0 text-amber-400 fill-amber-400" aria-label="Starred" />}
+          {col.read_only && <ReadOnlyMark />}
         </div>
 
         {col.description
@@ -188,6 +212,7 @@ export function SpaceCard({
             <h3 className="min-w-0 font-semibold text-text-primary truncate">{col.name}</h3>
             {/* Gold, so it never reads as the (accent) pin. */}
             {col.starred && <Star size={14} className="shrink-0 text-amber-400 fill-amber-400" aria-label="Starred" />}
+            {col.read_only && <ReadOnlyMark />}
           </div>
           {col.description && (
             <p className="text-text-secondary text-sm mt-1 line-clamp-2 leading-relaxed">{col.description}</p>

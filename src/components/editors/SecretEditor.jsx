@@ -12,7 +12,7 @@ import { useEncryption } from '../../context/EncryptionCore'
 import { encryptString, decryptString } from '../../lib/crypto/cipher'
 import PinInput from '../PinInput'
 
-export const SecretEditor = forwardRef(function SecretEditor({ content, onChange, onStateChange }, ref) {
+export const SecretEditor = forwardRef(function SecretEditor({ content, onChange, onStateChange, readOnly = false }, ref) {
   const { cryptoKey, verifyVaultPin } = useEncryption()
   const cipher = content?.cipher || ''
 
@@ -88,10 +88,11 @@ export const SecretEditor = forwardRef(function SecretEditor({ content, onChange
     return (
       <textarea
         ref={taRef}
-        autoFocus
+        autoFocus={!readOnly}
         value={text}
         onChange={e => handleTextChange(e.target.value)}
-        placeholder="Secret content…"
+        readOnly={readOnly}
+        placeholder={readOnly ? 'Empty' : 'Secret content…'}
         rows={3}
         className="password-field w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-text-content placeholder-text-muted focus:outline-none transition-colors text-sm resize-none overflow-hidden min-h-[80px] leading-relaxed font-mono"
       />

@@ -18,6 +18,7 @@ import {
   makeBulkSetPinned,
   makeTogglePin,
   makeToggleStar,
+  makeToggleFlag,
   makeReorder,
 } from './entityMutations'
 
@@ -167,6 +168,16 @@ export function useSpaces() {
     invalidate: () => qc.invalidateQueries({ queryKey: queryKeys.spaces() }),
   }))
 
+  // Read-only on / off. The database then refuses edits to the space's details
+  // and its items' content until it's turned off again.
+  const toggleReadOnly = useMutation(makeToggleFlag({
+    table: 'spaces',
+    field: 'read_only',
+    qc,
+    queryKey: queryKeys.spaces(),
+    invalidate: () => qc.invalidateQueries({ queryKey: queryKeys.spaces() }),
+  }))
+
   const reorder = useMutation(makeReorder({
     qc,
     queryKey: queryKeys.spaces(),
@@ -283,6 +294,7 @@ export function useSpaces() {
     update,
     togglePin,
     toggleStar,
+    toggleReadOnly,
     remove,
     reorder,
     archive,

@@ -15,6 +15,7 @@ import { useBlocker, useLocation } from 'react-router-dom'
 import { useSpaceItems } from './useSpaceItems'
 import { useToast } from '../context/ToastCore'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
+import { isReadOnlyError, READ_ONLY_MESSAGE } from '../lib/readOnly'
 
 export function useItemBoard(spaceId) {
   const location = useLocation()
@@ -89,7 +90,12 @@ export function useItemBoard(spaceId) {
   const duplicateMutate = duplicate.mutate
   const archiveMutate = archive.mutate
 
-  const handleItemUpdate = useCallback((payload) => updateAsync(payload), [updateAsync])
+  // A save refused because the space was made read-only elsewhere says so;
+  // the card keeps the edit unsaved so it can be discarded.
+  const handleItemUpdate = useCallback((payload) => updateAsync(payload).catch((err) => {
+    if (isReadOnlyError(err)) toastRef.current.error(READ_ONLY_MESSAGE)
+    throw err
+  }), [updateAsync])
   const handleSetTags = useCallback((itemId, tags) => setTags.mutate({ id: itemId, tags }), [setTags])
   const handleTogglePin = useCallback(
     (itemId, pinned) => togglePinMutate({ id: itemId, pinned }),

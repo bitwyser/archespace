@@ -13,13 +13,13 @@ function formatCode(code) {
   return `${code.slice(0, mid)} ${code.slice(mid)}`
 }
 
-export function AuthenticatorEditor({ content, onChange }) {
+export function AuthenticatorEditor({ content, onChange, readOnly = false }) {
   const entries = useMemo(() => content?.entries || [], [content])
 
   const [codes, setCodes] = useState({})
   const [now, setNow] = useState(() => Date.now())
   const [copiedId, setCopiedId] = useState(null)
-  const [adding, setAdding] = useState(entries.length === 0)
+  const [adding, setAdding] = useState(entries.length === 0 && !readOnly)
   const [form, setForm] = useState({ issuer: '', label: '', secret: '' })
   const [formError, setFormError] = useState('')
 
@@ -96,7 +96,7 @@ export function AuthenticatorEditor({ content, onChange }) {
   return (
     <div className="space-y-2">
       {entries.length === 0 && !adding && (
-        <p className="text-text-muted text-sm italic">No accounts yet. Add one to generate codes.</p>
+        <p className="text-text-muted text-sm italic">{readOnly ? 'No accounts.' : 'No accounts yet. Add one to generate codes.'}</p>
       )}
 
       {entries.map((entry) => {
@@ -146,6 +146,7 @@ export function AuthenticatorEditor({ content, onChange }) {
             >
               {copiedId === entry.id ? <Check size={14} /> : <Copy size={14} />}
             </button>
+            {!readOnly && (
             <button
               type="button"
               onClick={() => removeEntry(entry.id)}
@@ -155,11 +156,12 @@ export function AuthenticatorEditor({ content, onChange }) {
             >
               <Trash2 size={14} />
             </button>
+            )}
           </div>
         )
       })}
 
-      {adding ? (
+      {readOnly ? null : adding ? (
         <div className="rounded-xl border border-bg-border bg-bg-elevated p-3 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             <input

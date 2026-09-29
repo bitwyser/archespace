@@ -24,7 +24,7 @@ const TOOLS = [
   { id: 'ellipse', icon: Circle, label: 'Ellipse' },
 ]
 
-export function DrawEditor({ content, onChange }) {
+export function DrawEditor({ content, onChange, readOnly = false }) {
   const strokes = useMemo(() => content?.strokes || [], [content?.strokes])
   const orientation = content?.orientation === 'portrait' ? 'portrait' : 'landscape'
   const { w: viewW, h: viewH } = drawDims(orientation)
@@ -88,7 +88,8 @@ export function DrawEditor({ content, onChange }) {
 
   return (
     <div className="space-y-2">
-      {/* Toolbar */}
+      {/* Toolbar (none when read-only: the drawing is view-only) */}
+      {!readOnly && (
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1">
           {TOOLS.map(({ id, icon: Icon, label }) => (
@@ -171,15 +172,16 @@ export function DrawEditor({ content, onChange }) {
           </button>
         </div>
       </div>
+      )}
 
       {/* Canvas */}
       <svg
         ref={svgRef}
         viewBox={`0 0 ${viewW} ${viewH}`}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        className="mx-auto block w-full touch-none rounded-xl border border-bg-border bg-white cursor-crosshair"
+        onPointerDown={readOnly ? undefined : handlePointerDown}
+        onPointerMove={readOnly ? undefined : handlePointerMove}
+        onPointerUp={readOnly ? undefined : handlePointerUp}
+        className={`mx-auto block w-full rounded-xl border border-bg-border bg-white ${readOnly ? '' : 'touch-none cursor-crosshair'}`}
         style={{ aspectRatio: `${viewW} / ${viewH}`, maxWidth: orientation === 'portrait' ? 420 : '100%' }}
       >
         {committed.map((p, i) => (

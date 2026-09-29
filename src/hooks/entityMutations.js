@@ -81,24 +81,24 @@ export function makeTogglePin({ table, qc, queryKey, invalidate }) {
 }
 
 /**
- * Optimistic single-row star toggle. Starring is a quick-access flag only: it
- * never changes a row's position or sort order.
+ * Optimistic single-row toggle of a boolean `field`. The mutation takes
+ * `{ id, [field]: current }` and writes the opposite value.
  */
-export function makeToggleStar({ table, qc, queryKey, invalidate }) {
+export function makeToggleFlag({ table, field, qc, queryKey, invalidate }) {
   return {
-    mutationFn: async ({ id, starred }) => {
+    mutationFn: async ({ id, [field]: current }) => {
       assertOnline()
       const { error } = await supabase
         .from(table)
-        .update({ starred: !starred })
+        .update({ [field]: !current })
         .eq('id', id)
       if (error) throw error
     },
-    onMutate: async ({ id, starred }) => {
+    onMutate: async ({ id, [field]: current }) => {
       await qc.cancelQueries({ queryKey })
       const previous = qc.getQueryData(queryKey)
       qc.setQueryData(queryKey, (old) =>
-        old?.map(row => (row.id === id ? { ...row, starred: !starred } : row))
+        old?.map(row => (row.id === id ? { ...row, [field]: !current } : row))
       )
       return { previous }
     },
@@ -107,6 +107,14 @@ export function makeToggleStar({ table, qc, queryKey, invalidate }) {
     },
     onSettled: invalidate,
   }
+}
+
+/**
+ * Optimistic single-row star toggle. Starring is a quick-access flag only: it
+ * never changes a row's position or sort order.
+ */
+export function makeToggleStar(options) {
+  return makeToggleFlag({ ...options, field: 'starred' })
 }
 
 /** Optimistic reorder via an RPC taking { updates: [{ id, position }] }. */

@@ -24,7 +24,8 @@ export default function ItemBoardModals({ board, spaces }) {
   const { remove, bulkRemove, move } = api
 
   // Inside a space, items can also move out to the dashboard.
-  const destinationSpaces = spaces.filter(candidate => candidate.id !== spaceId)
+  // A read-only space takes no new items, so it's never a destination.
+  const destinationSpaces = spaces.filter(candidate => candidate.id !== spaceId && !candidate.read_only)
   const canMoveToDashboard = spaceId !== null
 
   return (

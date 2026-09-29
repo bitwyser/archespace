@@ -1,7 +1,8 @@
 /**
  * Content editors, one per space-item type. Each takes the current `content`
  * and calls `onChange(newContent)` on every keystroke so the parent can track
- * dirty state and auto-save.
+ * dirty state and auto-save. `readOnly` (a read-only space) keeps the content
+ * readable and selectable but hides every editing control.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -54,7 +55,7 @@ function ReorderBtn({ onDragStart, onDragEnd, onKeyDown }) {
  *
  * @param {{ content: { text: string }, onChange: Function }} props
  */
-export function TextboxEditor({ content, onChange }) {
+export function TextboxEditor({ content, onChange, readOnly = false }) {
   const [text, setText] = useState(content?.text || '')
   const ref = useRef(null)
 
@@ -80,7 +81,8 @@ export function TextboxEditor({ content, onChange }) {
         ref={ref}
         value={text}
         onChange={handleChange}
-        placeholder="Start writing anything…"
+        readOnly={readOnly}
+        placeholder={readOnly ? 'Empty' : 'Start writing anything…'}
         rows={3}
         className="w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-text-content placeholder-text-muted focus:outline-none transition-colors text-sm resize-none overflow-hidden leading-relaxed min-h-[80px]"
       />
@@ -100,7 +102,7 @@ export function TextboxEditor({ content, onChange }) {
  *
  * @param {{ content: { text: string }, onChange: Function }} props
  */
-export function MarkdownEditor({ content, onChange }) {
+export function MarkdownEditor({ content, onChange, readOnly = false }) {
   const [text, setText] = useState(content?.text || '')
   const [editing, setEditing] = useState(false)
   const ref = useRef(null)
@@ -157,6 +159,15 @@ export function MarkdownEditor({ content, onChange }) {
     )
   }
 
+  // Read-only: the rendered preview only, with no way into edit mode.
+  if (readOnly) {
+    return (
+      <div className="w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-sm text-text-content leading-relaxed min-h-[80px] prose-custom">
+        {text ? <MarkdownPreview text={text} /> : <span className="text-text-muted italic">Empty</span>}
+      </div>
+    )
+  }
+
   // Preview mode
   return (
     <div
@@ -186,7 +197,7 @@ export function MarkdownEditor({ content, onChange }) {
 // ListEditor (shared by ChecklistEditor & MenuListEditor)
 // ─────────────────────────────────────────────────────────
 
-function ListEditor({ content, onChange, variant }) {
+function ListEditor({ content, onChange, variant, readOnly = false }) {
   const isChecklist = variant === 'checkbox'
   const isNumbered = variant === 'numbered'
   const inputAttr = isChecklist ? 'data-checklist-input' : 'data-menu-input'
@@ -280,16 +291,17 @@ function ListEditor({ content, onChange, variant }) {
         <div
           key={item.id}
           className="flex items-start gap-2 group py-0.5"
-          onDragOver={e => e.preventDefault()}
-          onDrop={e => handleDrop(e, idx)}
+          onDragOver={readOnly ? undefined : e => e.preventDefault()}
+          onDrop={readOnly ? undefined : e => handleDrop(e, idx)}
         >
           {isChecklist ? (
             <button
               type="button"
               onClick={() => updateItem(item.id, 'checked', !item.checked)}
+              disabled={readOnly}
               aria-label={item.checked ? 'Mark item as not done' : 'Mark item as done'}
               aria-pressed={item.checked}
-              className="shrink-0 mt-0.5 text-text-muted hover:text-accent transition-colors"
+              className={`shrink-0 mt-0.5 text-text-muted transition-colors ${readOnly ? 'cursor-default' : 'hover:text-accent'}`}
             >
               {item.checked
                 ? <CheckSquare size={16} className="text-accent" />
@@ -310,31 +322,38 @@ function ListEditor({ content, onChange, variant }) {
               updateItem(item.id, 'text', e.target.value)
               adjustItemText(e.target)
             }}
-            onKeyDown={e => handleKeyDown(e, idx)}
-            placeholder={isChecklist ? 'List item…' : 'Item…'}
+            onKeyDown={readOnly ? undefined : e => handleKeyDown(e, idx)}
+            readOnly={readOnly}
+            placeholder={readOnly ? '' : isChecklist ? 'List item…' : 'Item…'}
             rows={1}
             className={`flex-1 min-w-0 bg-transparent text-sm leading-relaxed focus:outline-none placeholder-text-muted resize-none overflow-hidden whitespace-pre-wrap break-words ${
               isChecklist && item.checked ? 'line-through text-text-muted' : 'text-text-primary'
             }`}
           />
 
-          <div className="flex shrink-0 items-center gap-0.5">
-            <ReorderBtn
-              onDragStart={e => handleDragStart(e, idx)}
-              onDragEnd={() => { dragFromIndex.current = null }}
-              onKeyDown={e => handleReorderKeyDown(e, idx)}
-            />
-            <DelBtn onClick={() => removeItem(item.id)} />
-          </div>
+          {!readOnly && (
+            <div className="flex shrink-0 items-center gap-0.5">
+              <ReorderBtn
+                onDragStart={e => handleDragStart(e, idx)}
+                onDragEnd={() => { dragFromIndex.current = null }}
+                onKeyDown={e => handleReorderKeyDown(e, idx)}
+              />
+              <DelBtn onClick={() => removeItem(item.id)} />
+            </div>
+          )}
         </div>
       ))}
 
-      <button
-        onClick={addItem}
-        className="flex items-center gap-2 text-text-muted hover:text-accent text-sm transition-colors mt-2 py-1"
-      >
-        <Plus size={14} /> Add item
-      </button>
+      {readOnly ? (
+        items.length === 0 && <p className="text-text-muted text-sm italic">Empty</p>
+      ) : (
+        <button
+          onClick={addItem}
+          className="flex items-center gap-2 text-text-muted hover:text-accent text-sm transition-colors mt-2 py-1"
+        >
+          <Plus size={14} /> Add item
+        </button>
+      )}
     </div>
   )
 }
@@ -361,7 +380,7 @@ export function NumberedListEditor(props) {
  *
  * @param {{ content: { items: Array }, onChange: Function }} props
  */
-export function CardListEditor({ content, onChange }) {
+export function CardListEditor({ content, onChange, readOnly = false }) {
   const [items, setItems] = useState(content?.items || [])
   const dragFromIndex = useRef(null)
 
@@ -419,22 +438,27 @@ export function CardListEditor({ content, onChange }) {
         <div
           key={item.id}
           className="group bg-bg-sunken border border-bg-border rounded-xl p-3 space-y-2"
-          onDragOver={e => e.preventDefault()}
-          onDrop={e => handleDrop(e, idx)}
+          onDragOver={readOnly ? undefined : e => e.preventDefault()}
+          onDrop={readOnly ? undefined : e => handleDrop(e, idx)}
         >
           <div className="flex items-center gap-2">
             <input
               value={item.title}
               onChange={e => updateItem(item.id, 'title', e.target.value)}
-              placeholder="Title…"
+              readOnly={readOnly}
+              placeholder={readOnly ? '' : 'Title…'}
               className="flex-1 bg-transparent text-sm font-semibold focus:outline-none text-text-primary placeholder-text-muted"
             />
-            <ReorderBtn
-              onDragStart={e => handleDragStart(e, idx)}
-              onDragEnd={() => { dragFromIndex.current = null }}
-              onKeyDown={e => handleReorderKeyDown(e, idx)}
-            />
-            <DelBtn onClick={() => removeItem(item.id)} label="Delete card" />
+            {!readOnly && (
+              <>
+                <ReorderBtn
+                  onDragStart={e => handleDragStart(e, idx)}
+                  onDragEnd={() => { dragFromIndex.current = null }}
+                  onKeyDown={e => handleReorderKeyDown(e, idx)}
+                />
+                <DelBtn onClick={() => removeItem(item.id)} label="Delete card" />
+              </>
+            )}
           </div>
 
           <textarea
@@ -444,19 +468,24 @@ export function CardListEditor({ content, onChange }) {
               updateItem(item.id, 'description', e.target.value)
               adjust(e.target)
             }}
-            placeholder="Description…"
+            readOnly={readOnly}
+            placeholder={readOnly ? '' : 'Description…'}
             rows={2}
             className="w-full bg-transparent text-sm text-text-secondary focus:outline-none placeholder-text-muted resize-none overflow-hidden leading-relaxed"
           />
         </div>
       ))}
 
-      <button
-        onClick={addItem}
-        className="flex items-center gap-2 text-text-muted hover:text-accent text-sm transition-colors py-1"
-      >
-        <Plus size={14} /> Add card
-      </button>
+      {readOnly ? (
+        items.length === 0 && <p className="text-text-muted text-sm italic">Empty</p>
+      ) : (
+        <button
+          onClick={addItem}
+          className="flex items-center gap-2 text-text-muted hover:text-accent text-sm transition-colors py-1"
+        >
+          <Plus size={14} /> Add card
+        </button>
+      )}
     </div>
   )
 }

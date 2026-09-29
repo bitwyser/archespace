@@ -29,7 +29,7 @@ const DEFAULT_FONT = 3
 /**
  * @param {{ content: { html: string }, onChange: Function }} props
  */
-const RichTextEditor = forwardRef(function RichTextEditor({ content, onChange }, ref) {
+const RichTextEditor = forwardRef(function RichTextEditor({ content, onChange, readOnly = false }, ref) {
   const el = useRef(null)
   const fontSize = useRef(DEFAULT_FONT)
   const initial = content?.html || ''
@@ -113,12 +113,13 @@ const RichTextEditor = forwardRef(function RichTextEditor({ content, onChange },
   return (
     <div
       ref={el}
-      contentEditable
+      contentEditable={!readOnly}
       suppressContentEditableWarning
       role="textbox"
       aria-multiline="true"
+      aria-readonly={readOnly || undefined}
       aria-label="Rich text content"
-      data-placeholder="Start writing…"
+      data-placeholder={readOnly ? 'Empty' : 'Start writing…'}
       onInput={emit}
       onKeyDown={handleKeyDown}
       onPaste={handlePaste}

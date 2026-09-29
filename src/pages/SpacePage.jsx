@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List, FolderPlus, Search, SearchX, X } from 'lucide-react'
+import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List, FolderPlus, Search, SearchX, X, PencilOff } from 'lucide-react'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useSpaces } from '../hooks/useSpaces'
 import { useItemBoard } from '../hooks/useItemBoard'
@@ -40,6 +40,7 @@ export default function SpacePage() {
     update: updateSpace,
     togglePin: toggleSpacePin,
     toggleStar: toggleSpaceStar,
+    toggleReadOnly: toggleSpaceReadOnly,
     remove: removeSpace,
     archive: archiveSpace,
     duplicate: duplicateSpace,
@@ -52,6 +53,9 @@ export default function SpacePage() {
 
   /** The space object for this page */
   const space = spaces.find(c => c.id === id)
+  // Read-only (stored on the server): items can be viewed, copied and
+  // exported, but nothing in the space can be added or changed.
+  const readOnly = !!space?.read_only
   // One-level nesting: sub-spaces live under a top-level space only.
   const isTopLevel = space ? !space.parent_id : false
   const parentSpace = space?.parent_id ? spaces.find(s => s.id === space.parent_id) : null
@@ -74,11 +78,26 @@ export default function SpacePage() {
 
   // While inside a space, expose a "New item" entry in the command palette
   // and bind it to the same "I" shortcut advertised there.
-  const { openAddItem } = board
+  const { openAddItem: boardOpenAddItem } = board
+  const openAddItem = useCallback(() => {
+    if (!readOnly) boardOpenAddItem()
+  }, [readOnly, boardOpenAddItem])
   useShortcut('new-item', openAddItem)
-  useEffect(() => registerCommands([
+  useEffect(() => (readOnly ? undefined : registerCommands([
     { id: 'new-item', label: 'New item', hint: 'I', icon: Plus, run: () => { closePalette(); openAddItem() } },
-  ]), [registerCommands, closePalette, openAddItem])
+  ])), [registerCommands, closePalette, openAddItem, readOnly])
+
+  const handleToggleReadOnly = () => {
+    // Turning it on would strand unsaved edits, so they go first.
+    if (!readOnly && board.dirtyItems.size > 0) {
+      toast.error('Save or discard unsaved changes first')
+      return
+    }
+    toggleSpaceReadOnly.mutate({ id, read_only: readOnly }, {
+      onSuccess: () => toast.success(readOnly ? 'Editing allowed' : 'Space is now read-only'),
+      onError: () => toast.error("Couldn't change read-only."),
+    })
+  }
 
   // ── Tag filter (within this space) ──
   const [selectedTags, setSelectedTags] = useState([])
@@ -168,7 +187,7 @@ export default function SpacePage() {
 
   // Manual drag order (in both list and grid views) only applies to the
   // default sort; other sorts and select mode disable it.
-  const reorderDisabled = selectMode || itemSort !== 'default' || activeTags.length > 0 || !!trimmedQuery
+  const reorderDisabled = readOnly || selectMode || itemSort !== 'default' || activeTags.length > 0 || !!trimmedQuery
 
   const selectedCount = selectedIds.size
   const selectedItems = useMemo(
@@ -277,6 +296,7 @@ export default function SpacePage() {
         onDragEnd={handleDragEnd}
         dragDisabled={reorderDisabled}
         dense={denseItems}
+        readOnly={readOnly}
       />
     </div>
   )
@@ -300,6 +320,7 @@ export default function SpacePage() {
       navigate={navigate}
       togglePin={toggleSpacePin}
       toggleStar={toggleSpaceStar}
+      toggleReadOnly={toggleSpaceReadOnly}
       setModal={setSpaceModal}
       setDeleteConfirm={setSpaceDeleteConfirm}
       onDuplicate={(sid) => duplicateSpace.mutate(sid, {
@@ -370,6 +391,24 @@ export default function SpacePage() {
           {/* Header actions: things done to the space itself. The view, sort and
               select controls live in the search row above the items. */}
           <div className="flex items-center gap-2 shrink-0 relative">
+            {space && !selectMode && (
+              <button
+                type="button"
+                onClick={handleToggleReadOnly}
+                disabled={!online}
+                aria-pressed={readOnly}
+                title={!online ? 'Unavailable offline' : readOnly ? 'Read-only - click to allow editing' : 'Make read-only'}
+                aria-label={readOnly ? 'Read-only, allow editing' : 'Make read-only'}
+                className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                  readOnly
+                    ? 'border-accent-border bg-accent-muted text-accent'
+                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                }`}
+              >
+                <PencilOff size={14} />
+                <span className="hidden sm:inline">Read-only</span>
+              </button>
+            )}
             {items.length > 0 && !selectMode && (
               <button
                 type="button"
@@ -382,7 +421,7 @@ export default function SpacePage() {
                 <span className="hidden sm:inline">Export</span>
               </button>
             )}
-            {isTopLevel && !selectMode && (
+            {isTopLevel && !selectMode && !readOnly && (
               <button
                 type="button"
                 onClick={() => setSpaceModal({ type: 'create' })}
@@ -394,22 +433,30 @@ export default function SpacePage() {
                 <span className="hidden sm:inline">New space</span>
               </button>
             )}
-            <button
-              type="button"
-              onClick={openAddItem}
-              disabled={!online}
-              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-              title={online ? 'Add item' : 'Unavailable offline'}
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              <span className="hidden sm:inline">Add item</span>
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={openAddItem}
+                disabled={!online}
+                className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                title={online ? 'Add item' : 'Unavailable offline'}
+              >
+                <Plus size={16} strokeWidth={2.5} />
+                <span className="hidden sm:inline">Add item</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       {/* ── Main content ─────────────────────────────── */}
       <main className={`flex-1 flex flex-col px-2 sm:px-4 pt-6 ${selectMode ? 'pb-32' : 'pb-6'} ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto w-full'}`}>
+        {readOnly && (
+          <p className="mb-3 px-1 flex items-center gap-2 text-sm text-text-muted">
+            <PencilOff size={14} className="shrink-0" />
+            Read-only. Items can be viewed, copied and exported, not changed.
+          </p>
+        )}
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
@@ -430,7 +477,8 @@ export default function SpacePage() {
               <Plus size={20} className="text-text-muted" />
             </div>
             <p className="text-text-secondary font-medium">Nothing here yet</p>
-            <p className="text-text-muted text-sm mt-1">Add your first item to this space</p>
+            {!readOnly && <p className="text-text-muted text-sm mt-1">Add your first item to this space</p>}
+            {!readOnly && (
             <button
               onClick={openAddItem}
               disabled={!online}
@@ -439,6 +487,7 @@ export default function SpacePage() {
             >
               <Plus size={16} /> Add first item
             </button>
+            )}
           </div>
         ) : (
           /* Items in list (single column) or grid (round-robin masonry) view */
@@ -599,7 +648,7 @@ export default function SpacePage() {
               count={selectedCount}
               onClear={exitSelectMode}
               actions={[
-                {
+                !readOnly && {
                   id: 'pin',
                   label: 'Pin',
                   icon: BULK_ICONS.pin,
@@ -609,7 +658,7 @@ export default function SpacePage() {
                     )
                   ),
                 },
-                {
+                !readOnly && {
                   id: 'unpin',
                   label: 'Unpin',
                   icon: BULK_ICONS.unpin,
@@ -637,7 +686,7 @@ export default function SpacePage() {
                     toast.info('Expanded items')
                   },
                 },
-                {
+                !readOnly && {
                   id: 'duplicate',
                   label: 'Duplicate',
                   icon: BULK_ICONS.copy,
@@ -647,13 +696,13 @@ export default function SpacePage() {
                     )
                   ),
                 },
-                {
+                !readOnly && {
                   id: 'move',
                   label: 'Move',
                   icon: BULK_ICONS.move,
                   onClick: () => board.openMoveItems(selectedItems.map(item => item.id), exitSelectMode),
                 },
-                {
+                !readOnly && {
                   id: 'archive',
                   label: 'Archive',
                   icon: BULK_ICONS.archive,
@@ -663,7 +712,7 @@ export default function SpacePage() {
                     )
                   ),
                 },
-                {
+                !readOnly && {
                   id: 'delete',
                   label: 'Delete',
                   icon: BULK_ICONS.trash,

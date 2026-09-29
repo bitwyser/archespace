@@ -48,7 +48,7 @@ export default function StarredPage() {
   const { toast } = useToast()
   const {
     data: spaces = [], isLoading: spacesLoading,
-    update, togglePin, toggleStar, remove, archive, duplicate,
+    update, togglePin, toggleStar, toggleReadOnly, remove, archive, duplicate,
   } = useSpaces()
   const { data: spaceStats = {} } = useSpaceStats()
   // Starred items from every space (and the dashboard).
@@ -62,6 +62,10 @@ export default function StarredPage() {
   const starredSpaces = useMemo(() => spaces.filter(s => s.starred), [spaces])
   const spaceNames = useMemo(
     () => Object.fromEntries(spaces.map(s => [s.id, s.name || 'Untitled'])),
+    [spaces]
+  )
+  const readOnlySpaceIds = useMemo(
+    () => new Set(spaces.filter(s => s.read_only).map(s => s.id)),
     [spaces]
   )
 
@@ -96,6 +100,7 @@ export default function StarredPage() {
       navigate={navigate}
       togglePin={togglePin}
       toggleStar={toggleStar}
+      toggleReadOnly={toggleReadOnly}
       setModal={setSpaceModal}
       setDeleteConfirm={setSpaceDeleteConfirm}
       onDuplicate={(id) => duplicate.mutate(id, {
@@ -125,6 +130,7 @@ export default function StarredPage() {
         {...board.cardProps}
         // Starred items come from many spaces, so there's no one order to drag.
         dragDisabled
+        readOnly={readOnlySpaceIds.has(item.space_id)}
         contextLabel={item.space_id ? spaceNames[item.space_id] || 'Space' : 'Dashboard'}
       />
     </div>

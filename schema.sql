@@ -72,6 +72,11 @@ ALTER TABLE space_items ALTER COLUMN space_id DROP NOT NULL;
 ALTER TABLE spaces      ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
 ALTER TABLE space_items ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
 
+-- Read-only spaces (added later): the space's details and its items' content
+-- can't be changed until it's turned off (enforced by trg_*_read_only in
+-- section 3). Safe to re-run.
+ALTER TABLE spaces ADD COLUMN IF NOT EXISTS read_only boolean NOT NULL DEFAULT false;
+
 -- One-level space nesting (added later; NULL = top-level space). Safe to re-run.
 ALTER TABLE spaces ADD COLUMN IF NOT EXISTS parent_id uuid
   REFERENCES spaces(id) ON DELETE CASCADE DEFAULT NULL;
@@ -203,6 +208,66 @@ DROP TRIGGER IF EXISTS trg_populate_item_user_id ON space_items;
 CREATE TRIGGER trg_populate_item_user_id
   BEFORE INSERT ON space_items
   FOR EACH ROW EXECUTE FUNCTION populate_item_user_id();
+
+-- Read-only spaces. A read-only space's details (name, description, colour,
+-- tags, parent) and its items' content (title, content, tags, type) can't
+-- change, and items can't be added to or moved in or out of it. Starring,
+-- pinning, ordering, archiving and deleting stay allowed, so archiving or
+-- deleting the space (which cascades to its items) still works. Raises
+-- SQLSTATE P0R01, which clients recognise (src/lib/readOnly.js).
+CREATE OR REPLACE FUNCTION is_space_read_only(sid uuid)
+RETURNS boolean AS $$
+  SELECT COALESCE((SELECT read_only FROM spaces WHERE id = sid), false);
+$$ LANGUAGE sql STABLE;
+
+CREATE OR REPLACE FUNCTION guard_read_only_space()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.read_only AND NEW.read_only AND (
+       NEW.name        IS DISTINCT FROM OLD.name
+    OR NEW.description IS DISTINCT FROM OLD.description
+    OR NEW.color       IS DISTINCT FROM OLD.color
+    OR NEW.tags        IS DISTINCT FROM OLD.tags
+    OR NEW.parent_id   IS DISTINCT FROM OLD.parent_id
+  ) THEN
+    RAISE EXCEPTION 'This space is read-only.' USING ERRCODE = 'P0R01';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_spaces_read_only ON spaces;
+CREATE TRIGGER trg_spaces_read_only
+  BEFORE UPDATE ON spaces
+  FOR EACH ROW EXECUTE FUNCTION guard_read_only_space();
+
+CREATE OR REPLACE FUNCTION guard_read_only_items()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    -- Also catches upserts, whose insert attempt fires this first.
+    IF is_space_read_only(NEW.space_id) THEN
+      RAISE EXCEPTION 'This space is read-only.' USING ERRCODE = 'P0R01';
+    END IF;
+  ELSIF NEW.space_id IS DISTINCT FROM OLD.space_id THEN
+    IF is_space_read_only(OLD.space_id) OR is_space_read_only(NEW.space_id) THEN
+      RAISE EXCEPTION 'This space is read-only.' USING ERRCODE = 'P0R01';
+    END IF;
+  ELSIF (NEW.title   IS DISTINCT FROM OLD.title
+      OR NEW.content IS DISTINCT FROM OLD.content
+      OR NEW.tags    IS DISTINCT FROM OLD.tags
+      OR NEW.type    IS DISTINCT FROM OLD.type)
+    AND is_space_read_only(NEW.space_id) THEN
+    RAISE EXCEPTION 'This space is read-only.' USING ERRCODE = 'P0R01';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_space_items_read_only ON space_items;
+CREATE TRIGGER trg_space_items_read_only
+  BEFORE INSERT OR UPDATE ON space_items
+  FOR EACH ROW EXECUTE FUNCTION guard_read_only_items();
 
 -- Purge soft-deleted rows older than 30 days. Wire to pg_cron / scheduled edge function.
 CREATE OR REPLACE FUNCTION purge_old_deleted_records()

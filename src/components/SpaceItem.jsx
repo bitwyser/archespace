@@ -23,7 +23,7 @@ import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Star, StarOff,
   Pin, PinOff, Save, AlertTriangle, GripVertical, Copy, Archive,
   Maximize2, Minimize2, MoveRight, MoreVertical,
-  ClipboardCopy, ClipboardCheck, FileDown, Eye, EyeOff,
+  ClipboardCopy, ClipboardCheck, FileDown, Eye, EyeOff, PencilOff,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, MenuListEditor, NumberedListEditor, CardListEditor } from './editors/ItemEditors'
 import RichTextEditor, { RichTextToolbar } from './editors/RichTextEditor'
@@ -76,6 +76,9 @@ function SpaceItem({
   dense = false,
   // Where the item lives, shown beside the title outside its space (Starred).
   contextLabel,
+  // In a read-only space: content stays readable and copyable, but every edit
+  // (content, title, tags, pin, order, move, archive, delete) is off.
+  readOnly = false,
 }) {
   const { cryptoKey } = useEncryption()
 
@@ -129,14 +132,14 @@ function SpaceItem({
   // React.memo can skip re-rendering this card when the list re-renders for
   // reasons that don't affect it (drag-hover, a sibling going dirty, etc.).
   const dragHandleProps = useMemo(
-    () => (dragDisabled
+    () => (dragDisabled || readOnly
       ? {}
       : {
           draggable: true,
           onDragStart: (e) => { e.stopPropagation(); onDragStart?.(index) },
           onDragEnd,
         }),
-    [dragDisabled, index, onDragStart, onDragEnd]
+    [dragDisabled, readOnly, index, onDragStart, onDragEnd]
   )
 
   // ── Sync from server when not dirty (realtime / parent update) ──
@@ -279,6 +282,7 @@ function SpaceItem({
   }, [isDirty, performSave])
 
   const handleContentChange = useCallback((newContent) => {
+    if (readOnly) return
     setLocalContent(newContent)
     setIsDirty(true)
 
@@ -286,7 +290,7 @@ function SpaceItem({
     autoSaveTimer.current = setTimeout(() => {
       performSave(latestState.current.title, newContent)
     }, AUTO_SAVE_DELAY_MS)
-  }, [performSave])
+  }, [performSave, readOnly])
 
   /** Manual save button handler */
   const handleSave = () => performSave()
@@ -351,10 +355,10 @@ function SpaceItem({
   const showCollapseToggle = !isFullscreen
   // Whether the tags row is shown (drives content top padding so the two don't
   // stack into a large gap).
-  const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || online)
+  const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || (online && !readOnly))
   // The Rich Text formatting toolbar shares the tags row (right-aligned). Shown
   // whenever the editor is live - not collapsed, clamped, or a dense preview.
-  const showRichToolbar = item.type === 'richtext' && !headerCollapsed && !clamped && !selectMode && !denseView
+  const showRichToolbar = item.type === 'richtext' && !readOnly && !headerCollapsed && !clamped && !selectMode && !denseView
 
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
@@ -380,8 +384,8 @@ function SpaceItem({
     } ${denseView ? 'text-[13px]' : ''} ${
       isFullscreen ? '' : selected ? 'ring-[1.5px] ring-accent-border'
         // Soft ring + lift while one of its text fields has the cursor
-        // (index.css), marking the item being edited.
-        : 'item-card-editable'
+        // (index.css), marking the item being edited. Read-only never edits.
+        : readOnly ? '' : 'item-card-editable'
     }`}
     >
       {/* ── Header ────────────────────────────────────── */}
@@ -392,7 +396,7 @@ function SpaceItem({
       } ${
         !headerCollapsed || collapseGuard ? 'border-b border-bg-border' : ''
       }`}>
-        {!selectMode && (
+        {!selectMode && !readOnly && (
           <div
             {...dragHandleProps}
             className="cursor-grab active:cursor-grabbing shrink-0 text-text-muted hover:text-text-secondary transition-colors"
@@ -442,6 +446,12 @@ function SpaceItem({
               (accent) pin. */}
           {item.starred && !editingTitle && (
             <Star size={13} className="shrink-0 self-center text-amber-400 fill-amber-400" aria-label="Starred" />
+          )}
+          {/* Outside its space, say why it can't be edited. */}
+          {readOnly && contextLabel && (
+            <span className="shrink-0 self-center text-text-muted" title="In a read-only space">
+              <PencilOff size={13} aria-label="Read-only" />
+            </span>
           )}
           {contextLabel && !editingTitle && (
             <span className="shrink-0 max-w-[45%] truncate text-xs text-text-muted" title={contextLabel}>
@@ -585,7 +595,7 @@ function SpaceItem({
                     compact
                     icon={MoreVertical}
                     actions={[
-                      {
+                      !readOnly && {
                         id: 'pin',
                         label: item.pinned ? 'Unpin' : 'Pin',
                         icon: item.pinned ? PinOff : Pin,
@@ -609,9 +619,9 @@ function SpaceItem({
                         icon: copied ? ClipboardCheck : ClipboardCopy,
                         onClick: handleCopy,
                       },
-                      { id: 'rename', label: 'Rename', icon: Pencil, onClick: () => setEditingTitle(true) },
-                      onDuplicate && { id: 'duplicate', label: 'Duplicate', icon: Copy, disabled: !online, onClick: () => onDuplicate(item) },
-                      onMove && { id: 'move', label: 'Move', icon: MoveRight, disabled: !online, onClick: () => onMove(item.id) },
+                      !readOnly && { id: 'rename', label: 'Rename', icon: Pencil, onClick: () => setEditingTitle(true) },
+                      !readOnly && onDuplicate && { id: 'duplicate', label: 'Duplicate', icon: Copy, disabled: !online, onClick: () => onDuplicate(item) },
+                      !readOnly && onMove && { id: 'move', label: 'Move', icon: MoveRight, disabled: !online, onClick: () => onMove(item.id) },
                       {
                         id: 'export-pdf',
                         label: 'Export PDF',
@@ -622,8 +632,8 @@ function SpaceItem({
                           content: latestState.current.content,
                         }),
                       },
-                      onArchive && { id: 'archive', label: 'Archive', icon: Archive, disabled: !online, onClick: () => onArchive(item.id) },
-                      { id: 'delete', label: 'Delete', icon: Trash2, variant: 'danger', disabled: !online, onClick: () => onDelete(item.id) },
+                      !readOnly && onArchive && { id: 'archive', label: 'Archive', icon: Archive, disabled: !online, onClick: () => onArchive(item.id) },
+                      !readOnly && { id: 'delete', label: 'Delete', icon: Trash2, variant: 'danger', disabled: !online, onClick: () => onDelete(item.id) },
                     ]}
                   />
                 </>
@@ -655,7 +665,7 @@ function SpaceItem({
               <ItemTags
                 tags={item.tags || []}
                 onChange={(tags) => onSetTags?.(item.id, tags)}
-                disabled={!online}
+                disabled={!online || readOnly}
               />
             )}
           </div>
@@ -725,18 +735,18 @@ function SpaceItem({
             preview; tapping it opens full screen / expands instead of editing. */}
         <div className={denseView || clamped ? 'pointer-events-none' : 'contents'}>
         {/* Render only the editor for this item's type (not all four) */}
-        {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'richtext'      && <RichTextEditor   key={`${item.id}:${editorVersion}`} ref={richTextRef} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'code'          && <CodeEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'checkbox_list' && <ChecklistEditor  key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'menu_list'     && <MenuListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'numbered_list' && <NumberedListEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'card_list'     && <CardListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'secret'        && <SecretEditor     key={`${item.id}:${editorVersion}`} ref={secretEditorRef} content={localContent} onChange={handleContentChange} onStateChange={setSecretState} />}
-        {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
-        {item.type === 'authenticator' && <AuthenticatorEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} />}
+        {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'richtext'      && <RichTextEditor   key={`${item.id}:${editorVersion}`} ref={richTextRef} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'code'          && <CodeEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'checkbox_list' && <ChecklistEditor  key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'menu_list'     && <MenuListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'numbered_list' && <NumberedListEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'card_list'     && <CardListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'secret'        && <SecretEditor     key={`${item.id}:${editorVersion}`} ref={secretEditorRef} content={localContent} onChange={handleContentChange} readOnly={readOnly} onStateChange={setSecretState} />}
+        {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'authenticator' && <AuthenticatorEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         </div>
         {/* A soft fade at the bottom cues "more below" without a label; tapping
             the preview expands it in full. */}

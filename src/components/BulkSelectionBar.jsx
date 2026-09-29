@@ -8,7 +8,7 @@ import { X } from 'lucide-react'
  * @param {{
  *   count: number,
  *   onClear: Function,
- *   actions: Array<{ id: string, label: string, icon: React.ComponentType, onClick: Function, variant?: 'danger' }>,
+ *   actions: Array<{ id: string, label: string, icon: React.ComponentType, onClick: Function, variant?: 'danger' } | false>,
  * }} props
  */
 export default function BulkSelectionBar({ count, onClear, actions }) {
@@ -42,7 +42,7 @@ export default function BulkSelectionBar({ count, onClear, actions }) {
           {count} selected
         </span>
         <div className="flex flex-wrap items-center gap-1.5">
-          {actions.map(({ id, label, icon: Icon, onClick, variant }) => (
+          {actions.filter(Boolean).map(({ id, label, icon: Icon, onClick, variant }) => (
             <button
               key={id}
               type="button"
