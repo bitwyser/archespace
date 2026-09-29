@@ -1,10 +1,14 @@
 /**
- * SettingsPage.jsx - Account, appearance, security, and backup settings.
+ * SettingsPage.jsx - Account, vault, appearance and backup settings.
+ *
+ * Each setting is a row (title, short explanation, current state, one action);
+ * a row's form opens from its action, one at a time, so the page reads as a
+ * list rather than a wall of fields. See components/settings/SettingRow.jsx.
  */
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, ShieldCheck, Lock } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, KeyRound, Lock, LogOut, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { useTheme } from '../context/ThemeCore'
@@ -25,43 +29,37 @@ import ReauthCode from '../components/ReauthCode'
 import { Modal, ConfirmDialog } from '../components/ui/UI'
 import RecoveryCodeDialog from '../components/RecoveryCodeDialog'
 import { queryKeys } from '../lib/queryKeys'
+import {
+  SettingRow, SettingGroup, FormActions,
+  rowButtonClass, rowDangerButtonClass, primaryButtonClass, inputClass, labelClass,
+} from '../components/settings/SettingRow'
 
-/**
- * A settings section rendered in the content pane. Only the section matching
- * the active nav item renders; the header shows the section's icon, title and
- * description for context.
- */
-function SettingsSection({ id, title, description, icon: Icon, active, children }) {
+/** Nav entries; each section's header repeats its title and description. */
+const SECTIONS = [
+  { id: 'account', title: 'Account', description: 'Your email, login password and sign-in security.', icon: User },
+  { id: 'vault', title: 'Vault', description: 'Your vault PIN encrypts everything you store. It is separate from your login password.', icon: KeyRound },
+  { id: 'appearance', title: 'Appearance', description: 'Theme and accent colour.', icon: Palette },
+  { id: 'backup', title: 'Backup', description: 'Download a copy of your data, or restore one.', icon: Download },
+]
+
+/** The active section: its icon, title and description, then its groups. */
+function SettingsSection({ id, active, children }) {
   if (active !== id) return null
-
+  const { title, description, icon: Icon } = SECTIONS.find(s => s.id === id)
   return (
     <section>
       <div className="mb-6 flex items-center gap-3">
-        {Icon && (
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
-            <Icon size={19} />
-          </span>
-        )}
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-muted text-accent">
+          <Icon size={19} />
+        </span>
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-          <p className="text-text-muted text-xs mt-0.5">{description}</p>
+          <p className="mt-0.5 text-xs text-text-muted">{description}</p>
         </div>
       </div>
       {children}
     </section>
   )
-}
-
-/** Nav rail entries (drive the left rail; content lives in the pane below). */
-const SECTIONS = [
-  { id: 'account', title: 'Account', description: 'Email, login password, and account.', icon: User },
-  { id: 'appearance', title: 'Appearance', description: 'Theme mode and accent color synced to your account.', icon: Palette },
-  { id: 'backup', title: 'Backup', description: 'Export or import all spaces as JSON.', icon: Download },
-  { id: 'security', title: 'Security', description: 'Vault PIN, recovery code, passkeys, and auto-lock.', icon: ShieldCheck },
-]
-
-function Divider() {
-  return <div className="my-5 border-t border-bg-border" />
 }
 
 export default function SettingsPage() {
@@ -121,6 +119,9 @@ export default function SettingsPage() {
     ? 'appearance'
     : rawActiveSection
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
+  // The one row whose form is open: 'email' | 'password' | 'pin' |
+  // 'pin-recovery' | 'recovery-code' | null.
+  const [openRow, setOpenRow] = useState(null)
   const [emailStep, setEmailStep] = useState('form')     // 'form' | 'code'
   const deleteConfirmationPhrase = `DELETE ${user?.email || ''}`
 
@@ -131,6 +132,35 @@ export default function SettingsPage() {
     setDeletePin('')
     setShowDeletePassword(false)
     setDeleteLoading(false)
+  }
+
+  /** Close the open row form and clear what was typed in it. */
+  const closeRow = () => {
+    setOpenRow(null)
+    setEmailStep('form')
+    setNewEmail('')
+    setEmailPassword('')
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setCurrentPin('')
+    setNewPin('')
+    setConfirmPin('')
+    setRecoveryCodeInput('')
+    setRecoveryPin('')
+    setConfirmRecoveryPin('')
+    setRecoverySetupPin('')
+  }
+
+  /** Open a row's form (closing any other, and its typed values). */
+  const toggleRow = (row) => {
+    closeRow()
+    setOpenRow(row)
+  }
+
+  const openSection = (section) => {
+    closeRow()
+    setActiveSection(section)
   }
 
   const sendEmailCode = async () => {
@@ -304,6 +334,7 @@ export default function SettingsPage() {
       setCurrentPin('')
       setNewPin('')
       setConfirmPin('')
+      setOpenRow(null)
       toast.success('Vault PIN updated.')
     } catch (err) {
       toast.error(err?.message || "Couldn't change vault PIN.")
@@ -317,6 +348,7 @@ export default function SettingsPage() {
     try {
       const { recoveryCode } = await setupRecoveryCode(recoverySetupPin)
       setRecoverySetupPin('')
+      setOpenRow(null)
       setOneTimeRecoveryCode(recoveryCode)
       toast.success('Recovery code created. Save it now.')
     } catch (err) {
@@ -342,6 +374,7 @@ export default function SettingsPage() {
       setRecoveryCodeInput('')
       setRecoveryPin('')
       setConfirmRecoveryPin('')
+      setOpenRow(null)
       setOneTimeRecoveryCode(recoveryCode)
       toast.success('Vault PIN updated. Save your new recovery code.')
     } catch (err) {
@@ -382,15 +415,19 @@ export default function SettingsPage() {
     navigate('/app')
   }
 
-  const handleThemeModeChange = (nextThemeMode) => {
-    setThemeMode(nextThemeMode.id)
-    toast.success(`${nextThemeMode.name} theme applied.`)
-  }
+  const passwordToggle = (shown, toggle, label) => (
+    <button
+      type="button"
+      onClick={toggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
+      aria-label={label}
+    >
+      {shown ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  )
 
-  const handleAccentColorChange = (nextAccentColor) => {
-    setAccentColor(nextAccentColor.id)
-    toast.success(`${nextAccentColor.name} accent applied.`)
-  }
+  const selectedTheme = themeModes.find(o => o.id === themeMode)
+  const selectedAccent = accentColors.find(o => o.id === accentColor)
 
   return (
     <div className="min-h-screen bg-bg-base">
@@ -408,12 +445,10 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 md:flex md:h-[calc(100dvh-3.5rem)] md:flex-col md:overflow-hidden">
-        <h1 className="mb-6 shrink-0 text-xl font-semibold text-text-primary">Settings</h1>
-
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8 md:flex md:h-[calc(100dvh-3.5rem)] md:flex-col md:overflow-hidden">
         <div className="flex flex-col gap-6 md:min-h-0 md:flex-1 md:flex-row md:items-stretch">
-          {/* Left pane */}
-          <nav className="w-full shrink-0 md:w-52 md:self-start">
+          {/* Section nav: tabs on phones, a rail on wider screens */}
+          <nav className="w-full shrink-0 md:w-52 md:self-start" aria-label="Settings sections">
             <div className="flex gap-1 overflow-x-auto rounded-xl border border-bg-border bg-bg-elevated p-1 md:flex-col md:overflow-visible">
               {SECTIONS.map(({ id, title, icon: NavIcon }) => {
                 const on = activeSection === id
@@ -422,7 +457,7 @@ export default function SettingsPage() {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => { if (!disabled) setActiveSection(id) }}
+                    onClick={() => { if (!disabled) openSection(id) }}
                     disabled={disabled}
                     aria-current={on ? 'page' : undefined}
                     title={disabled ? 'Unavailable offline' : undefined}
@@ -438,472 +473,418 @@ export default function SettingsPage() {
 
           {/* Content pane */}
           <div className="min-w-0 flex-1 md:flex md:min-h-0 md:flex-col">
-            <div className="rounded-2xl border border-bg-border bg-bg-surface p-5 sm:p-6 md:min-h-0 md:flex-1 md:overflow-y-auto">
-              <SettingsSection
-                id="account"
-            title="Account"
-            description="Email, login password, and account."
-            icon={User}
-            active={activeSection}
-          >
-            <div className="flex items-center gap-3 rounded-xl border border-bg-border bg-bg-elevated px-4 py-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                <User size={17} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-text-muted">Signed in as</p>
-                <p className="text-sm font-medium text-text-primary truncate">{user?.email}</p>
-              </div>
-            </div>
-
-            <Divider />
-
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Change email</h3>
-              <p className="text-text-muted text-xs mt-0.5">
-                Current email: <span className="text-text-secondary">{user?.email}</span>
-              </p>
-              <p className="text-text-muted text-xs mt-1.5">
-                We'll email a 6-digit code to your current address to confirm it's you. After you enter it, a confirmation link is sent to your new address, and the change takes effect once you open that link.
-              </p>
-            </div>
-            {emailStep === 'form' ? (
-            <form onSubmit={handleChangeEmail} className="mt-3 space-y-3">
-              <div>
-                <label htmlFor="new-email" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  New email
-                </label>
-                <input
-                  id="new-email"
-                  type="email"
-                  value={newEmail}
-                  onChange={e => setNewEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
-                />
-              </div>
-              <div>
-                <label htmlFor="email-change-password" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Login password
-                </label>
-                <div className="relative">
-                  <input
-                    id="email-change-password"
-                    type={showEmailPassword ? 'text' : 'password'}
-                    value={emailPassword}
-                    onChange={e => setEmailPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                    className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:border-accent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowEmailPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
-                    aria-label="Toggle email password visibility"
+            <div className="md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-1">
+              {/* ── Account ─────────────────────────────── */}
+              <SettingsSection id="account" active={activeSection}>
+                <SettingGroup label="Sign-in">
+                  <SettingRow
+                    title="Email"
+                    description={user?.email}
+                    open={openRow === 'email'}
+                    action={openRow !== 'email' && (
+                      <button type="button" onClick={() => toggleRow('email')} className={rowButtonClass}>Change</button>
+                    )}
                   >
-                    {showEmailPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={emailLoading}
-                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-              >
-                {emailLoading ? 'Sending code…' : 'Change email'}
-              </button>
-            </form>
-            ) : (
-              <ReauthCode
-                email={user?.email}
-                busy={emailLoading}
-                onConfirm={handleConfirmEmailChange}
-                onCancel={() => { setEmailStep('form'); setEmailPassword('') }}
-                onResend={sendEmailCode}
-              />
-            )}
-
-            <Divider />
-
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Change login password</h3>
-              <p className="text-text-muted text-xs mt-0.5">Used to sign in. Separate from your vault PIN.</p>
-            </div>
-            <form onSubmit={handleChangePassword} className="mt-3 space-y-3">
-              <div>
-                <label htmlFor="current-password" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Current password
-                </label>
-                <div className="relative">
-                  <input
-                    id="current-password"
-                    type={showPasswords ? 'text' : 'password'}
-                    value={currentPassword}
-                    onChange={e => setCurrentPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                    className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:border-accent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPasswords ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="new-password" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  New password
-                </label>
-                <input
-                  id="new-password"
-                  type={showPasswords ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  required
-                  minLength={PASSWORD_RULES.minLength}
-                  autoComplete="new-password"
-                  className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
-                />
-              </div>
-              <div>
-                <label htmlFor="confirm-password" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Confirm new password
-                </label>
-                <input
-                  id="confirm-password"
-                  type={showPasswords ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={passwordLoading}
-                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-              >
-                {passwordLoading ? 'Updating…' : 'Change login password'}
-              </button>
-              <button
-                type="button"
-                onClick={handleSendPasswordReset}
-                disabled={resetLoading}
-                className="w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
-              >
-                {resetLoading ? 'Sending reset link...' : 'Forgot current password? Send reset link'}
-              </button>
-            </form>
-
-            <Divider />
-
-            <MfaSettings />
-
-            <Divider />
-
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Sign out of all devices</h3>
-              <p className="text-text-muted text-xs mt-0.5">
-                End your session everywhere, including this one. Use this if you've signed in on a device you no longer have access to.
-              </p>
-              <button
-                type="button"
-                onClick={() => setConfirmSignOutAll(true)}
-                className="mt-3 w-full px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-danger/10 hover:border-danger/30 text-sm font-semibold text-text-secondary hover:text-danger transition-colors"
-              >
-                Sign out of all devices
-              </button>
-            </div>
-
-            <Divider />
-
-            <div className="rounded-xl border border-danger/30 bg-danger/10 p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle size={20} className="mt-0.5 shrink-0 text-danger" />
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-danger">Delete Account Permanently</h3>
-                  <p className="mt-1 text-xs leading-5 text-text-muted">
-                    Permanently delete your account, spaces, items, encrypted vault, and settings.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDeleteStep('warning')}
-                className="mt-4 w-full rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm font-semibold text-danger transition-colors hover:bg-danger-muted"
-              >
-                Delete Account
-              </button>
-            </div>
-          </SettingsSection>
-
-          <SettingsSection
-            id="appearance"
-            title="Appearance"
-            description="Theme mode and accent color synced to your account."
-            icon={Palette}
-            active={activeSection}
-          >
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Theme</h3>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                {themeModes.map(option => {
-                  const selected = themeMode === option.id
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => handleThemeModeChange(option)}
-                      className={`min-h-[76px] rounded-xl border px-3 py-3 text-left transition-colors ${
-                        selected
-                          ? 'border-accent bg-accent-muted'
-                          : 'border-bg-border bg-bg-elevated hover:bg-bg-base'
-                      }`}
-                    >
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-text-primary">{option.name}</span>
-                        {selected && <Check size={16} className="text-accent shrink-0" />}
-                      </span>
-                      <span className="mt-1 block text-xs text-text-muted">{option.description}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            <Divider />
-
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Accent Color</h3>
-              <div className="mt-3 grid gap-3">
-                {accentColors.map(option => {
-                  const selected = accentColor === option.id
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => handleAccentColorChange(option)}
-                      className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
-                        selected
-                          ? 'border-accent bg-accent-muted'
-                          : 'border-bg-border bg-bg-elevated hover:bg-bg-base'
-                      }`}
-                    >
-                      <span
-                        className="h-8 w-8 rounded-full border border-white/20 shrink-0"
-                        style={{ backgroundColor: option.swatch }}
+                    <p className="mb-3 text-xs leading-relaxed text-text-muted">
+                      We'll email a 6-digit code to your current address to confirm it's you. Then a link goes to the new address, and the change applies once you open it.
+                    </p>
+                    {emailStep === 'form' ? (
+                      <form onSubmit={handleChangeEmail} className="space-y-3">
+                        <div>
+                          <label htmlFor="new-email" className={labelClass}>New email</label>
+                          <input
+                            id="new-email"
+                            type="email"
+                            value={newEmail}
+                            onChange={e => setNewEmail(e.target.value)}
+                            required
+                            autoComplete="email"
+                            className={inputClass}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="email-change-password" className={labelClass}>Login password</label>
+                          <div className="relative">
+                            <input
+                              id="email-change-password"
+                              type={showEmailPassword ? 'text' : 'password'}
+                              value={emailPassword}
+                              onChange={e => setEmailPassword(e.target.value)}
+                              required
+                              autoComplete="current-password"
+                              className={`password-field pr-11 ${inputClass}`}
+                            />
+                            {passwordToggle(showEmailPassword, () => setShowEmailPassword(v => !v), 'Toggle email password visibility')}
+                          </div>
+                        </div>
+                        <FormActions onCancel={closeRow} submitLabel="Send code" busy={emailLoading} busyLabel="Sending code…" />
+                      </form>
+                    ) : (
+                      <ReauthCode
+                        email={user?.email}
+                        busy={emailLoading}
+                        onConfirm={handleConfirmEmailChange}
+                        onCancel={() => { setEmailStep('form'); setEmailPassword('') }}
+                        onResend={sendEmailCode}
                       />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-semibold text-text-primary">{option.name}</span>
-                        <span className="block text-xs text-text-muted mt-0.5">{option.description}</span>
-                      </span>
-                      {selected && <Check size={16} className="text-accent shrink-0" />}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </SettingsSection>
+                    )}
+                  </SettingRow>
 
-          <SettingsSection
-            id="backup"
-            title="Backup"
-            description="Export or import all spaces as JSON."
-            icon={Download}
-            active={activeSection}
-          >
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                type="button"
-                onClick={handleExport}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-text-secondary hover:text-text-primary text-sm font-medium transition-colors"
-              >
-                <Download size={16} />
-                Export backup
-              </button>
-              <button
-                type="button"
-                onClick={() => importRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-text-secondary hover:text-text-primary text-sm font-medium transition-colors"
-              >
-                <Upload size={16} />
-                Import backup
-              </button>
-              <input
-                ref={importRef}
-                type="file"
-                accept=".json"
-                onChange={handleImport}
-                className="hidden"
-              />
-            </div>
-          </SettingsSection>
+                  <SettingRow
+                    title="Login password"
+                    description="Used to sign in. Separate from your vault PIN."
+                    open={openRow === 'password'}
+                    action={openRow !== 'password' && (
+                      <button type="button" onClick={() => toggleRow('password')} className={rowButtonClass}>Change</button>
+                    )}
+                  >
+                    <form onSubmit={handleChangePassword} className="space-y-3">
+                      <div>
+                        <label htmlFor="current-password" className={labelClass}>Current password</label>
+                        <div className="relative">
+                          <input
+                            id="current-password"
+                            type={showPasswords ? 'text' : 'password'}
+                            value={currentPassword}
+                            onChange={e => setCurrentPassword(e.target.value)}
+                            required
+                            autoComplete="current-password"
+                            className={`password-field pr-11 ${inputClass}`}
+                          />
+                          {passwordToggle(showPasswords, () => setShowPasswords(v => !v), 'Toggle password visibility')}
+                        </div>
+                      </div>
+                      <div>
+                        <label htmlFor="new-password" className={labelClass}>New password</label>
+                        <input
+                          id="new-password"
+                          type={showPasswords ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={e => setNewPassword(e.target.value)}
+                          required
+                          minLength={PASSWORD_RULES.minLength}
+                          autoComplete="new-password"
+                          className={`password-field ${inputClass}`}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="confirm-password" className={labelClass}>Confirm new password</label>
+                        <input
+                          id="confirm-password"
+                          type={showPasswords ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={e => setConfirmPassword(e.target.value)}
+                          required
+                          autoComplete="new-password"
+                          className={`password-field ${inputClass}`}
+                        />
+                      </div>
+                      <p className="text-xs text-text-muted">
+                        You'll be signed out and asked to sign in with the new password.
+                      </p>
+                      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                        <button
+                          type="button"
+                          onClick={handleSendPasswordReset}
+                          disabled={resetLoading}
+                          className="text-left text-xs font-medium text-accent hover:underline disabled:opacity-50"
+                        >
+                          {resetLoading ? 'Sending reset link…' : 'Forgot it? Email me a reset link'}
+                        </button>
+                        <div className="flex justify-end gap-2">
+                          <button type="button" onClick={closeRow} className={rowButtonClass}>Cancel</button>
+                          <button type="submit" disabled={passwordLoading} className={primaryButtonClass}>
+                            {passwordLoading ? 'Updating…' : 'Change password'}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </SettingRow>
 
-          <SettingsSection
-            id="security"
-            title="Security"
-            description="Vault PIN, recovery code, passkeys, and auto-lock."
-            icon={ShieldCheck}
-            active={activeSection}
-          >
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Change vault PIN</h3>
-              <p className="text-text-muted text-xs mt-0.5">
-                Unlocks encrypted data. PIN or passphrase, at least {VAULT_PIN_MIN_LENGTH} characters.
-              </p>
-            </div>
-            <form onSubmit={handleChangePin} className="mt-3 space-y-3">
-              <PinInput
-                id="settings-current-pin"
-                label="Current vault PIN"
-                value={currentPin}
-                onChange={setCurrentPin}
-                disabled={pinLoading || unlocking}
-              />
-              <PinInput
-                id="settings-new-pin"
-                label="New vault PIN"
-                value={newPin}
-                onChange={setNewPin}
-                disabled={pinLoading || unlocking}
-              />
-              <PinInput
-                id="settings-confirm-pin"
-                label="Confirm new vault PIN"
-                value={confirmPin}
-                onChange={setConfirmPin}
-                disabled={pinLoading || unlocking}
-              />
-              <WeakPinWarning message={!validateVaultPin(newPin) ? getWeakPinWarning(newPin) : null} />
-              <button
-                type="submit"
-                disabled={pinLoading || unlocking}
-                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-              >
-                {pinLoading || unlocking ? 'Updating...' : 'Change vault PIN'}
-              </button>
-            </form>
+                  <MfaSettings />
+                </SettingGroup>
 
-            <Divider />
+                <SettingGroup label="Sessions">
+                  <SettingRow
+                    title="Sign out of all devices"
+                    description="Ends your session everywhere, including here. Use it if you've lost a device you were signed in on."
+                    action={
+                      <button type="button" onClick={() => setConfirmSignOutAll(true)} className={rowButtonClass}>
+                        <LogOut size={15} /> Sign out everywhere
+                      </button>
+                    }
+                  />
+                </SettingGroup>
 
-            <PasskeyManager />
+                <SettingGroup label="Danger zone" danger>
+                  <SettingRow
+                    title="Delete account"
+                    description="Permanently deletes your account, spaces, items and vault. This can't be undone."
+                    action={
+                      <button type="button" onClick={() => setDeleteStep('warning')} className={rowDangerButtonClass}>
+                        <Trash2 size={15} /> Delete account
+                      </button>
+                    }
+                  />
+                </SettingGroup>
+              </SettingsSection>
 
-            <Divider />
+              {/* ── Vault ───────────────────────────────── */}
+              <SettingsSection id="vault" active={activeSection}>
+                <SettingGroup label="Unlocking">
+                  <SettingRow
+                    title="Vault PIN"
+                    description={`Unlocks your encrypted data. A PIN or passphrase of at least ${VAULT_PIN_MIN_LENGTH} characters.`}
+                    open={openRow === 'pin' || openRow === 'pin-recovery'}
+                    action={openRow !== 'pin' && openRow !== 'pin-recovery' && (
+                      <button type="button" onClick={() => toggleRow('pin')} className={rowButtonClass}>Change</button>
+                    )}
+                  >
+                    {openRow === 'pin' ? (
+                      <form onSubmit={handleChangePin} className="space-y-3">
+                        <PinInput
+                          id="settings-current-pin"
+                          label="Current vault PIN"
+                          value={currentPin}
+                          onChange={setCurrentPin}
+                          disabled={pinLoading || unlocking}
+                        />
+                        <PinInput
+                          id="settings-new-pin"
+                          label="New vault PIN"
+                          value={newPin}
+                          onChange={setNewPin}
+                          disabled={pinLoading || unlocking}
+                        />
+                        <PinInput
+                          id="settings-confirm-pin"
+                          label="Confirm new vault PIN"
+                          value={confirmPin}
+                          onChange={setConfirmPin}
+                          disabled={pinLoading || unlocking}
+                        />
+                        <WeakPinWarning message={!validateVaultPin(newPin) ? getWeakPinWarning(newPin) : null} />
+                        <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setOpenRow('pin-recovery')}
+                            className="text-left text-xs font-medium text-accent hover:underline"
+                          >
+                            Forgot your PIN? Use your recovery code
+                          </button>
+                          <div className="flex justify-end gap-2">
+                            <button type="button" onClick={closeRow} className={rowButtonClass}>Cancel</button>
+                            <button type="submit" disabled={pinLoading || unlocking} className={primaryButtonClass}>
+                              {pinLoading || unlocking ? 'Updating…' : 'Change PIN'}
+                            </button>
+                          </div>
+                        </div>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleChangePinWithRecoveryCode} className="space-y-3">
+                        <p className="text-xs leading-relaxed text-text-muted">
+                          Set a new PIN with your recovery code. You'll get a new recovery code afterwards.
+                        </p>
+                        <div>
+                          <label htmlFor="pin-recovery-code" className={labelClass}>Recovery code</label>
+                          <input
+                            id="pin-recovery-code"
+                            type="text"
+                            value={recoveryCodeInput}
+                            onChange={e => setRecoveryCodeInput(e.target.value)}
+                            required
+                            autoComplete="off"
+                            inputMode="text"
+                            className={`password-field ${inputClass}`}
+                          />
+                        </div>
+                        <PinInput
+                          id="settings-recovery-pin"
+                          label="New vault PIN"
+                          value={recoveryPin}
+                          onChange={setRecoveryPin}
+                          disabled={pinRecoveryLoading || unlocking}
+                        />
+                        <PinInput
+                          id="settings-recovery-confirm-pin"
+                          label="Confirm new vault PIN"
+                          value={confirmRecoveryPin}
+                          onChange={setConfirmRecoveryPin}
+                          disabled={pinRecoveryLoading || unlocking}
+                        />
+                        <WeakPinWarning message={!validateVaultPin(recoveryPin) ? getWeakPinWarning(recoveryPin) : null} />
+                        <FormActions
+                          onCancel={closeRow}
+                          submitLabel="Reset PIN"
+                          busy={pinRecoveryLoading || unlocking}
+                          busyLabel="Updating…"
+                        />
+                      </form>
+                    )}
+                  </SettingRow>
 
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Forgot vault PIN - reset with recovery code</h3>
-              <p className="text-text-muted text-xs mt-0.5">Use your recovery code to set a new vault PIN.</p>
-            </div>
-            <form onSubmit={handleChangePinWithRecoveryCode} className="mt-3 space-y-3">
-              <div>
-                <label htmlFor="pin-recovery-code" className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Recovery code
-                </label>
+                  <PasskeyManager />
+                </SettingGroup>
+
+                <SettingGroup label="Recovery">
+                  <SettingRow
+                    title="Recovery code"
+                    description="A one-time code that resets your vault PIN if you forget it. Making a new one replaces the old one."
+                    open={openRow === 'recovery-code'}
+                    action={openRow !== 'recovery-code' && (
+                      <button type="button" onClick={() => toggleRow('recovery-code')} className={rowButtonClass}>Create new</button>
+                    )}
+                  >
+                    <form onSubmit={handleSetupRecoveryCode} className="space-y-3">
+                      <PinInput
+                        id="settings-recovery-setup-pin"
+                        label="Current vault PIN"
+                        value={recoverySetupPin}
+                        onChange={setRecoverySetupPin}
+                        disabled={recoverySetupLoading || unlocking}
+                      />
+                      <FormActions
+                        onCancel={closeRow}
+                        submitLabel="Create code"
+                        busy={recoverySetupLoading || unlocking}
+                        busyLabel="Creating…"
+                        disabled={recoverySetupPin.length < VAULT_PIN_MIN_LENGTH}
+                      />
+                    </form>
+                  </SettingRow>
+                </SettingGroup>
+
+                {oneTimeRecoveryCode && (
+                  <RecoveryCodeDialog
+                    code={oneTimeRecoveryCode}
+                    description="Save this code now. It replaces your previous recovery code."
+                    onAcknowledge={() => setOneTimeRecoveryCode('')}
+                  />
+                )}
+
+                <SettingGroup label="Locking">
+                  <SettingRow
+                    title="Auto-lock"
+                    description="Lock the vault after a period of inactivity. Applies to this device only."
+                    action={
+                      <select
+                        value={autoLockId}
+                        onChange={(e) => { setAutoLock(e.target.value); toast.success('Auto-lock updated.') }}
+                        aria-label="Auto-lock after"
+                        className="rounded-xl border border-bg-border bg-bg-surface px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none"
+                      >
+                        {VAULT_AUTO_LOCK_OPTIONS.map(o => (
+                          <option key={o.id} value={o.id}>{o.label}</option>
+                        ))}
+                      </select>
+                    }
+                  />
+                  <SettingRow
+                    title="Lock now"
+                    description="Your PIN or passkey will be needed again to see your data."
+                    action={
+                      <button type="button" onClick={handleLockVault} className={rowButtonClass}>
+                        <Lock size={15} /> Lock vault
+                      </button>
+                    }
+                  />
+                </SettingGroup>
+              </SettingsSection>
+
+              {/* ── Appearance ──────────────────────────── */}
+              <SettingsSection id="appearance" active={activeSection}>
+                <SettingGroup>
+                  <SettingRow
+                    title="Theme"
+                    description={selectedTheme?.description}
+                    action={
+                      <div role="radiogroup" aria-label="Theme" className="flex rounded-xl border border-bg-border bg-bg-elevated p-0.5">
+                        {themeModes.map(option => {
+                          const selected = themeMode === option.id
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              onClick={() => setThemeMode(option.id)}
+                              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                                selected ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'
+                              }`}
+                            >
+                              {option.name}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    }
+                  />
+                  <SettingRow
+                    title="Accent colour"
+                    description={selectedAccent ? `${selectedAccent.name}. Used for buttons, highlights and marks.` : undefined}
+                    action={
+                      <div role="radiogroup" aria-label="Accent colour" className="flex items-center gap-2">
+                        {accentColors.map(option => {
+                          const selected = accentColor === option.id
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              aria-label={option.name}
+                              title={option.name}
+                              onClick={() => setAccentColor(option.id)}
+                              className={`flex h-8 w-8 items-center justify-center rounded-full ring-offset-2 ring-offset-bg-surface transition-shadow ${
+                                selected ? 'ring-2 ring-text-primary' : 'hover:ring-2 hover:ring-bg-border'
+                              }`}
+                              style={{ backgroundColor: option.swatch }}
+                            >
+                              {selected && <Check size={15} className="text-white drop-shadow" />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    }
+                  />
+                </SettingGroup>
+                <p className="mt-3 px-1 text-xs text-text-muted">Synced to your account, so every device looks the same.</p>
+              </SettingsSection>
+
+              {/* ── Backup ──────────────────────────────── */}
+              <SettingsSection id="backup" active={activeSection}>
+                <SettingGroup>
+                  <SettingRow
+                    title="Export backup"
+                    description="Downloads all your spaces and items as a JSON file."
+                    action={
+                      <button type="button" onClick={handleExport} className={rowButtonClass}>
+                        <Download size={15} /> Export
+                      </button>
+                    }
+                  />
+                  <SettingRow
+                    title="Import backup"
+                    description="Adds the spaces and items from a backup file. Nothing you already have is replaced."
+                    action={
+                      <button type="button" onClick={() => importRef.current?.click()} className={rowButtonClass}>
+                        <Upload size={15} /> Import
+                      </button>
+                    }
+                  />
+                </SettingGroup>
                 <input
-                  id="pin-recovery-code"
-                  type="text"
-                  value={recoveryCodeInput}
-                  onChange={e => setRecoveryCodeInput(e.target.value)}
-                  required
-                  autoComplete="off"
-                  inputMode="text"
-                  className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent"
+                  ref={importRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImport}
+                  className="hidden"
                 />
-              </div>
-              <PinInput
-                id="settings-recovery-pin"
-                label="New vault PIN"
-                value={recoveryPin}
-                onChange={setRecoveryPin}
-                disabled={pinRecoveryLoading || unlocking}
-              />
-              <PinInput
-                id="settings-recovery-confirm-pin"
-                label="Confirm new vault PIN"
-                value={confirmRecoveryPin}
-                onChange={setConfirmRecoveryPin}
-                disabled={pinRecoveryLoading || unlocking}
-              />
-              <WeakPinWarning message={!validateVaultPin(recoveryPin) ? getWeakPinWarning(recoveryPin) : null} />
-              <button
-                type="submit"
-                disabled={pinRecoveryLoading || unlocking}
-                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-              >
-                {pinRecoveryLoading || unlocking ? 'Updating...' : 'Reset PIN with recovery code'}
-              </button>
-            </form>
-
-            <Divider />
-
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Setup recovery code</h3>
-              <p className="text-text-muted text-xs mt-0.5">Use your current vault PIN to create or replace your one-time recovery code.</p>
-            </div>
-            <form onSubmit={handleSetupRecoveryCode} className="mt-3 space-y-3">
-              <PinInput
-                id="settings-recovery-setup-pin"
-                label="Current vault PIN"
-                value={recoverySetupPin}
-                onChange={setRecoverySetupPin}
-                disabled={recoverySetupLoading || unlocking}
-              />
-              <button
-                type="submit"
-                disabled={recoverySetupLoading || unlocking || recoverySetupPin.length < VAULT_PIN_MIN_LENGTH}
-                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-              >
-                {recoverySetupLoading || unlocking ? 'Creating...' : 'Create recovery code'}
-              </button>
-            </form>
-
-            {oneTimeRecoveryCode && (
-              <RecoveryCodeDialog
-                code={oneTimeRecoveryCode}
-                description="Save this code now. It replaces your previous recovery code."
-                onAcknowledge={() => setOneTimeRecoveryCode('')}
-              />
-            )}
-
-            <Divider />
-
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Auto-lock</h3>
-              <p className="text-text-muted text-xs mt-0.5">Lock the vault automatically after a period of inactivity. This setting applies to this device only.</p>
-            </div>
-            <select
-              value={autoLockId}
-              onChange={(e) => { setAutoLock(e.target.value); toast.success('Auto-lock updated.') }}
-              className="mt-3 w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent"
-            >
-              {VAULT_AUTO_LOCK_OPTIONS.map(o => (
-                <option key={o.id} value={o.id}>{o.label}</option>
-              ))}
-            </select>
-
-            <Divider />
-
-            <div>
-              <h3 className="text-sm font-semibold text-text-primary">Lock vault</h3>
-              <p className="text-text-muted text-xs mt-0.5">Require your PIN or passkey again to view your encrypted data.</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleLockVault}
-              className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors py-3"
-            >
-              <Lock size={16} />
-              Lock vault now
-            </button>
-          </SettingsSection>
-
+                <p className="mt-3 flex items-start gap-2 px-1 text-xs leading-relaxed text-text-muted">
+                  <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-400" />
+                  The backup file is not encrypted: anyone who opens it can read your data. Keep it somewhere safe.
+                </p>
+              </SettingsSection>
             </div>
 
             <p className="mt-6 shrink-0 text-center text-xs text-text-muted">

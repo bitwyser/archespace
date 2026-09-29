@@ -1,15 +1,16 @@
 /**
  * PasskeyManager.jsx - Enable or remove biometric (WebAuthn PRF) unlock for the
- * vault. One passkey per browser (stored locally in IndexedDB). Lives in
- * Settings → Security.
+ * vault. One passkey per browser (stored locally in IndexedDB). A row in
+ * Settings → Vault; the PIN form opens from "Set up".
  */
 import { useState } from 'react'
-import { Fingerprint, ShieldCheck } from 'lucide-react'
+import { Fingerprint } from 'lucide-react'
 import { useEncryption } from '../context/EncryptionCore'
 import { useToast } from '../context/ToastCore'
 import PinInput from './PinInput'
 import { ConfirmDialog } from './ui/UI'
 import { VAULT_PIN_MIN_LENGTH } from '../lib/constants'
+import { SettingRow, FormActions, rowButtonClass, rowDangerButtonClass } from './settings/SettingRow'
 
 function formatDate(value) {
   if (!value) return null
@@ -39,6 +40,7 @@ export default function PasskeyManager() {
   const [adding, setAdding] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const passkey = passkeys[0] || null
 
@@ -52,6 +54,7 @@ export default function PasskeyManager() {
     try {
       await enrollPasskey(pin)
       setPin('')
+      setOpen(false)
       toast.success('Biometric unlock enabled.')
     } catch (err) {
       toast.error(err?.message || "Couldn't enable biometric unlock.")
@@ -74,44 +77,39 @@ export default function PasskeyManager() {
     }
   }
 
+  const closeForm = () => {
+    setOpen(false)
+    setPin('')
+  }
+
+  const since = passkey ? formatDate(passkey.createdAt) : null
+  let description
+  let action = null
+  if (!passkeySupported) {
+    description = 'Not available on this device or browser.'
+  } else if (!vaultStatus.hasVault) {
+    description = 'Create a vault PIN first, then you can turn this on.'
+  } else if (passkey) {
+    description = `On for this browser${since ? ` since ${since}` : ''}. Your PIN and recovery code still work.`
+    action = (
+      <button type="button" onClick={() => setConfirmRemove(true)} disabled={removing} className={rowDangerButtonClass}>
+        Turn off
+      </button>
+    )
+  } else {
+    description = 'Unlock with Face ID, Touch ID or Windows Hello instead of typing your PIN, on this browser.'
+    action = !open && (
+      <button type="button" onClick={() => setOpen(true)} className={rowButtonClass}>
+        <Fingerprint size={15} /> Set up
+      </button>
+    )
+  }
+
+  // One element, so it sits as a single row in the settings group's list.
   return (
     <div>
-      <h3 className="text-sm font-semibold text-text-primary">Passkey / biometric unlock</h3>
-      <p className="text-text-muted text-xs mt-0.5">
-        Unlock your vault with Face ID, Touch ID, or Windows Hello instead of typing your PIN,
-        on this browser. Your PIN and recovery code still work as backups.
-      </p>
-
-      {!passkeySupported ? (
-        <p className="text-text-muted text-xs mt-3 bg-bg-elevated border border-bg-border rounded-lg px-3 py-2">
-          Biometric unlock isn’t available on this device or browser.
-        </p>
-      ) : !vaultStatus.hasVault ? (
-        <p className="text-text-muted text-xs mt-3 bg-bg-elevated border border-bg-border rounded-lg px-3 py-2">
-          Create a vault PIN first, then you can enable biometric unlock.
-        </p>
-      ) : passkey ? (
-        <div className="mt-3 flex items-center justify-between gap-3 bg-bg-elevated border border-bg-border rounded-xl px-3 py-2.5">
-          <div className="flex items-center gap-2 min-w-0">
-            <ShieldCheck size={16} className="text-success shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm text-text-primary">Biometric unlock is on</p>
-              {formatDate(passkey.createdAt) && (
-                <p className="text-text-muted text-[11px] mt-0.5">Enabled {formatDate(passkey.createdAt)}</p>
-              )}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setConfirmRemove(true)}
-            disabled={removing}
-            className="shrink-0 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            Disable
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={handleEnable} className="mt-3 space-y-3">
+      <SettingRow title="Biometric unlock" description={description} action={action} open={open && !passkey}>
+        <form onSubmit={handleEnable} className="space-y-3">
           <PinInput
             id="passkey-current-pin"
             label="Current vault PIN"
@@ -119,22 +117,21 @@ export default function PasskeyManager() {
             onChange={setPin}
             disabled={adding || unlocking}
           />
-          <button
-            type="submit"
-            disabled={adding || unlocking || pin.length < VAULT_PIN_MIN_LENGTH}
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
-          >
-            <Fingerprint size={16} />
-            {adding ? 'Waiting for device…' : 'Enable biometric unlock'}
-          </button>
+          <FormActions
+            onCancel={closeForm}
+            submitLabel="Turn on"
+            busy={adding}
+            busyLabel="Waiting for device…"
+            disabled={unlocking || pin.length < VAULT_PIN_MIN_LENGTH}
+          />
         </form>
-      )}
+      </SettingRow>
 
       {confirmRemove && (
         <ConfirmDialog
-          title="Disable biometric unlock?"
-          message="This browser will no longer unlock with biometrics. You can still unlock with your PIN, and re-enable it later."
-          confirmLabel="Disable"
+          title="Turn off biometric unlock?"
+          message="This browser will no longer unlock with biometrics. You can still unlock with your PIN, and turn it on again later."
+          confirmLabel="Turn off"
           destructive
           busy={removing}
           onConfirm={handleRemove}
