@@ -397,8 +397,8 @@ export default function SpacePage() {
                 onClick={handleToggleReadOnly}
                 disabled={!online}
                 aria-pressed={readOnly}
-                title={!online ? 'Unavailable offline' : readOnly ? 'Read-only - click to allow editing' : 'Make read-only'}
-                aria-label={readOnly ? 'Read-only, allow editing' : 'Make read-only'}
+                title={!online ? 'Unavailable offline' : readOnly ? 'Read-only - click to allow editing' : 'Read-only'}
+                aria-label={readOnly ? 'Read-only, allow editing' : 'Read-only'}
                 className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                   readOnly
                     ? 'border-accent-border bg-accent-muted text-accent'

@@ -442,10 +442,9 @@ function SpaceItem({
               {item.title || 'Untitled'}
             </span>
           )}
-          {/* Starred, right after the name: gold, so it never reads as the
-              (accent) pin. */}
+          {/* Starred, right after the name, in the accent colour. */}
           {item.starred && !editingTitle && (
-            <Star size={13} className="shrink-0 self-center text-amber-400 fill-amber-400" aria-label="Starred" />
+            <Star size={13} className="shrink-0 self-center text-accent fill-accent" aria-label="Starred" />
           )}
           {/* Outside its space, say why it can't be edited. */}
           {readOnly && contextLabel && (

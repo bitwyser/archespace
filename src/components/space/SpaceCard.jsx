@@ -102,7 +102,7 @@ export function SpaceCard({
     // the space itself (pin, duplicate, archive, delete) stays available.
     toggleReadOnly && {
       id: 'read-only',
-      label: col.read_only ? 'Allow editing' : 'Make read-only',
+      label: col.read_only ? 'Allow editing' : 'Read-only',
       icon: col.read_only ? PencilLine : PencilOff,
       disabled: !online,
       onClick: () => toggleReadOnly.mutate({ id: col.id, read_only: col.read_only }, {
@@ -156,11 +156,11 @@ export function SpaceCard({
           </span>
         )}
         {col.pinned && <Pin size={14} className="shrink-0 text-accent fill-accent" />}
-        {/* The name column, with the star (gold, unlike the accent pin) right
-            after the name inside the same fixed width. */}
+        {/* The name column, with the star right after the name inside the
+            same fixed width. */}
         <div className="shrink-0 w-32 sm:w-44 min-w-0 flex items-center gap-1">
           <h3 className="min-w-0 font-semibold text-text-primary truncate">{col.name}</h3>
-          {col.starred && <Star size={14} className="shrink-0 text-amber-400 fill-amber-400" aria-label="Starred" />}
+          {col.starred && <Star size={14} className="shrink-0 text-accent fill-accent" aria-label="Starred" />}
           {col.read_only && <ReadOnlyMark />}
         </div>
 
@@ -210,8 +210,7 @@ export function SpaceCard({
           <div className="flex items-center gap-1.5">
             {col.pinned && <Pin size={14} className="shrink-0 text-accent fill-accent" />}
             <h3 className="min-w-0 font-semibold text-text-primary truncate">{col.name}</h3>
-            {/* Gold, so it never reads as the (accent) pin. */}
-            {col.starred && <Star size={14} className="shrink-0 text-amber-400 fill-amber-400" aria-label="Starred" />}
+            {col.starred && <Star size={14} className="shrink-0 text-accent fill-accent" aria-label="Starred" />}
             {col.read_only && <ReadOnlyMark />}
           </div>
           {col.description && (
