@@ -58,25 +58,34 @@
   --glass-border:  rgba(255,255,255,0.06);
 }
 
+/* Light: neutral cool greys (no warm/sage tint), with clear layers - a grey
+   page, white cards and panels on it, and a slightly grey field inside them.
+   Muted text still clears 4.5:1 on white. */
 [data-theme-mode="light"] {
   color-scheme: light;
-  --bg-base:       #f5f7f2;
-  --bg-card:       #fdfefb;
-  --bg-sunken:     #f3f5f1;
+  --bg-base:       #eef1f5;
+  --bg-card:       #ffffff;
+  --bg-sunken:     #f5f7fa;
   --bg-surface:    #ffffff;
-  --bg-elevated:   #edf1eb;
-  --bg-hover:      #e3e9e1;
-  --bg-border:     #d4ddd1;
-  --text-primary:  #121713;
-  --text-content:  #1c221d;
-  --text-secondary:#4f5e55;
-  --text-muted:    #7c8b82;
-  --success:       #059669;
+  --bg-elevated:   #e9edf2;
+  --bg-hover:      #e1e6ec;
+  --bg-border:     #d5dbe3;
+  --text-primary:  #0f172a;
+  --text-content:  #1e293b;
+  --text-secondary:#475569;
+  --text-muted:    #64748b;
+  --success:       #047857;
   --danger:        #dc2626;
   --danger-hover:  #b91c1c;
-  --danger-muted:  rgba(220,38,38,0.12);
-  --glass-bg:      rgba(255,255,255,0.88);
-  --glass-border:  rgba(18,23,19,0.08);
+  --danger-muted:  rgba(220,38,38,0.1);
+  --glass-bg:      rgba(255,255,255,0.9);
+  --glass-border:  rgba(15,23,42,0.08);
+}
+
+/* Cards are borderless; on the light page a hairline joins the soft shadow so
+   a white card never melts into its surroundings. */
+[data-theme-mode="light"] .shadow-sm {
+  --tw-shadow: 0 1px 2px rgba(15,23,42,0.06), 0 0 0 1px rgba(15,23,42,0.06);
 }
 
 /* ── Accent color tokens ────────────────────────────────── */
@@ -122,6 +131,66 @@
   --accent-muted:  rgba(245,107,138,0.16);
   --accent-border: rgba(245,107,138,0.5);
 }
+
+/* Light mode: the bright accents above wash out on white, so each takes a
+   deeper shade of the same hue (about 5:1 on white, for text and icons too)
+   with white text on fills, and a darker hover. */
+[data-theme-mode="light"] {
+  --accent-fg:     #ffffff;
+}
+[data-theme-mode="light"],
+[data-theme-mode="light"][data-accent="mint"] {
+  --accent:        #0b7f64;
+  --accent-hover:  #096b54;
+  --accent-muted:  rgba(11,127,100,0.1);
+  --accent-border: rgba(11,127,100,0.45);
+}
+[data-theme-mode="light"][data-accent="lavender"] {
+  --accent:        #5b45e0;
+  --accent-hover:  #4a35cc;
+  --accent-muted:  rgba(91,69,224,0.1);
+  --accent-border: rgba(91,69,224,0.45);
+}
+[data-theme-mode="light"][data-accent="amber"] {
+  --accent:        #a35f00;
+  --accent-hover:  #8a5000;
+  --accent-muted:  rgba(163,95,0,0.1);
+  --accent-border: rgba(163,95,0,0.45);
+}
+[data-theme-mode="light"][data-accent="sky"] {
+  --accent:        #0a6fb8;
+  --accent-hover:  #085c99;
+  --accent-muted:  rgba(10,111,184,0.1);
+  --accent-border: rgba(10,111,184,0.45);
+}
+[data-theme-mode="light"][data-accent="rose"] {
+  --accent:        #cc2f57;
+  --accent-hover:  #b0254a;
+  --accent-muted:  rgba(204,47,87,0.1);
+  --accent-border: rgba(204,47,87,0.45);
+}
+
+/* Light mode: the pale -300/-400 palette shades used for item types, status
+   badges and marks read fine on dark but fade on white; use deeper shades.
+   (Tints like bg-amber-400/10 stay as they are.) The landing page is always
+   dark, so it keeps its own shades. */
+[data-theme-mode="light"] .text-blue-400    { color: #2563eb; }
+[data-theme-mode="light"] .text-rose-400    { color: #e11d48; }
+[data-theme-mode="light"] .text-teal-400    { color: #0f766e; }
+[data-theme-mode="light"] .text-purple-400  { color: #9333ea; }
+[data-theme-mode="light"] .text-pink-400    { color: #db2777; }
+[data-theme-mode="light"] .text-green-400   { color: #15803d; }
+[data-theme-mode="light"] .text-amber-300,
+[data-theme-mode="light"] .text-amber-400   { color: #b45309; }
+[data-theme-mode="light"] .text-sky-400     { color: #0369a1; }
+[data-theme-mode="light"] .text-indigo-400  { color: #4f46e5; }
+[data-theme-mode="light"] .text-fuchsia-400 { color: #c026d3; }
+[data-theme-mode="light"] .text-orange-400  { color: #c2410c; }
+[data-theme-mode="light"] .text-emerald-300:not(.home-page *),
+[data-theme-mode="light"] .text-emerald-400:not(.home-page *) { color: #047857; }
+[data-theme-mode="light"] .text-red-400     { color: #dc2626; }
+/* The star stays gold, just a touch deeper so it holds on white. */
+[data-theme-mode="light"] .fill-amber-400   { fill: #f59e0b; }
 
 /* ── Base body styles ───────────────────────────────────── */
 body {
