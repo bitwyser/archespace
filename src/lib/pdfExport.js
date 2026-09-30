@@ -8,6 +8,7 @@
 import { markdownToHtml } from '../components/editors/MarkdownPreview'
 import { sanitizeRichHtml } from './sanitizeHtml'
 import { TYPE_LABELS } from './itemTypes'
+import { isRichDoc } from './richText/doc'
 import { strokeToSvgPath, drawDims } from './drawing'
 
 const SITE_URL = 'https://archespace.app/'
@@ -118,6 +119,114 @@ const tableLayout = {
   vLineColor: () => '#cccccc',
 }
 
+// ── Rich text (Tiptap JSON) ──────────────────────────────────
+const HEADING_SIZES = { 1: 16, 2: 14, 3: 12.5 }
+
+/** pdfmake text runs for a node's inline content (text + marks). */
+function richRuns(node) {
+  const runs = []
+  for (const child of node?.content || []) {
+    if (child.type === 'hardBreak') { runs.push({ text: '\n' }); continue }
+    if (child.type !== 'text') continue
+    const run = { text: child.text || '' }
+    for (const mark of child.marks || []) {
+      if (mark.type === 'bold') run.bold = true
+      if (mark.type === 'italic') run.italics = true
+      if (mark.type === 'underline') run.decoration = 'underline'
+      if (mark.type === 'strike') run.decoration = 'lineThrough'
+      if (mark.type === 'code') { run.font = 'DejaVuMono'; run.fontSize = 9.5; run.background = '#f0f2f5' }
+      if (mark.type === 'highlight') run.background = '#fdf1a8'
+      if (mark.type === 'superscript') run.sup = true
+      if (mark.type === 'subscript') run.sub = true
+      if (mark.type === 'link' && mark.attrs?.href) { run.link = mark.attrs.href; run.color = '#0b7f64' }
+    }
+    runs.push(run)
+  }
+  return runs.length ? runs : [{ text: '' }]
+}
+
+/** A paragraph/heading's alignment and line spacing, if set. */
+function richAlign(node) {
+  const align = node.attrs?.textAlign
+  const lineHeight = Number(node.attrs?.lineHeight)
+  return {
+    ...(align && align !== 'left' ? { alignment: align } : {}),
+    // The editor's Normal is 1.5 and the PDF's body is 1.3: scale to match.
+    ...(lineHeight ? { lineHeight: Math.round(lineHeight * (1.3 / 1.5) * 100) / 100 } : {}),
+  }
+}
+
+/** pdfmake nodes for a list of Tiptap block nodes. */
+function richBlocks(nodes) {
+  const out = []
+  for (const node of nodes || []) {
+    switch (node.type) {
+      case 'paragraph':
+        out.push({ text: richRuns(node), margin: [0, 0, 0, 4], ...richAlign(node) })
+        break
+      case 'heading':
+        out.push({ text: richRuns(node), bold: true, fontSize: HEADING_SIZES[node.attrs?.level] || 12, margin: [0, 4, 0, 3], ...richAlign(node) })
+        break
+      case 'bulletList':
+      case 'orderedList':
+        out.push({
+          [node.type === 'bulletList' ? 'ul' : 'ol']: (node.content || []).map(li => ({ stack: richBlocks(li.content) })),
+          margin: [4, 0, 0, 4],
+        })
+        break
+      case 'taskList':
+        out.push({
+          stack: (node.content || []).map(ti => {
+            const done = !!ti.attrs?.checked
+            const [first, ...rest] = ti.content || []
+            return {
+              stack: [
+                { text: [{ text: done ? '☑  ' : '☐  ' }, ...richRuns(first)], ...(done ? { color: '#777777', decoration: 'lineThrough' } : {}) },
+                ...(rest.length ? [{ stack: richBlocks(rest), margin: [14, 0, 0, 0] }] : []),
+              ],
+            }
+          }),
+          margin: [2, 0, 0, 4],
+        })
+        break
+      case 'blockquote':
+        out.push({ stack: richBlocks(node.content), italics: true, color: '#555555', margin: [12, 0, 0, 4] })
+        break
+      case 'codeBlock': {
+        const code = (node.content || []).map(t => t.text || '').join('')
+        out.push({
+          table: { widths: ['*'], body: [[{ text: code, font: 'DejaVuMono', fontSize: 9.5, preserveLeadingSpaces: true }]] },
+          layout: codeLayout,
+          margin: [0, 2, 0, 6],
+        })
+        break
+      }
+      case 'horizontalRule':
+        out.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: CONTENT_WIDTH, y2: 0, lineWidth: 0.5, lineColor: '#cccccc' }], margin: [0, 4, 0, 6] })
+        break
+      case 'table': {
+        const rows = (node.content || []).map(row => row.content || [])
+        const cols = Math.max(1, ...rows.map(r => r.length))
+        const body = rows.map(cells => Array.from({ length: cols }, (_, i) => {
+          const cell = cells[i]
+          if (!cell) return { text: '' }
+          return {
+            stack: richBlocks(cell.content),
+            ...(cell.type === 'tableHeader' ? { bold: true, fillColor: '#f5f5f5' } : {}),
+          }
+        }))
+        if (body.length) {
+          out.push({ table: { widths: Array(cols).fill('*'), body }, layout: tableLayout, fontSize: 10, margin: [0, 2, 0, 6] })
+        }
+        break
+      }
+      default:
+        if (node.content) out.push(...richBlocks(node.content))
+    }
+  }
+  return out
+}
+
 /** Content nodes for a single item's body, by type. */
 function itemBodyNodes({ type, content }) {
   const c = content || {}
@@ -129,6 +238,12 @@ function itemBodyNodes({ type, content }) {
       return t ? [{ text: t }] : [emptyNode()]
     }
     case 'richtext': {
+      if (isRichDoc(c)) {
+        const nodes = richBlocks(c.doc.content)
+        const hasText = JSON.stringify(c.doc).includes('"text"')
+        return hasText ? nodes : [emptyNode()]
+      }
+      // Saved before the Tiptap editor (converts on next unlock).
       const t = htmlToText(c.html)
       return t ? [{ text: t }] : [emptyNode()]
     }

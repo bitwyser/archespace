@@ -3,7 +3,7 @@
  * per item type (raw text, bulleted or numbered lines, or card blocks).
  */
 
-import { richHtmlToPlainText } from './sanitizeHtml'
+import { richContentToPlainText } from './richText/doc'
 
 const BULLET = '• ' // "• "
 
@@ -40,10 +40,10 @@ export function itemToClipboardText({ type, content } = {}) {
   const c = content || {}
   switch (type) {
     case 'textbox':
-    case 'markdown':
       return c.text ?? ''
+    case 'markdown':
     case 'richtext':
-      return richHtmlToPlainText(c.html)
+      return richContentToPlainText(type, c)
     case 'code':
       return c.code ?? ''
     case 'menu_list':

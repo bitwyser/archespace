@@ -3,6 +3,7 @@
  * `spaceId === null`, the dashboard's items, which belong to no space; or with
  * `STARRED_ITEMS`, the starred items from every space (the Starred view).
  */
+import { EMPTY_RICH_DOC } from '../lib/richText/doc'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
@@ -33,7 +34,7 @@ const defaultContent = {
   numbered_list: { items: [] },
   card_list: { items: [] },
   markdown: { text: '' },
-  richtext: { html: '' },
+  richtext: { doc: EMPTY_RICH_DOC },
   code: { code: '' },
   draw: { strokes: [] },
   table: { columns: ['', ''], rows: [['', ''], ['', '']] },

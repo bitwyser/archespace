@@ -488,13 +488,40 @@ body.bulk-bar-active .toast-stack {
 .prose-custom code { background: var(--bg-base); padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; color: var(--accent); border: 1px solid var(--bg-border); }
 .prose-custom pre code { background: transparent; padding: 0; border: none; color: inherit; }
 
-/* ── Rich Text item: contenteditable placeholder ──────────────
-   Shown only when the editor is empty and not focused. */
-.rich-text-editor:empty::before {
+/* ── Rich text item (Tiptap) ─────────────────────────────────
+   Base typography comes from .prose-custom; these cover what the editor adds:
+   the empty placeholder, task lists, tables and the last block's spacing. */
+.rich-text-editor > :last-child { margin-bottom: 0; }
+.rich-text-editor p { margin-bottom: 0.5rem; }
+.rich-text-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--text-muted);
+  float: left;
+  height: 0;
   pointer-events: none;
 }
+.rich-text-editor li > p { margin-bottom: 0.15rem; }
+.rich-text-editor ul[data-type="taskList"] { list-style: none; padding-left: 0.25rem; }
+.rich-text-editor ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5rem; }
+.rich-text-editor ul[data-type="taskList"] li > label { margin-top: 0.2rem; user-select: none; }
+.rich-text-editor ul[data-type="taskList"] li > div { flex: 1; min-width: 0; }
+.rich-text-editor ul[data-type="taskList"] input[type="checkbox"] { width: 0.95rem; height: 0.95rem; accent-color: var(--accent); cursor: pointer; }
+.rich-text-editor li[data-checked="true"] > div { color: var(--text-muted); text-decoration: line-through; }
+.rich-text-editor .tableWrapper { overflow-x: auto; margin-bottom: 0.75rem; }
+.rich-text-editor table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.rich-text-editor th,
+.rich-text-editor td { border: 1px solid var(--bg-border); padding: 0.35rem 0.5rem; vertical-align: top; min-width: 4rem; }
+.rich-text-editor th { background: var(--bg-elevated); font-weight: 600; text-align: left; }
+.rich-text-editor th > p,
+.rich-text-editor td > p { margin-bottom: 0; }
+.rich-text-editor .selectedCell { background: var(--accent-muted); }
+/* Highlight: a marker yellow that keeps the text colour readable in both themes. */
+.rich-text-editor mark { background: color-mix(in srgb, #facc15 42%, transparent); color: inherit; border-radius: 3px; padding: 0 0.1em; }
+.rich-text-editor sup,
+.rich-text-editor sub { font-size: 0.75em; line-height: 0; }
+/* Find and replace: every match softly, the current one in the accent. */
+.rich-text-editor .search-match { background: color-mix(in srgb, var(--accent) 22%, transparent); border-radius: 2px; }
+.rich-text-editor .search-match-current { background: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 0 0 1px var(--accent); }
 
 /* ── Code item: highlight.js token colours ──────────────────
    A single mid-tone palette (One-Dark/Light-ish) chosen to stay legible on

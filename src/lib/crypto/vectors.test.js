@@ -33,7 +33,9 @@ describe('crypto conformance vectors', () => {
       const derived = await deriveVaultKey(v.secret, v.descriptor)
       expect(await decryptString(probe, derived)).toBe(`probe:${v.secret}`)
     }
-  })
+    // Key derivation is deliberately slow; give it room when the suite runs
+    // in parallel with the heavier DOM-based tests.
+  }, 30000)
 
   it('runs the full vault-unlock flow', async () => {
     const vu = vectors.vaultUnlock

@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:">
+<title>Rich text editor</title>
+<style>
+  /* Colours come from the app (editorApi.setTheme); these are fallbacks. */
+  :root {
+    --bg: #eef1f5; --text: #0f172a; --muted: #64748b; --border: #d5dbe3;
+    --surface: #e9edf2; --accent: #0b7f64;
+  }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 -apple-system, "Roboto", "Segoe UI", sans-serif;
+    -webkit-tap-highlight-color: transparent; }
+  #editor { padding: 4px 16px 45vh; box-sizing: border-box; }
+  .ProseMirror { outline: none; min-height: 50vh; word-wrap: break-word; overflow-wrap: anywhere; }
+  .ProseMirror > :first-child { margin-top: 0; }
+  .ProseMirror p { margin: 0 0 .5em; }
+  .ProseMirror h1 { font-size: 1.5em; font-weight: 600; margin: .7em 0 .35em; line-height: 1.25; }
+  .ProseMirror h2 { font-size: 1.25em; font-weight: 600; margin: .7em 0 .3em; line-height: 1.3; }
+  .ProseMirror h3 { font-size: 1.1em; font-weight: 600; margin: .6em 0 .3em; }
+  .ProseMirror ul, .ProseMirror ol { padding-left: 1.4em; margin: 0 0 .6em; }
+  .ProseMirror li > p { margin: 0 0 .15em; }
+  .ProseMirror ul[data-type="taskList"] { list-style: none; padding-left: .2em; }
+  .ProseMirror ul[data-type="taskList"] li { display: flex; gap: .55em; align-items: flex-start; }
+  .ProseMirror ul[data-type="taskList"] li > label { margin-top: .25em; }
+  .ProseMirror ul[data-type="taskList"] li > div { flex: 1; min-width: 0; }
+  .ProseMirror ul[data-type="taskList"] input { width: 1.1em; height: 1.1em; accent-color: var(--accent); }
+  .ProseMirror li[data-checked="true"] > div { color: var(--muted); text-decoration: line-through; }
+  .ProseMirror blockquote { border-left: 3px solid var(--accent); margin: 0 0 .6em; padding-left: .9em;
+    color: var(--muted); font-style: italic; }
+  .ProseMirror code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+    padding: .05em .3em; font-size: .88em; color: var(--accent); font-family: ui-monospace, monospace; }
+  .ProseMirror pre { background: #0d1117; color: #d5dae2; border-radius: 8px; padding: .8em 1em;
+    overflow-x: auto; margin: 0 0 .6em; font-size: .85em; }
+  .ProseMirror pre code { background: none; border: none; padding: 0; color: inherit; }
+  .ProseMirror a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .ProseMirror hr { border: none; border-top: 1px solid var(--border); margin: 1em 0; }
+  .ProseMirror .tableWrapper { overflow-x: auto; margin: 0 0 .6em; }
+  .ProseMirror table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+  .ProseMirror th, .ProseMirror td { border: 1px solid var(--border); padding: .35em .5em; vertical-align: top; min-width: 5em; }
+  .ProseMirror th { background: var(--surface); text-align: left; font-weight: 600; }
+  .ProseMirror th > p, .ProseMirror td > p { margin: 0; }
+  .ProseMirror .selectedCell { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+  .ProseMirror mark { background: color-mix(in srgb, #facc15 42%, transparent); color: inherit; border-radius: 3px; padding: 0 .1em; }
+  .ProseMirror sup, .ProseMirror sub { font-size: .75em; line-height: 0; }
+  .ProseMirror .search-match { background: color-mix(in srgb, var(--accent) 22%, transparent); border-radius: 2px; }
+  .ProseMirror .search-match-current { background: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 0 0 1px var(--accent); }
+  .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--muted);
+    float: left; height: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="editor"></div>
+<script>/*__BUNDLE__*/</script>
+</body>
+</html>

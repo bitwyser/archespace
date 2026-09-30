@@ -17,7 +17,7 @@
  * (auto-save after 5s).
  */
 
-import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, memo } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, memo, lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Star, StarOff,
@@ -26,7 +26,11 @@ import {
   ClipboardCopy, ClipboardCheck, FileDown, PencilOff,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, ListItemsEditor, CardListEditor } from './editors/ItemEditors'
-import RichTextEditor, { RichTextToolbar } from './editors/RichTextEditor'
+// The Rich text editor (Tiptap) loads only when a Rich text item is shown.
+const RichTextEditor = lazy(() => import('./editors/RichTextEditor'))
+const RichTextToolbar = lazy(() =>
+  import('./editors/RichTextEditor').then(m => ({ default: m.RichTextToolbar }))
+)
 import { DrawEditor } from './editors/DrawEditor'
 import { TableEditor } from './editors/TableEditor'
 import { CodeEditor } from './editors/CodeEditor'
@@ -101,7 +105,8 @@ function SpaceItem({
   const [expanded, setExpanded] = useState(false)
   const contentRef = useRef(null)
   const [copied, setCopied] = useState(false)
-  const richTextRef = useRef(null)
+  // The Rich text editor instance, for its toolbar on the tags row.
+  const [richEditor, setRichEditor] = useState(null)
   // On mobile the header keeps only Collapse + Full screen direct; Copy moves
   // into the action menu to leave room for the title.
   const online = useOnlineStatus()
@@ -354,9 +359,11 @@ function SpaceItem({
   // Whether the tags row is shown (drives content top padding so the two don't
   // stack into a large gap).
   const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || (online && !readOnly))
-  // The Rich Text formatting toolbar shares the tags row (right-aligned). Shown
-  // whenever the editor is live - not collapsed, clamped, or a dense preview.
-  const showRichToolbar = item.type === 'richtext' && !readOnly && !headerCollapsed && !clamped && !selectMode && !denseView
+  // The Rich text toolbar: a bar across the top of the note, always shown
+  // (it scrolls sideways when narrow) - except read-only, collapsed or select
+  // mode. On a clamped preview it expands the note first; on a dense grid card
+  // it opens full screen (how those cards edit).
+  const showRichToolbar = item.type === 'richtext' && !readOnly && !headerCollapsed && !selectMode
 
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
@@ -631,23 +638,31 @@ function SpaceItem({
         )}
       </div>
 
-      {/* ── Tags (+ Rich Text toolbar, right-aligned) ──── */}
-      {(showTags || showRichToolbar) && (
-        <div className={`flex items-start gap-2 ${denseView ? 'px-2.5 py-2' : 'px-4 py-2.5'}`}>
-          <div className="flex-1 min-w-0">
-            {showTags && (
-              <ItemTags
-                tags={item.tags || []}
-                onChange={(tags) => onSetTags?.(item.id, tags)}
-                disabled={!online || readOnly}
-              />
-            )}
-          </div>
-          {showRichToolbar && (
-            <div className="shrink-0">
-              <RichTextToolbar editorRef={richTextRef} />
-            </div>
-          )}
+      {/* ── Tags ──────────────────────────────────────── */}
+      {showTags && (
+        <div className={denseView ? 'px-2.5 py-2' : 'px-4 py-2.5'}>
+          <ItemTags
+            tags={item.tags || []}
+            onChange={(tags) => onSetTags?.(item.id, tags)}
+            disabled={!online || readOnly}
+          />
+        </div>
+      )}
+
+      {/* ── Rich text toolbar: a bar across the top of the note with a rule
+          above and below, inset from the card's edges (no box, same
+          background as the card), shown whenever its editor is live. ── */}
+      {showRichToolbar && (
+        <div
+          onMouseDownCapture={() => {
+            if (clamped) setExpanded(true)
+            else if (denseView) setIsFullscreen(true)
+          }}
+          className={`${denseView ? 'mx-2.5' : 'mx-4'} border-y border-bg-border py-1 ${showTags ? '' : 'mt-3'}`}
+        >
+          <Suspense fallback={<div className="h-8" />}>
+            <RichTextToolbar editor={richEditor} />
+          </Suspense>
         </div>
       )}
 
@@ -701,8 +716,8 @@ function SpaceItem({
           isFullscreen
             ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8'
             : denseView
-              ? `px-2.5 ${showTags ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
-              : `px-4 ${showTags || showRichToolbar ? 'pt-0' : 'pt-4'} pb-4`
+              ? `px-2.5 ${showTags && !showRichToolbar ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
+              : `px-4 ${showRichToolbar ? 'pt-3' : showTags ? 'pt-0' : 'pt-4'} pb-4`
         }${clamped ? ` relative overflow-hidden rounded-b-2xl${selectMode ? '' : ' cursor-pointer'}` : ''}`}
       >
         {/* In the dense grid, or while clamped, the content is a non-interactive
@@ -711,7 +726,17 @@ function SpaceItem({
         {/* Render only the editor for this item's type (not all four) */}
         {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
-        {item.type === 'richtext'      && <RichTextEditor   key={`${item.id}:${editorVersion}`} ref={richTextRef} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'richtext' && (
+          <Suspense fallback={<div className="min-h-[80px] rounded-xl border border-bg-border bg-bg-sunken" />}>
+            <RichTextEditor
+              key={`${item.id}:${editorVersion}`}
+              content={localContent}
+              onChange={handleContentChange}
+              readOnly={readOnly}
+              onEditor={setRichEditor}
+            />
+          </Suspense>
+        )}
         {item.type === 'code'          && <CodeEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'checkbox_list' && <ChecklistEditor  key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {/* One List type: bullets (menu_list) or numbers (numbered_list); the

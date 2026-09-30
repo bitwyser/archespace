@@ -32,3 +32,6 @@ dist-ssr
 
 # legal
 compliance/
+
+# Mobile Rich text editor build output (when the mobile repo is not alongside)
+dist-mobile-editor/

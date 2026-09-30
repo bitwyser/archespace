@@ -13,6 +13,7 @@ import { supabase } from './supabase'
 import { logAudit } from './auditLog'
 import { encryptSpace, encryptItem, decryptItems } from './dataProtection'
 import { secretToNoteContent } from './secretMigration'
+import { isRichDoc } from './richText/doc'
 import { parseTags } from './spaceColors'
 import {
   MAX_IMPORT_FILE_SIZE,
@@ -107,7 +108,8 @@ function validateItemContent(type, content) {
     case 'markdown':
       return typeof content.text === 'string'
     case 'richtext':
-      return typeof content.html === 'string'
+      // Tiptap JSON, or the older HTML (converted after import).
+      return isRichDoc(content) || typeof content.html === 'string'
     case 'code':
       return typeof content.code === 'string'
     case 'checkbox_list':

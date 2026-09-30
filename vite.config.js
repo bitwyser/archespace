@@ -120,6 +120,13 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
+          // The Rich text editor (Tiptap + ProseMirror + its markdown parser) is
+          // left out of the manual chunks, so it splits off with its lazy import
+          // and loads only when a Rich text item is shown. Checked first:
+          // `@tiptap/react` would otherwise match 'react' and load at startup.
+          if (/[\\/](@tiptap|prosemirror-[\w-]+|marked|linkifyjs|orderedmap|rope-sequence|w3c-keyname)[\\/]/.test(id)) {
+            return undefined
+          }
           if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
             return 'react'
           }

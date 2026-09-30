@@ -18,6 +18,7 @@ import { useRecycleBin } from '../../hooks/useRecycleBin'
 import { useStarredItemCount } from '../../hooks/useStarredItemCount'
 import { ConfirmDialog } from '../ui/UI'
 import { convertSecretsToNotes } from '../../lib/secretMigration'
+import { convertLegacyRichText } from '../../lib/richText/richTextMigration'
 import { queryKeys } from '../../lib/queryKeys'
 import AppSidebar from './AppSidebar'
 
@@ -40,16 +41,19 @@ export default function AppShell() {
   const location = useLocation()
   const [confirmSignOut, setConfirmSignOut] = useState(false)
 
-  // The Secret type was removed: once unlocked, turn any existing secrets
-  // into Notes (see secretMigration.js), then refresh the item lists.
+  // One-time conversions after unlock (only an unlocked device can read the
+  // content): secrets become Notes (secretMigration.js), and older Rich text
+  // and Markdown items move to the Tiptap format (richTextMigration.js).
   useEffect(() => {
     if (!cryptoKey) return
-    convertSecretsToNotes(cryptoKey).then((converted) => {
-      if (converted > 0) {
-        qc.invalidateQueries({ queryKey: queryKeys.items() })
-        toast.info(`${converted} secret${converted === 1 ? ' was' : 's were'} turned into Notes.`)
+    ;(async () => {
+      const secrets = await convertSecretsToNotes(cryptoKey)
+      if (secrets > 0) {
+        toast.info(`${secrets} secret${secrets === 1 ? ' was' : 's were'} turned into Notes.`)
       }
-    })
+      const rich = await convertLegacyRichText(cryptoKey)
+      if (secrets > 0 || rich > 0) qc.invalidateQueries({ queryKey: queryKeys.items() })
+    })()
   }, [cryptoKey, qc, toast])
 
   // Safe before unlock: all three queries are `enabled: !!cryptoKey`.
