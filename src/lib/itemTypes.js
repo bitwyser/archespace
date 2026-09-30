@@ -1,4 +1,4 @@
-import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, FileCode, Type, Code, KeyRound, Brush, Table, ShieldCheck } from 'lucide-react'
+import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, FileCode, Type, Code, Brush, Table, ShieldCheck } from 'lucide-react'
 
 /** Human-readable labels for each item type */
 export const TYPE_LABELS = {
@@ -11,7 +11,6 @@ export const TYPE_LABELS = {
   checkbox_list: 'Checklist',
   card_list: 'Cards',
   table: 'Table',
-  secret: 'Secret',
   draw: 'Drawing',
   code: 'Code',
   authenticator: 'Authenticator',
@@ -27,7 +26,6 @@ export const TYPE_ICONS = {
   checkbox_list: CheckSquare,
   card_list: LayoutList,
   table: Table,
-  secret: KeyRound,
   draw: Brush,
   code: Code,
   authenticator: ShieldCheck,
@@ -43,7 +41,6 @@ export const TYPE_STYLES = {
   checkbox_list: { text: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/20' },
   card_list: { text: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/20' },
   table: { text: 'text-sky-400', bg: 'bg-sky-400/10', border: 'border-sky-400/20' },
-  secret: { text: 'text-indigo-400', bg: 'bg-indigo-400/10', border: 'border-indigo-400/20' },
   draw: { text: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10', border: 'border-fuchsia-400/20' },
   code: { text: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/20' },
   authenticator: { text: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20' },
@@ -58,7 +55,6 @@ export const ITEM_TYPE_OPTIONS = [
   { type: 'checkbox_list', label: 'Checklist', desc: 'Items with checkboxes', icon: CheckSquare, color: 'text-green-400', bg: 'bg-green-400/10' },
   { type: 'card_list', label: 'Cards', desc: 'Title + description pairs', icon: LayoutList, color: 'text-amber-400', bg: 'bg-amber-400/10' },
   { type: 'table', label: 'Table', desc: 'Rows and columns of text', icon: Table, color: 'text-sky-400', bg: 'bg-sky-400/10' },
-  { type: 'secret', label: 'Secret', desc: 'PIN-protected hidden text', icon: KeyRound, color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
   { type: 'draw', label: 'Drawing', desc: 'Freehand sketch or diagram', icon: Brush, color: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10' },
   { type: 'code', label: 'Code', desc: 'Code snippet with syntax highlighting', icon: Code, color: 'text-orange-400', bg: 'bg-orange-400/10' },
   { type: 'authenticator', label: 'Authenticator', desc: 'Two-factor (TOTP) codes for your accounts', icon: ShieldCheck, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },

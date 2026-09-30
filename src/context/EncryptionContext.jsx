@@ -174,8 +174,8 @@ export function EncryptionProvider({ children }) {
     }
   }, [userId, applyUnlockedKey])
 
-  // Verify a re-entered PIN without changing session state (used to reveal
-  // "secret" items). Shares the vault-unlock rate limiter + server lockout, so
+  // Verify a re-entered PIN without changing session state (for re-confirming
+  // the PIN before a sensitive action, such as a per-item lock). Shares the vault-unlock rate limiter + server lockout, so
   // a wrong reveal PIN counts like a wrong unlock. Returns true if correct.
   const verifyVaultPin = useCallback(async (pin) => {
     if (!userId) return false

@@ -199,8 +199,6 @@ function itemBodyNodes({ type, content }) {
         fontSize: 10,
       }]
     }
-    case 'secret':
-      return [{ text: '•••••• (hidden secret - reveal it in the app to view)', style: 'empty' }]
     case 'draw': {
       const strokes = Array.isArray(c.strokes) ? c.strokes : []
       if (!strokes.length) return [emptyNode()]

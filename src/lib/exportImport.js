@@ -12,6 +12,7 @@
 import { supabase } from './supabase'
 import { logAudit } from './auditLog'
 import { encryptSpace, encryptItem, decryptItems } from './dataProtection'
+import { secretToNoteContent } from './secretMigration'
 import { parseTags } from './spaceColors'
 import {
   MAX_IMPORT_FILE_SIZE,
@@ -123,10 +124,6 @@ function validateItemContent(type, content) {
       )
     case 'draw':
       return Array.isArray(content.strokes) && content.strokes.length <= 10000
-    case 'secret':
-      // The body stays a nested ciphertext, only decryptable in the same vault.
-      // An empty string is valid (an unset secret).
-      return typeof content.cipher === 'string'
     default:
       return false
   }
@@ -141,7 +138,18 @@ function validateItemContent(type, content) {
 async function insertImportedItems(items, spaceId, userId, cryptoKey) {
   let skipped = 0
   const rows = []
-  for (const item of items) {
+  for (const raw of items) {
+    // Secrets (a removed type) come in as Notes when they're from this vault;
+    // one sealed to another vault can't be opened, so it's skipped.
+    let item = raw
+    if (raw?.type === 'secret') {
+      try {
+        item = { ...raw, type: 'textbox', content: await secretToNoteContent(raw.content, cryptoKey) }
+      } catch {
+        skipped++
+        continue
+      }
+    }
     if (
       !item ||
       typeof item !== 'object' ||

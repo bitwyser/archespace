@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS space_items (
   id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   space_id    uuid        REFERENCES spaces(id) ON DELETE CASCADE,
   user_id     uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'richtext', 'code', 'secret', 'draw', 'table', 'authenticator')),
+  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'richtext', 'code', 'draw', 'table', 'authenticator')),
   title       text        NOT NULL DEFAULT '',
   content     jsonb       NOT NULL DEFAULT '{}'::jsonb,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,   -- encrypted client-side
@@ -55,9 +55,12 @@ CREATE TABLE IF NOT EXISTS space_items (
 
 -- Keep the allowed item types in sync on existing databases (CREATE TABLE above
 -- only applies to fresh installs). Re-running this file updates the constraint.
+-- 'secret' was removed: the apps turn existing secrets into Notes after unlock
+-- (their text can only be opened on-device). Until every secret is converted,
+-- adding this constraint fails - nothing is lost, just run it again later.
 ALTER TABLE space_items DROP CONSTRAINT IF EXISTS space_items_type_check;
 ALTER TABLE space_items ADD CONSTRAINT space_items_type_check
-  CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'richtext', 'code', 'secret', 'draw', 'table', 'authenticator'));
+  CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'richtext', 'code', 'draw', 'table', 'authenticator'));
 
 -- Item tags (added later; encrypted client-side like space tags). Safe to re-run.
 ALTER TABLE space_items ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]'::jsonb;

@@ -35,7 +35,6 @@ const defaultContent = {
   markdown: { text: '' },
   richtext: { html: '' },
   code: { code: '' },
-  secret: { secret: true, cipher: '' },
   draw: { strokes: [] },
   table: { columns: ['', ''], rows: [['', ''], ['', '']] },
   authenticator: { entries: [] },

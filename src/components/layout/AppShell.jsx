@@ -5,8 +5,9 @@
  * only appears once signed in AND the vault is unlocked; while locked (or signed
  * out) it renders just the route (the unlock gate / redirect) full-width.
  */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContextCore'
 import { useEncryption } from '../../context/EncryptionCore'
 import { useCommandPalette } from '../../context/CommandPaletteCore'
@@ -16,6 +17,8 @@ import { useArchive } from '../../hooks/useArchive'
 import { useRecycleBin } from '../../hooks/useRecycleBin'
 import { useStarredItemCount } from '../../hooks/useStarredItemCount'
 import { ConfirmDialog } from '../ui/UI'
+import { convertSecretsToNotes } from '../../lib/secretMigration'
+import { queryKeys } from '../../lib/queryKeys'
 import AppSidebar from './AppSidebar'
 
 function activeFromPath(pathname) {
@@ -29,12 +32,25 @@ function activeFromPath(pathname) {
 
 export default function AppShell() {
   const { user, signOut } = useAuth()
-  const { isUnlocked, lock } = useEncryption()
+  const { isUnlocked, lock, cryptoKey } = useEncryption()
+  const qc = useQueryClient()
   const { openPalette } = useCommandPalette()
   const { toast } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+
+  // The Secret type was removed: once unlocked, turn any existing secrets
+  // into Notes (see secretMigration.js), then refresh the item lists.
+  useEffect(() => {
+    if (!cryptoKey) return
+    convertSecretsToNotes(cryptoKey).then((converted) => {
+      if (converted > 0) {
+        qc.invalidateQueries({ queryKey: queryKeys.items() })
+        toast.info(`${converted} secret${converted === 1 ? ' was' : 's were'} turned into Notes.`)
+      }
+    })
+  }, [cryptoKey, qc, toast])
 
   // Safe before unlock: all three queries are `enabled: !!cryptoKey`.
   const { data: spaces = [] } = useSpaces()

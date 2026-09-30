@@ -23,11 +23,10 @@ import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Star, StarOff,
   Pin, PinOff, Save, AlertTriangle, GripVertical, Copy, Archive,
   Maximize2, Minimize2, MoveRight, MoreVertical,
-  ClipboardCopy, ClipboardCheck, FileDown, Eye, EyeOff, PencilOff,
+  ClipboardCopy, ClipboardCheck, FileDown, PencilOff,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, ListItemsEditor, CardListEditor } from './editors/ItemEditors'
 import RichTextEditor, { RichTextToolbar } from './editors/RichTextEditor'
-import { SecretEditor } from './editors/SecretEditor'
 import { DrawEditor } from './editors/DrawEditor'
 import { TableEditor } from './editors/TableEditor'
 import { CodeEditor } from './editors/CodeEditor'
@@ -102,8 +101,6 @@ function SpaceItem({
   const [expanded, setExpanded] = useState(false)
   const contentRef = useRef(null)
   const [copied, setCopied] = useState(false)
-  const [secretState, setSecretState] = useState({ revealed: false, prompting: false })
-  const secretEditorRef = useRef(null)
   const richTextRef = useRef(null)
   // On mobile the header keeps only Collapse + Full screen direct; Copy moves
   // into the action menu to leave room for the title.
@@ -551,7 +548,7 @@ function SpaceItem({
                   >
                     {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                   </button>
-                  {!isSmallScreen && item.type !== 'secret' && item.type !== 'draw' && item.type !== 'authenticator' && (
+                  {!isSmallScreen && item.type !== 'draw' && item.type !== 'authenticator' && (
                   <button
                     type="button"
                     onClick={handleCopy}
@@ -565,29 +562,6 @@ function SpaceItem({
                   >
                     {copied ? <ClipboardCheck size={14} /> : <ClipboardCopy size={14} />}
                   </button>
-                  )}
-                  {item.type === 'secret' && !!localContent?.cipher && (
-                    secretState.revealed ? (
-                      <button
-                        type="button"
-                        onClick={() => secretEditorRef.current?.hide()}
-                        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
-                        aria-label="Hide secret"
-                        title="Hide secret"
-                      >
-                        <EyeOff size={14} />
-                      </button>
-                    ) : !secretState.prompting ? (
-                      <button
-                        type="button"
-                        onClick={() => secretEditorRef.current?.startReveal()}
-                        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
-                        aria-label="Reveal secret"
-                        title="Reveal secret"
-                      >
-                        <Eye size={14} />
-                      </button>
-                    ) : null
                   )}
                   <ActionMenu
                     label="Item actions"
@@ -613,7 +587,7 @@ function SpaceItem({
                       },
                       // Copy is a direct header button on larger screens; on
                       // mobile it lives here instead to keep the header compact.
-                      isSmallScreen && item.type !== 'secret' && item.type !== 'draw' && item.type !== 'authenticator' && {
+                      isSmallScreen && item.type !== 'draw' && item.type !== 'authenticator' && {
                         id: 'copy',
                         label: copied ? 'Copied' : 'Copy',
                         icon: copied ? ClipboardCheck : ClipboardCopy,
@@ -753,7 +727,6 @@ function SpaceItem({
           />
         )}
         {item.type === 'card_list'     && <CardListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
-        {item.type === 'secret'        && <SecretEditor     key={`${item.id}:${editorVersion}`} ref={secretEditorRef} content={localContent} onChange={handleContentChange} readOnly={readOnly} onStateChange={setSecretState} />}
         {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'authenticator' && <AuthenticatorEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
