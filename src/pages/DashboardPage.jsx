@@ -49,7 +49,7 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const { openPalette, registerCommands, closePalette } = useCommandPalette()
   const {
-    data: spaces = [], isLoading, create, update, togglePin, toggleStar, toggleReadOnly, remove, reorder,
+    data: spaces = [], isLoading, create, update, togglePin, toggleStar, toggleReadOnly, toggleLock, remove, reorder,
     archive, duplicate, bulkRemove, bulkArchive, bulkSetPinned, bulkDuplicate,
   } = useSpaces()
   // Dashboard items: items that belong to no space, shown after the spaces.
@@ -354,6 +354,7 @@ export default function DashboardPage() {
       togglePin={togglePin}
       toggleStar={toggleStar}
       toggleReadOnly={toggleReadOnly}
+      toggleLock={toggleLock}
       setModal={setModal}
       setDeleteConfirm={setDeleteConfirm}
       onDuplicate={(id) => duplicate.mutate(id, {

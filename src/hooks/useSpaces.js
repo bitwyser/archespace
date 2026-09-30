@@ -14,6 +14,7 @@ import { encryptSpace, decryptSpace, decryptSpaces } from '../lib/dataProtection
 import { duplicateSpaceWithItems } from '../lib/spaceDuplicate'
 import { invalidateSpaceCollections, invalidateSpaceList } from '../lib/queryInvalidation'
 import { queryKeys } from '../lib/queryKeys'
+import { setSpaceLocks, setSpaceLocked } from '../lib/itemLock'
 import {
   makeBulkSetPinned,
   makeTogglePin,
@@ -52,6 +53,7 @@ export function useSpaces() {
         const rows = data || []
         setReachable(true)
         saveRows(userId, 'spaces', rows) // cache ciphertext for offline reads
+        setSpaceLocks(rows) // so a locked space's items stay hidden everywhere
         return decryptSpaces(rows, cryptoKey)
       } catch (err) {
         // Fall back to the encrypted cache on any network failure - navigator
@@ -60,7 +62,10 @@ export function useSpaces() {
         if (isNetworkError(err)) {
           setReachable(false)
           const cached = await loadRows(userId, 'spaces')
-          if (cached) return decryptSpaces(cached, cryptoKey)
+          if (cached) {
+            setSpaceLocks(cached)
+            return decryptSpaces(cached, cryptoKey)
+          }
         }
         throw err
       }
@@ -177,6 +182,27 @@ export function useSpaces() {
     queryKey: queryKeys.spaces(),
     invalidate: () => qc.invalidateQueries({ queryKey: queryKeys.spaces() }),
   }))
+
+  // Lock / remove lock (a flag only; nothing is re-encrypted). The lock store
+  // is told at once, so locking hides the space before the list reloads.
+  const lockFlag = makeToggleFlag({
+    table: 'spaces',
+    field: 'locked',
+    qc,
+    queryKey: queryKeys.spaces(),
+    invalidate: () => invalidateSpaceCollections(qc),
+  })
+  const toggleLock = useMutation({
+    ...lockFlag,
+    onMutate: async (vars) => {
+      setSpaceLocked(vars.id, !vars.locked)
+      return lockFlag.onMutate(vars)
+    },
+    onError: (err, vars, context) => {
+      setSpaceLocked(vars.id, !!vars.locked)
+      lockFlag.onError(err, vars, context)
+    },
+  })
 
   const reorder = useMutation(makeReorder({
     qc,
@@ -295,6 +321,7 @@ export function useSpaces() {
     togglePin,
     toggleStar,
     toggleReadOnly,
+    toggleLock,
     remove,
     reorder,
     archive,

@@ -33,15 +33,19 @@ const BACKUP_VERSION = 2
  *
  * @param {Array} spaces - The current (decrypted) spaces array
  * @param {CryptoKey} cryptoKey - Vault key for decrypting items from the DB
+ * @param {{ confirmLocked?: () => Promise<boolean> }} [options] - Asked before
+ *   a backup that includes locked items is saved (the vault PIN); resolving
+ *   false cancels the export, which then returns false.
+ * @returns {Promise<boolean>} Whether the backup was saved
  */
-export async function exportSpaces(spaces, cryptoKey) {
+export async function exportSpaces(spaces, cryptoKey, { confirmLocked } = {}) {
   if (!cryptoKey) throw new Error('Vault must be unlocked to export')
 
   // Active items of one space, or the dashboard's items (no space) for `null`.
   const loadItems = async (spaceId) => {
     let q = supabase
       .from('space_items')
-      .select('type, title, content, position, pinned')
+      .select('type, title, content, position, pinned, locked')
     q = spaceId ? q.eq('space_id', spaceId) : q.is('space_id', null)
     const { data, error } = await q
       .is('deleted_at', null)
@@ -54,6 +58,8 @@ export async function exportSpaces(spaces, cryptoKey) {
       title: it.title ?? '',
       content: it.content ?? {},
       pinned: !!it.pinned,
+      // Only written when set, so older app versions read the file unchanged.
+      ...(it.locked ? { locked: true } : {}),
     }))
   }
 
@@ -65,6 +71,7 @@ export async function exportSpaces(spaces, cryptoKey) {
         color: typeof c.color === 'string' ? c.color : null,
         tags: parseTags(c.tags),
         pinned: !!c.pinned,
+        ...(c.locked ? { locked: true } : {}),
         items: await loadItems(c.id),
       }))
     )
@@ -78,6 +85,12 @@ export async function exportSpaces(spaces, cryptoKey) {
       // backups don't have it, and older app versions ignore it.
       items: await loadItems(null),
     }
+
+    // The file holds everything readable, so locked spaces and items need the
+    // PIN first.
+    const hasLocked = exportedSpaces.some(s => s.locked) ||
+      [...payload.items, ...exportedSpaces.flatMap(s => s.items)].some(it => it.locked)
+    if (hasLocked && confirmLocked && !(await confirmLocked())) return false
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
@@ -93,6 +106,7 @@ export async function exportSpaces(spaces, cryptoKey) {
     if (session?.user) {
       await logAudit({ action: 'export', details: { count: spaces.length } })
     }
+    return true
   } catch (error) {
     console.error('Export failed:', error)
     throw error
@@ -174,6 +188,7 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
       content: encryptedItem.content,
       position: rows.length,
       pinned: !!item.pinned,
+      locked: item.locked === true,
     })
   }
 
@@ -249,6 +264,7 @@ export async function importSpaces(file, userId, cryptoKey) {
         tags: encryptedCol.tags,
         color: typeof col.color === 'string' ? col.color : null,
         pinned: !!col.pinned,
+        locked: col.locked === true,
         user_id: userId,
       })
       .select()

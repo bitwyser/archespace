@@ -23,7 +23,7 @@ import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Star, StarOff,
   Pin, PinOff, Save, AlertTriangle, GripVertical, Copy, Archive,
   Maximize2, Minimize2, MoveRight, MoreVertical,
-  ClipboardCopy, ClipboardCheck, FileDown, PencilOff,
+  ClipboardCopy, ClipboardCheck, FileDown, PencilOff, Lock, LockOpen,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, ListItemsEditor, CardListEditor } from './editors/ItemEditors'
 // The Rich text editor (Tiptap) loads only when a Rich text item is shown.
@@ -42,7 +42,9 @@ import { isOnline, enqueueOffline } from '../lib/offlineQueue'
 import { isReachable, isNetworkError, setReachable } from '../lib/connectivity'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useEncryption } from '../context/EncryptionCore'
+import { useVaultPinPrompt } from '../context/VaultPinPromptCore'
 import { encryptItem } from '../lib/dataProtection'
+import { hideItem, revealContent, useContentHidden } from '../lib/itemLock'
 import { itemToClipboardText } from '../lib/itemClipboard'
 import { exportItemToPdf } from '../lib/pdfExport'
 import { TYPE_LABELS, TYPE_STYLES, TYPE_ICONS } from '../lib/itemTypes'
@@ -63,6 +65,7 @@ function SpaceItem({
   onSetListNumbered,
   onTogglePin,
   onToggleStar,
+  onToggleLock,
   onDelete,
   onDuplicate,
   onArchive,
@@ -85,6 +88,10 @@ function SpaceItem({
   readOnly = false,
 }) {
   const { cryptoKey } = useEncryption()
+  const askVaultPin = useVaultPinPrompt()
+  // A locked item, or one in a locked space, shows its content only after
+  // the vault PIN (see itemLock).
+  const hidden = useContentHidden(item)
 
   // ── Local state ──
   const [editingTitle, setEditingTitle]   = useState(false)
@@ -311,6 +318,22 @@ function SpaceItem({
     }
   }, [item.type])
 
+  /** Open a locked item with the vault PIN. */
+  const handleReveal = async () => {
+    const ok = await askVaultPin({
+      title: 'Unlock item',
+      message: `Enter your vault PIN to open "${item.title || 'Untitled'}".`,
+    })
+    if (ok) revealContent(item)
+  }
+
+  /** Hide an opened locked item again (saving any edit first). */
+  const handleHide = () => {
+    if (isDirty) performSave()
+    setIsFullscreen(false)
+    hideItem(item.id)
+  }
+
   /** Discard all local edits and revert to server state */
   const handleDiscard = () => {
     setTitleVal(item.title)
@@ -363,7 +386,9 @@ function SpaceItem({
   // (it scrolls sideways when narrow) - except read-only, collapsed or select
   // mode. On a clamped preview it expands the note first; on a dense grid card
   // it opens full screen (how those cards edit).
-  const showRichToolbar = item.type === 'richtext' && !readOnly && !headerCollapsed && !selectMode
+  const showRichToolbar = item.type === 'richtext' && !readOnly && !headerCollapsed && !selectMode && !hidden
+  // Copy and Export PDF release the content, so a hidden locked item has none.
+  const canCopy = !hidden && item.type !== 'draw' && item.type !== 'authenticator'
 
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
@@ -451,6 +476,21 @@ function SpaceItem({
           {item.starred && !editingTitle && (
             <Star size={13} className="shrink-0 self-center text-accent fill-accent" aria-label="Starred" />
           )}
+          {/* Locked: a closed lock, or an open one (tap to hide again) once
+              the PIN has opened it. */}
+          {(item.locked || hidden) && !editingTitle && (!hidden ? (
+            <button
+              type="button"
+              onClick={handleHide}
+              className="shrink-0 self-center -m-1 p-1 rounded-md text-accent hover:bg-bg-hover transition-colors"
+              aria-label="Lock again"
+              title="Lock again"
+            >
+              <LockOpen size={13} />
+            </button>
+          ) : (
+            <Lock size={13} className="shrink-0 self-center text-text-muted" aria-label="Locked" />
+          ))}
           {/* Outside its space, say why it can't be edited. */}
           {readOnly && contextLabel && (
             <span className="shrink-0 self-center text-text-muted" title="In a read-only space">
@@ -464,7 +504,7 @@ function SpaceItem({
           )}
         </div>
 
-        {headerCollapsed && checklistProgress && (
+        {headerCollapsed && checklistProgress && !hidden && (
           <span className="shrink-0 text-xs text-text-muted font-medium tabular-nums">
             {checklistProgress.done}/{checklistProgress.total} done
           </span>
@@ -542,6 +582,7 @@ function SpaceItem({
                     {headerCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                   </button>
                   )}
+                  {!hidden && (
                   <button
                     type="button"
                     onClick={handleFullscreenClick}
@@ -555,7 +596,8 @@ function SpaceItem({
                   >
                     {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                   </button>
-                  {!isSmallScreen && item.type !== 'draw' && item.type !== 'authenticator' && (
+                  )}
+                  {!isSmallScreen && canCopy && (
                   <button
                     type="button"
                     onClick={handleCopy}
@@ -594,16 +636,23 @@ function SpaceItem({
                       },
                       // Copy is a direct header button on larger screens; on
                       // mobile it lives here instead to keep the header compact.
-                      isSmallScreen && item.type !== 'draw' && item.type !== 'authenticator' && {
+                      isSmallScreen && canCopy && {
                         id: 'copy',
                         label: copied ? 'Copied' : 'Copy',
                         icon: copied ? ClipboardCheck : ClipboardCopy,
                         onClick: handleCopy,
                       },
+                      onToggleLock && {
+                        id: 'lock',
+                        label: item.locked ? 'Remove lock' : 'Lock',
+                        icon: item.locked ? LockOpen : Lock,
+                        disabled: !online,
+                        onClick: () => onToggleLock(item.id, !!item.locked),
+                      },
                       !readOnly && { id: 'rename', label: 'Rename', icon: Pencil, onClick: () => setEditingTitle(true) },
                       !readOnly && onDuplicate && { id: 'duplicate', label: 'Duplicate', icon: Copy, disabled: !online, onClick: () => onDuplicate(item) },
                       !readOnly && onMove && { id: 'move', label: 'Move', icon: MoveRight, disabled: !online, onClick: () => onMove(item.id) },
-                      {
+                      !hidden && {
                         id: 'export-pdf',
                         label: 'Export PDF',
                         icon: FileDown,
@@ -700,8 +749,25 @@ function SpaceItem({
       {/* ── Content editor ──
           The header chevron hides the body entirely (only the header and tags
           stay). When shown, a long body is clamped to a fixed preview height
-          (with a fade) that expands to full height when tapped. */}
-      {!headerCollapsed && (
+          (with a fade) that expands to full height when tapped. A locked item
+          shows an Unlock panel instead until the vault PIN opens it. */}
+      {!headerCollapsed && hidden && (
+        <div className={`${denseView ? 'px-2.5 pb-3' : 'px-4 pb-4'} ${showTags ? 'pt-0' : denseView ? 'pt-3' : 'pt-4'}`}>
+          <button
+            type="button"
+            onClick={handleReveal}
+            disabled={selectMode}
+            className={`w-full flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-bg-border bg-bg-sunken text-text-muted transition-colors enabled:hover:border-accent-border enabled:hover:text-text-primary ${
+              denseView ? 'py-4' : 'py-7'
+            }`}
+          >
+            <Lock size={denseView ? 16 : 18} className="mb-1" />
+            <span className="text-sm font-medium text-text-secondary">Locked</span>
+            <span className="text-xs">Unlock with your vault PIN</span>
+          </button>
+        </div>
+      )}
+      {!headerCollapsed && !hidden && (
       <div
         ref={contentRef}
         onClick={

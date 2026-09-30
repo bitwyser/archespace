@@ -3,6 +3,7 @@
  */
 
 import { richContentToPlainText } from './richText/doc'
+import { isContentHidden, isSpaceHidden } from './itemLock'
 
 /** How many item matches the search dropdown renders (shared with keyboard nav). */
 export const SEARCH_ITEM_DISPLAY_LIMIT = 30
@@ -19,6 +20,9 @@ function norm(s) {
 function itemSearchText(item) {
   const parts = [item.title]
   if (Array.isArray(item.tags)) parts.push(...item.tags)
+  // A locked item (or one in a locked space) is found by its title and tags
+  // only: matching its content would reveal what it says.
+  if (isContentHidden(item)) return norm(parts.filter(Boolean).join(' '))
   const c = item.content || {}
   if (item.type === 'textbox') parts.push(c.text)
   if (item.type === 'richtext' || item.type === 'markdown') parts.push(richContentToPlainText(item.type, c))
@@ -41,8 +45,11 @@ export function filterGlobalSearch({ spaces, items, itemMeta }, query) {
   const q = norm(query.trim())
   if (!q) return { spaces: [], items: [] }
 
+  // A locked space is found by its name and tags; its description only once
+  // it's opened.
   const matchedSpaces = spaces.filter(c =>
-    norm(c.name).includes(q) || norm(c.description).includes(q) ||
+    norm(c.name).includes(q) ||
+    (!isSpaceHidden(c.id) && norm(c.description).includes(q)) ||
     (Array.isArray(c.tags) && c.tags.some(t => norm(t).includes(q)))
   )
 

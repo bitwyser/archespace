@@ -26,6 +26,8 @@ export async function duplicateSpaceWithItems(source, cryptoKey, position) {
       color: source.color,
       tags: encCol.tags,
       pinned: false,
+      // A copy of a locked space stays locked.
+      locked: !!source.locked,
     })
     .select()
     .single()
@@ -33,7 +35,7 @@ export async function duplicateSpaceWithItems(source, cryptoKey, position) {
 
   const { data: items, error: itemsErr } = await supabase
     .from('space_items')
-    .select('type, title, content, position, pinned')
+    .select('type, title, content, position, pinned, locked')
     .eq('space_id', source.id)
     .is('deleted_at', null)
     .is('archived_at', null)
@@ -50,6 +52,7 @@ export async function duplicateSpaceWithItems(source, cryptoKey, position) {
         content: item.content,
         position: i,
         pinned: item.pinned,
+        locked: !!item.locked,
       }))
     )
     if (insertErr) throw insertErr

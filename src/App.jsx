@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './context/AuthContext'
 import { useAuth } from './context/AuthContextCore'
 import { EncryptionProvider } from './context/EncryptionContext'
+import { VaultPinPromptProvider } from './context/VaultPinPromptContext'
 import VaultUnlockGate from './components/VaultUnlockGate'
 import MfaGate from './components/MfaGate'
 import { ThemeProvider } from './context/ThemeContext'
@@ -227,7 +228,9 @@ export default function App() {
                 <PageActionsProvider>
                   <AuthProvider>
                     <EncryptionProvider>
-                      <RouterProvider router={router} />
+                      <VaultPinPromptProvider>
+                        <RouterProvider router={router} />
+                      </VaultPinPromptProvider>
                     </EncryptionProvider>
                   </AuthProvider>
                 </PageActionsProvider>

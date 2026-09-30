@@ -7,11 +7,13 @@
  * by their surface, a soft space-colour strip, tags coloured by name shown
  * inline with the item count, and a vertical 3-dot menu in the top-right.
  */
-import { Check, Pin, PinOff, Star, StarOff, Pencil, PencilOff, PencilLine, Trash2, Copy, Archive, CheckSquare, Square, MoreVertical } from 'lucide-react'
+import { Check, Pin, PinOff, Star, StarOff, Pencil, PencilOff, PencilLine, Trash2, Copy, Archive, CheckSquare, Square, MoreVertical, Lock, LockOpen } from 'lucide-react'
 import { getColorPreset, softColorValue, tagColorValue } from '../../lib/spaceColors'
 import { ActionMenu } from '../ui/ActionMenu'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { useToast } from '../../context/ToastCore'
+import { useVaultPinPrompt } from '../../context/VaultPinPromptCore'
+import { useItemRevealed, useSpaceHidden } from '../../lib/itemLock'
 
 /** A tag chip tinted by the tag's own stable colour; brighter when it's an
  * active filter. Consumes its own click so it filters instead of opening. */
@@ -43,10 +45,19 @@ function ReadOnlyMark() {
   )
 }
 
+/** After the name of a locked space: closed until opened with the PIN. */
+function LockMark({ hidden }) {
+  return (
+    <span className={`shrink-0 ${hidden ? 'text-text-muted' : 'text-accent'}`} title={hidden ? 'Locked' : 'Unlocked'}>
+      {hidden ? <Lock size={13} aria-label="Locked" /> : <LockOpen size={13} aria-label="Unlocked" />}
+    </span>
+  )
+}
+
 export function SpaceCard({
   col, index, search, dragIndex, dragOverIndex,
   handleDragStart, handleDragOver, handleDrop, handleDragEnd,
-  navigate, togglePin, toggleStar, toggleReadOnly, setModal, setDeleteConfirm, onDuplicate, onArchive,
+  navigate, togglePin, toggleStar, toggleReadOnly, toggleLock, setModal, setDeleteConfirm, onDuplicate, onArchive,
   stats,
   onTagClick,
   activeTags = [],
@@ -58,6 +69,28 @@ export function SpaceCard({
 }) {
   const online = useOnlineStatus()
   const { toast } = useToast()
+  const askVaultPin = useVaultPinPrompt()
+  // Locked (itself or its parent) and not opened: the name, tags and count
+  // show; the description and editing wait for the PIN (asked on opening).
+  const hidden = useSpaceHidden(col.id)
+  const revealed = useItemRevealed(col.id)
+
+  // Locking is instant and hides the space. Removing a lock needs the PIN,
+  // unless the space was already opened with it.
+  const handleToggleLock = async () => {
+    if (col.locked && !revealed) {
+      const ok = await askVaultPin({
+        title: 'Remove lock',
+        message: 'Enter your vault PIN to remove the lock. The space will open without the PIN.',
+        confirmLabel: 'Remove lock',
+      })
+      if (!ok) return
+    }
+    toggleLock.mutate({ id: col.id, locked: !!col.locked }, {
+      onSuccess: () => toast.success(col.locked ? 'Lock removed' : 'Space locked'),
+      onError: () => toast.error(col.locked ? "Couldn't remove the lock." : "Couldn't lock the space."),
+    })
+  }
   const colorPreset = getColorPreset(col.color)
   // Softer, thinner space-colour strip (~50% alpha) than the picker's vivid value.
   const softColor = softColorValue(col.color, '80')
@@ -110,7 +143,15 @@ export function SpaceCard({
         onError: () => toast.error("Couldn't change read-only."),
       }),
     },
-    !col.read_only && { id: 'edit', label: 'Edit', icon: Pencil, disabled: !online, onClick: () => setModal({ type: 'edit', col }) },
+    toggleLock && {
+      id: 'lock',
+      label: col.locked ? 'Remove lock' : 'Lock',
+      icon: col.locked ? LockOpen : Lock,
+      disabled: !online,
+      onClick: handleToggleLock,
+    },
+    // Editing shows the description, so a hidden locked space opens first.
+    !col.read_only && !hidden && { id: 'edit', label: 'Edit', icon: Pencil, disabled: !online, onClick: () => setModal({ type: 'edit', col }) },
     { id: 'duplicate', label: 'Duplicate', icon: Copy, disabled: !online, onClick: () => onDuplicate?.(col.id) },
     { id: 'archive', label: 'Archive', icon: Archive, disabled: !online, onClick: () => onArchive?.(col.id) },
     { id: 'delete', label: 'Delete', icon: Trash2, variant: 'danger', disabled: !online, onClick: () => setDeleteConfirm(col.id) },
@@ -162,9 +203,10 @@ export function SpaceCard({
           <h3 className="min-w-0 font-semibold text-text-primary truncate">{col.name}</h3>
           {col.starred && <Star size={14} className="shrink-0 text-accent fill-accent" aria-label="Starred" />}
           {col.read_only && <ReadOnlyMark />}
+          {(col.locked || hidden) && <LockMark hidden={hidden} />}
         </div>
 
-        {col.description
+        {col.description && !hidden
           ? <p className="text-text-secondary text-sm truncate flex-1 min-w-0">{col.description}</p>
           : <span className="flex-1 min-w-0" />}
 
@@ -212,8 +254,9 @@ export function SpaceCard({
             <h3 className="min-w-0 font-semibold text-text-primary truncate">{col.name}</h3>
             {col.starred && <Star size={14} className="shrink-0 text-accent fill-accent" aria-label="Starred" />}
             {col.read_only && <ReadOnlyMark />}
+            {(col.locked || hidden) && <LockMark hidden={hidden} />}
           </div>
-          {col.description && (
+          {col.description && !hidden && (
             <p className="text-text-secondary text-sm mt-1 line-clamp-2 leading-relaxed">{col.description}</p>
           )}
         </div>

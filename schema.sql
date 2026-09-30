@@ -75,6 +75,13 @@ ALTER TABLE space_items ALTER COLUMN space_id DROP NOT NULL;
 ALTER TABLE spaces      ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
 ALTER TABLE space_items ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
 
+-- Locked spaces and items (added later): the content shows only after the
+-- vault PIN is entered again (a locked space's name, a locked item's title
+-- stay visible). A flag like `starred` - the content is encrypted as always -
+-- so it can be toggled in read-only spaces too. Safe to re-run.
+ALTER TABLE spaces      ADD COLUMN IF NOT EXISTS locked boolean NOT NULL DEFAULT false;
+ALTER TABLE space_items ADD COLUMN IF NOT EXISTS locked boolean NOT NULL DEFAULT false;
+
 -- Read-only spaces (added later): the space's details and its items' content
 -- can't be changed until it's turned off (enforced by trg_*_read_only in
 -- section 3). Safe to re-run.

@@ -40,6 +40,7 @@ import {
   clearClientRateLimit,
 } from '../lib/rateLimiter'
 import { logAudit } from '../lib/auditLog'
+import { hideAllItems } from '../lib/itemLock'
 
 const VAULT_STATUS_TIMEOUT_MS = 8000
 const VAULT_SESSION_RESTORE_TIMEOUT_MS = 4000
@@ -131,6 +132,7 @@ export function EncryptionProvider({ children }) {
 
   const lock = useCallback((reason) => {
     clearVaultSession()
+    hideAllItems() // opened locked items need the PIN again
     setCryptoKey(null)
     setUnlockError('')
     // `reason` is a string for programmatic calls ('auto'); when lock is
@@ -381,6 +383,7 @@ export function EncryptionProvider({ children }) {
 
     if (!userId) {
       clearVaultSession()
+      hideAllItems()
       const timer = setTimeout(() => {
         setCryptoKey(null)
         setSessionRestoring(false)

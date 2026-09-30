@@ -16,13 +16,16 @@ import { useSpaceItems } from './useSpaceItems'
 import { useToast } from '../context/ToastCore'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { isReadOnlyError, READ_ONLY_MESSAGE } from '../lib/readOnly'
+import { hideItem, isItemRevealed } from '../lib/itemLock'
+import { useVaultPinPrompt } from '../context/VaultPinPromptCore'
 
 export function useItemBoard(spaceId) {
   const location = useLocation()
   const { toast } = useToast()
   const itemsApi = useSpaceItems(spaceId)
   const { data: items = [], isLoading } = itemsApi
-  const { update, togglePin, toggleStar, setTags, setListNumbered, duplicate, archive, create, move } = itemsApi
+  const { update, togglePin, toggleStar, toggleLock, setTags, setListNumbered, duplicate, archive, create, move } = itemsApi
+  const askVaultPin = useVaultPinPrompt()
 
   // ── Dialog + card state ──
   const [addModal, setAddModal] = useState(false)
@@ -117,6 +120,24 @@ export function useItemBoard(spaceId) {
     }),
     [toggleStarMutate]
   )
+  // Locking is instant and hides the content at once. Removing a lock needs
+  // the PIN, unless the item was already opened with it.
+  const toggleLockMutate = toggleLock.mutate
+  const handleToggleLock = useCallback(async (itemId, locked) => {
+    if (locked && !isItemRevealed(itemId)) {
+      const ok = await askVaultPin({
+        title: 'Remove lock',
+        message: 'Enter your vault PIN to remove the lock. The content will show without the PIN.',
+        confirmLabel: 'Remove lock',
+      })
+      if (!ok) return
+    }
+    if (!locked) hideItem(itemId)
+    toggleLockMutate({ id: itemId, locked }, {
+      onSuccess: () => toastRef.current.success(locked ? 'Lock removed' : 'Item locked'),
+      onError: () => toastRef.current.error(locked ? "Couldn't remove the lock." : "Couldn't lock the item."),
+    })
+  }, [toggleLockMutate, askVaultPin])
   const handleDuplicateItem = useCallback((it) => duplicateMutate(it, {
     onSuccess: () => toastRef.current.success('Item duplicated'),
     onError: () => toastRef.current.error("Couldn't duplicate the item."),
@@ -152,6 +173,7 @@ export function useItemBoard(spaceId) {
     onSetListNumbered: handleSetListNumbered,
     onTogglePin: handleTogglePin,
     onToggleStar: handleToggleStar,
+    onToggleLock: handleToggleLock,
     onDelete: setDeleteConfirm,
     onDuplicate: handleDuplicateItem,
     onMove: handleMoveOne,
@@ -159,7 +181,7 @@ export function useItemBoard(spaceId) {
     onDirtyChange: handleDirtyChange,
   }), [
     setItemCollapsed, handleItemUpdate, handleSetTags, handleSetListNumbered, handleTogglePin, handleToggleStar,
-    handleDuplicateItem, handleMoveOne, handleArchiveItem, handleDirtyChange,
+    handleToggleLock, handleDuplicateItem, handleMoveOne, handleArchiveItem, handleDirtyChange,
   ])
 
   // ── Warn on page close / in-app navigation if unsaved edits exist ──

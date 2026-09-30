@@ -11,6 +11,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, KeyRound, Lock, LogOut, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
+import { useVaultPinPrompt } from '../context/VaultPinPromptCore'
 import { useTheme } from '../context/ThemeCore'
 import { useToast } from '../context/ToastCore'
 import { useSpaces } from '../hooks/useSpaces'
@@ -66,6 +67,7 @@ export default function SettingsPage() {
   const navigate = useNavigate()
   const { user, signIn, signOut, requestPasswordReset, reauthenticate, updateEmail, deleteAccount, updatePasswordAndSignOut } = useAuth()
   const { cryptoKey, unlock, updatePin, setupRecoveryCode, updatePinWithRecoveryCode, unlocking, lock, autoLockId, setAutoLock } = useEncryption()
+  const askVaultPin = useVaultPinPrompt()
   const {
     themeMode,
     themeModes,
@@ -385,8 +387,14 @@ export default function SettingsPage() {
 
   const handleExport = async () => {
     try {
-      await exportSpaces(spaces, cryptoKey)
-      toast.success("Backup exported")
+      const saved = await exportSpaces(spaces, cryptoKey, {
+        confirmLocked: () => askVaultPin({
+          title: 'Export locked content',
+          message: 'The backup includes locked items or spaces, saved readable in the file. Enter your vault PIN to export.',
+          confirmLabel: 'Export',
+        }),
+      })
+      if (saved) toast.success("Backup exported")
     } catch {
       toast.error("Couldn't export backup.")
     }

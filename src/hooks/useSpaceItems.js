@@ -22,6 +22,7 @@ import {
   makeBulkSetPinned,
   makeTogglePin,
   makeToggleStar,
+  makeToggleFlag,
   makeReorder,
 } from './entityMutations'
 
@@ -196,6 +197,16 @@ export function useSpaceItems(spaceId) {
     invalidate: () => invalidateSpaceItems(qc, itemsKey),
   }))
 
+  // Lock / remove lock: a flag only (the content stays encrypted with the
+  // vault key as before); a locked item's content is shown after the PIN.
+  const toggleLock = useMutation(makeToggleFlag({
+    table: 'space_items',
+    field: 'locked',
+    qc,
+    queryKey: queryKeys.items(itemsKey),
+    invalidate: () => invalidateSpaceItems(qc, itemsKey),
+  }))
+
   // Tags-only update (encrypted like a space's tags). Optimistic so chips update
   // instantly. Isolated from create/update so the tags-column migration can't
   // break item creation or content saves.
@@ -288,6 +299,8 @@ export function useSpaceItems(spaceId) {
           content: encrypted.content,
           position: items.length,
           pinned: false,
+          // A copy of a locked item stays locked.
+          locked: !!item.locked,
         })
         .select()
         .single()
@@ -386,6 +399,7 @@ export function useSpaceItems(spaceId) {
             content: encrypted.content,
             position: basePos + i,
             pinned: false,
+            locked: !!item.locked,
           }
         })
       )
@@ -401,6 +415,7 @@ export function useSpaceItems(spaceId) {
     update,
     togglePin,
     toggleStar,
+    toggleLock,
     setTags,
     setListNumbered,
     remove,

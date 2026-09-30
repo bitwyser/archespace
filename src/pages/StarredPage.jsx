@@ -48,7 +48,7 @@ export default function StarredPage() {
   const { toast } = useToast()
   const {
     data: spaces = [], isLoading: spacesLoading,
-    update, togglePin, toggleStar, toggleReadOnly, remove, archive, duplicate,
+    update, togglePin, toggleStar, toggleReadOnly, toggleLock, remove, archive, duplicate,
   } = useSpaces()
   const { data: spaceStats = {} } = useSpaceStats()
   // Starred items from every space (and the dashboard).
@@ -101,6 +101,7 @@ export default function StarredPage() {
       togglePin={togglePin}
       toggleStar={toggleStar}
       toggleReadOnly={toggleReadOnly}
+      toggleLock={toggleLock}
       setModal={setSpaceModal}
       setDeleteConfirm={setSpaceDeleteConfirm}
       onDuplicate={(id) => duplicate.mutate(id, {
