@@ -22,7 +22,7 @@ export function useItemBoard(spaceId) {
   const { toast } = useToast()
   const itemsApi = useSpaceItems(spaceId)
   const { data: items = [], isLoading } = itemsApi
-  const { update, togglePin, toggleStar, setTags, duplicate, archive, create, move } = itemsApi
+  const { update, togglePin, toggleStar, setTags, setListNumbered, duplicate, archive, create, move } = itemsApi
 
   // ── Dialog + card state ──
   const [addModal, setAddModal] = useState(false)
@@ -97,6 +97,15 @@ export function useItemBoard(spaceId) {
     throw err
   }), [updateAsync])
   const handleSetTags = useCallback((itemId, tags) => setTags.mutate({ id: itemId, tags }), [setTags])
+  const setListNumberedMutate = setListNumbered.mutate
+  const handleSetListNumbered = useCallback(
+    (itemId, numbered) => setListNumberedMutate({ id: itemId, numbered }, {
+      onError: (err) => toastRef.current.error(
+        isReadOnlyError(err) ? READ_ONLY_MESSAGE : "Couldn't change the list."
+      ),
+    }),
+    [setListNumberedMutate]
+  )
   const handleTogglePin = useCallback(
     (itemId, pinned) => togglePinMutate({ id: itemId, pinned }),
     [togglePinMutate]
@@ -140,6 +149,7 @@ export function useItemBoard(spaceId) {
     onCollapsedChange: setItemCollapsed,
     onUpdate: handleItemUpdate,
     onSetTags: handleSetTags,
+    onSetListNumbered: handleSetListNumbered,
     onTogglePin: handleTogglePin,
     onToggleStar: handleToggleStar,
     onDelete: setDeleteConfirm,
@@ -148,7 +158,7 @@ export function useItemBoard(spaceId) {
     onArchive: handleArchiveItem,
     onDirtyChange: handleDirtyChange,
   }), [
-    setItemCollapsed, handleItemUpdate, handleSetTags, handleTogglePin, handleToggleStar,
+    setItemCollapsed, handleItemUpdate, handleSetTags, handleSetListNumbered, handleTogglePin, handleToggleStar,
     handleDuplicateItem, handleMoveOne, handleArchiveItem, handleDirtyChange,
   ])
 

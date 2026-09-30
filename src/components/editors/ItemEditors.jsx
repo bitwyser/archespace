@@ -197,7 +197,7 @@ export function MarkdownEditor({ content, onChange, readOnly = false }) {
 // ListEditor (shared by ChecklistEditor & MenuListEditor)
 // ─────────────────────────────────────────────────────────
 
-function ListEditor({ content, onChange, variant, readOnly = false }) {
+function ListEditor({ content, onChange, variant, readOnly = false, onNumberedChange }) {
   const isChecklist = variant === 'checkbox'
   const isNumbered = variant === 'numbered'
   const inputAttr = isChecklist ? 'data-checklist-input' : 'data-menu-input'
@@ -347,12 +347,25 @@ function ListEditor({ content, onChange, variant, readOnly = false }) {
       {readOnly ? (
         items.length === 0 && <p className="text-text-muted text-sm italic">Empty</p>
       ) : (
-        <button
-          onClick={addItem}
-          className="flex items-center gap-2 text-text-muted hover:text-accent text-sm transition-colors mt-2 py-1"
-        >
-          <Plus size={14} /> Add item
-        </button>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <button
+            onClick={addItem}
+            className="flex items-center gap-2 text-text-muted hover:text-accent text-sm transition-colors py-1"
+          >
+            <Plus size={14} /> Add item
+          </button>
+          {onNumberedChange && (
+            <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs font-medium text-text-muted hover:text-text-secondary">
+              <input
+                type="checkbox"
+                checked={isNumbered}
+                onChange={e => onNumberedChange(e.target.checked)}
+                className="h-3.5 w-3.5 cursor-pointer accent-[var(--accent)]"
+              />
+              Numbered
+            </label>
+          )}
+        </div>
       )}
     </div>
   )
@@ -362,12 +375,12 @@ export function ChecklistEditor(props) {
   return <ListEditor {...props} variant="checkbox" />
 }
 
-export function MenuListEditor(props) {
-  return <ListEditor {...props} variant="bullet" />
-}
-
-export function NumberedListEditor(props) {
-  return <ListEditor {...props} variant="numbered" />
+/**
+ * The List type: bullets, or numbers when `numbered`. `onNumberedChange`
+ * (omitted offline) shows the Numbered checkbox that switches between them.
+ */
+export function ListItemsEditor({ numbered = false, ...props }) {
+  return <ListEditor {...props} variant={numbered ? 'numbered' : 'bullet'} />
 }
 
 

@@ -223,6 +223,32 @@ export function useSpaceItems(spaceId) {
     onSettled: () => invalidateSpaceItems(qc, itemsKey),
   })
 
+  // A List's numbering: bullets and numbers hold the same content, so turning
+  // numbers on or off only switches the item's type (plain metadata, nothing
+  // to re-encrypt). Optimistic so the list re-numbers at once.
+  const setListNumbered = useMutation({
+    mutationFn: async ({ id, numbered }) => {
+      assertOnline()
+      const { error } = await supabase
+        .from('space_items')
+        .update({ type: numbered ? 'numbered_list' : 'menu_list' })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onMutate: async ({ id, numbered }) => {
+      await qc.cancelQueries({ queryKey: queryKeys.items(itemsKey) })
+      const previous = qc.getQueryData(queryKeys.items(itemsKey))
+      qc.setQueryData(queryKeys.items(itemsKey), (old) =>
+        old?.map(it => (it.id === id ? { ...it, type: numbered ? 'numbered_list' : 'menu_list' } : it))
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(queryKeys.items(itemsKey), context.previous)
+    },
+    onSettled: () => invalidateSpaceItems(qc, itemsKey),
+  })
+
   const remove = useMutation(makeSoftDelete({
     table: 'space_items',
     invalidate: () => invalidateSpaceItems(qc, itemsKey),
@@ -376,6 +402,7 @@ export function useSpaceItems(spaceId) {
     togglePin,
     toggleStar,
     setTags,
+    setListNumbered,
     remove,
     reorder,
     archive,

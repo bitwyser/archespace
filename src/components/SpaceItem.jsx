@@ -25,7 +25,7 @@ import {
   Maximize2, Minimize2, MoveRight, MoreVertical,
   ClipboardCopy, ClipboardCheck, FileDown, Eye, EyeOff, PencilOff,
 } from 'lucide-react'
-import { TextboxEditor, MarkdownEditor, ChecklistEditor, MenuListEditor, NumberedListEditor, CardListEditor } from './editors/ItemEditors'
+import { TextboxEditor, MarkdownEditor, ChecklistEditor, ListItemsEditor, CardListEditor } from './editors/ItemEditors'
 import RichTextEditor, { RichTextToolbar } from './editors/RichTextEditor'
 import { SecretEditor } from './editors/SecretEditor'
 import { DrawEditor } from './editors/DrawEditor'
@@ -57,6 +57,7 @@ function SpaceItem({
   item,
   onUpdate,
   onSetTags,
+  onSetListNumbered,
   onTogglePin,
   onToggleStar,
   onDelete,
@@ -739,8 +740,18 @@ function SpaceItem({
         {item.type === 'richtext'      && <RichTextEditor   key={`${item.id}:${editorVersion}`} ref={richTextRef} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'code'          && <CodeEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'checkbox_list' && <ChecklistEditor  key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
-        {item.type === 'menu_list'     && <MenuListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
-        {item.type === 'numbered_list' && <NumberedListEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {/* One List type: bullets (menu_list) or numbers (numbered_list); the
+            Numbered checkbox switches between them without remounting. */}
+        {(item.type === 'menu_list' || item.type === 'numbered_list') && (
+          <ListItemsEditor
+            key={`${item.id}:${editorVersion}`}
+            content={localContent}
+            onChange={handleContentChange}
+            readOnly={readOnly}
+            numbered={item.type === 'numbered_list'}
+            onNumberedChange={onSetListNumbered && online ? (numbered) => onSetListNumbered(item.id, numbered) : undefined}
+          />
+        )}
         {item.type === 'card_list'     && <CardListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'secret'        && <SecretEditor     key={`${item.id}:${editorVersion}`} ref={secretEditorRef} content={localContent} onChange={handleContentChange} readOnly={readOnly} onStateChange={setSecretState} />}
         {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
