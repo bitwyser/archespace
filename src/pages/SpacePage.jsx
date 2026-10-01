@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List, FolderPlus, Search, SearchX, X, PencilOff, Lock, LockOpen } from 'lucide-react'
+import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List, FolderPlus, Search, SearchX, X, PencilOff, Shield, ShieldCheck } from 'lucide-react'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useSpaces } from '../hooks/useSpaces'
 import { useItemBoard } from '../hooks/useItemBoard'
@@ -102,15 +102,16 @@ export default function SpacePage() {
     })
   }
 
-  // Locked (this space or its parent) and not opened: the page shows a
-  // Locked view and asks for the vault PIN as it opens.
+  // Protected (this space or its parent) and not opened: the page shows a
+  // Protected view and asks for the vault PIN as it opens.
   const askVaultPin = useVaultPinPrompt()
   const hidden = useSpaceHidden(id)
   const locked = !!space?.locked
   const spaceName = space?.name || 'Untitled'
   const unlockSpace = useCallback(async () => {
     const ok = await askVaultPin({
-      title: 'Unlock space',
+      title: 'Open protected space',
+      confirmLabel: 'Open',
       message: `Enter your vault PIN to open "${spaceName}".`,
     })
     if (ok) revealSpace(id)
@@ -118,12 +119,12 @@ export default function SpacePage() {
   const promptedFor = useRef(null)
   useEffect(() => {
     if (!space || promptedFor.current === id) return
-    // Once per visit, and only when it opens locked (not after locking it here).
+    // Once per visit, and only when it opens hidden (not after protecting it here).
     promptedFor.current = id
     if (hidden) unlockSpace()
   }, [hidden, space, id, unlockSpace])
 
-  // Locking is instant and hides the space. Removing the lock asks for the
+  // Protecting is instant and hides the space. Removing protection asks for the
   // PIN unless the space was opened with it (it always is, on this page).
   const handleToggleLock = async () => {
     if (!locked && board.dirtyItems.size > 0) {
@@ -132,15 +133,15 @@ export default function SpacePage() {
     }
     if (locked && !isItemRevealed(id)) {
       const ok = await askVaultPin({
-        title: 'Remove lock',
-        message: 'Enter your vault PIN to remove the lock. The space will open without the PIN.',
-        confirmLabel: 'Remove lock',
+        title: 'Remove protection',
+        message: 'Enter your vault PIN to remove protection. The space will open without the PIN.',
+        confirmLabel: 'Remove protection',
       })
       if (!ok) return
     }
     toggleSpaceLock.mutate({ id, locked }, {
-      onSuccess: () => toast.success(locked ? 'Lock removed' : 'Space locked'),
-      onError: () => toast.error(locked ? "Couldn't remove the lock." : "Couldn't lock the space."),
+      onSuccess: () => toast.success(locked ? 'Protection removed' : 'Space protected'),
+      onError: () => toast.error(locked ? "Couldn't remove protection." : "Couldn't protect the space."),
     })
   }
 
@@ -314,7 +315,7 @@ export default function SpacePage() {
     )
   }
 
-  // ── Locked state: the name only, until the vault PIN opens it ──
+  // ── Protected state: the name only, until the vault PIN opens it ──
   if (space && hidden) {
     return (
       <div className="min-h-screen bg-bg-base flex flex-col">
@@ -334,16 +335,16 @@ export default function SpacePage() {
         <main className="flex-1 flex items-center justify-center px-6 pb-16">
           <div className="text-center max-w-xs">
             <div className="w-14 h-14 rounded-2xl bg-accent-muted text-accent flex items-center justify-center mx-auto mb-4">
-              <Lock size={22} />
+              <ShieldCheck size={22} />
             </div>
-            <p className="text-text-primary font-semibold">Locked</p>
+            <p className="text-text-primary font-semibold">Protected</p>
             <p className="text-text-muted text-sm mt-1">Enter your vault PIN to open this space.</p>
             <button
               type="button"
               onClick={unlockSpace}
               className="mt-5 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
             >
-              <LockOpen size={16} /> Unlock
+              Open
             </button>
           </div>
         </main>
@@ -480,16 +481,16 @@ export default function SpacePage() {
                 onClick={handleToggleLock}
                 disabled={!online}
                 aria-pressed={locked}
-                title={!online ? 'Unavailable offline' : locked ? 'Locked - click to remove the lock' : 'Lock'}
-                aria-label={locked ? 'Locked, remove the lock' : 'Lock'}
+                title={!online ? 'Unavailable offline' : locked ? 'Protected - click to remove protection' : 'Protect'}
+                aria-label={locked ? 'Protected, remove protection' : 'Protect'}
                 className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                   locked
                     ? 'border-accent-border bg-accent-muted text-accent'
                     : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
                 }`}
               >
-                <Lock size={14} />
-                <span className="hidden sm:inline">Lock</span>
+                <Shield size={14} />
+                <span className="hidden sm:inline">Protect</span>
               </button>
             )}
             {space && !selectMode && (

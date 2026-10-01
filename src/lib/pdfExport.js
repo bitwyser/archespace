@@ -344,8 +344,8 @@ function itemSectionNodes(item) {
       margin: [0, 12, 0, 3],
     },
     { canvas: [{ type: 'line', x1: 0, y1: 0, x2: CONTENT_WIDTH, y2: 0, lineWidth: 0.5, lineColor: '#dddddd' }], margin: [0, 0, 0, 8] },
-    // A locked item that isn't open stays out of the file.
-    ...(isContentHidden(item) ? [{ text: 'Locked', style: 'empty' }] : itemBodyNodes(item)),
+    // A protected item that isn't open stays out of the file.
+    ...(isContentHidden(item) ? [{ text: 'Protected', style: 'empty' }] : itemBodyNodes(item)),
   ]
 }
 

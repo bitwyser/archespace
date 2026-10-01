@@ -23,7 +23,7 @@ import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Star, StarOff,
   Pin, PinOff, Save, AlertTriangle, GripVertical, Copy, Archive,
   Maximize2, Minimize2, MoveRight, MoreVertical,
-  ClipboardCopy, ClipboardCheck, FileDown, PencilOff, Lock, LockOpen,
+  ClipboardCopy, ClipboardCheck, FileDown, PencilOff, Shield, ShieldCheck, ShieldOff, EyeOff,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, ListItemsEditor, CardListEditor } from './editors/ItemEditors'
 // The Rich text editor (Tiptap) loads only when a Rich text item is shown.
@@ -318,16 +318,17 @@ function SpaceItem({
     }
   }, [item.type])
 
-  /** Open a locked item with the vault PIN. */
+  /** Open a protected item with the vault PIN. */
   const handleReveal = async () => {
     const ok = await askVaultPin({
-      title: 'Unlock item',
+      title: 'Open protected item',
+      confirmLabel: 'Open',
       message: `Enter your vault PIN to open "${item.title || 'Untitled'}".`,
     })
     if (ok) revealContent(item)
   }
 
-  /** Hide an opened locked item again (saving any edit first). */
+  /** Hide an opened protected item again (saving any edit first). */
   const handleHide = () => {
     if (isDirty) performSave()
     setIsFullscreen(false)
@@ -387,7 +388,7 @@ function SpaceItem({
   // mode. On a clamped preview it expands the note first; on a dense grid card
   // it opens full screen (how those cards edit).
   const showRichToolbar = item.type === 'richtext' && !readOnly && !headerCollapsed && !selectMode && !hidden
-  // Copy and Export PDF release the content, so a hidden locked item has none.
+  // Copy and Export PDF release the content, so a hidden protected item has none.
   const canCopy = !hidden && item.type !== 'draw' && item.type !== 'authenticator'
 
   /** Save the title instantly to the server without marking dirty */
@@ -476,20 +477,20 @@ function SpaceItem({
           {item.starred && !editingTitle && (
             <Star size={13} className="shrink-0 self-center text-accent fill-accent" aria-label="Starred" />
           )}
-          {/* Locked: a closed lock, or an open one (tap to hide again) once
-              the PIN has opened it. */}
+          {/* Protected: a shield, or once the PIN has opened it, a button to
+              hide it again. */}
           {(item.locked || hidden) && !editingTitle && (!hidden ? (
             <button
               type="button"
               onClick={handleHide}
               className="shrink-0 self-center -m-1 p-1 rounded-md text-accent hover:bg-bg-hover transition-colors"
-              aria-label="Lock again"
-              title="Lock again"
+              aria-label="Hide again"
+              title="Hide again"
             >
-              <LockOpen size={13} />
+              <EyeOff size={13} />
             </button>
           ) : (
-            <Lock size={13} className="shrink-0 self-center text-text-muted" aria-label="Locked" />
+            <ShieldCheck size={13} className="shrink-0 self-center text-text-muted" aria-label="Protected" />
           ))}
           {/* Outside its space, say why it can't be edited. */}
           {readOnly && contextLabel && (
@@ -644,8 +645,8 @@ function SpaceItem({
                       },
                       onToggleLock && {
                         id: 'lock',
-                        label: item.locked ? 'Remove lock' : 'Lock',
-                        icon: item.locked ? LockOpen : Lock,
+                        label: item.locked ? 'Remove protection' : 'Protect',
+                        icon: item.locked ? ShieldOff : Shield,
                         disabled: !online,
                         onClick: () => onToggleLock(item.id, !!item.locked),
                       },
@@ -749,8 +750,8 @@ function SpaceItem({
       {/* ── Content editor ──
           The header chevron hides the body entirely (only the header and tags
           stay). When shown, a long body is clamped to a fixed preview height
-          (with a fade) that expands to full height when tapped. A locked item
-          shows an Unlock panel instead until the vault PIN opens it. */}
+          (with a fade) that expands to full height when tapped. A protected item
+          shows a Protected panel instead until the vault PIN opens it. */}
       {!headerCollapsed && hidden && (
         <div className={`${denseView ? 'px-2.5 pb-3' : 'px-4 pb-4'} ${showTags ? 'pt-0' : denseView ? 'pt-3' : 'pt-4'}`}>
           <button
@@ -761,9 +762,9 @@ function SpaceItem({
               denseView ? 'py-4' : 'py-7'
             }`}
           >
-            <Lock size={denseView ? 16 : 18} className="mb-1" />
-            <span className="text-sm font-medium text-text-secondary">Locked</span>
-            <span className="text-xs">Unlock with your vault PIN</span>
+            <ShieldCheck size={denseView ? 16 : 18} className="mb-1" />
+            <span className="text-sm font-medium text-text-secondary">Protected</span>
+            <span className="text-xs">Open with your vault PIN</span>
           </button>
         </div>
       )}

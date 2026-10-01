@@ -120,22 +120,22 @@ export function useItemBoard(spaceId) {
     }),
     [toggleStarMutate]
   )
-  // Locking is instant and hides the content at once. Removing a lock needs
+  // Protecting is instant and hides the content at once. Removing protection needs
   // the PIN, unless the item was already opened with it.
   const toggleLockMutate = toggleLock.mutate
   const handleToggleLock = useCallback(async (itemId, locked) => {
     if (locked && !isItemRevealed(itemId)) {
       const ok = await askVaultPin({
-        title: 'Remove lock',
-        message: 'Enter your vault PIN to remove the lock. The content will show without the PIN.',
-        confirmLabel: 'Remove lock',
+        title: 'Remove protection',
+        message: 'Enter your vault PIN to remove protection. The content will show without the PIN.',
+        confirmLabel: 'Remove protection',
       })
       if (!ok) return
     }
     if (!locked) hideItem(itemId)
     toggleLockMutate({ id: itemId, locked }, {
-      onSuccess: () => toastRef.current.success(locked ? 'Lock removed' : 'Item locked'),
-      onError: () => toastRef.current.error(locked ? "Couldn't remove the lock." : "Couldn't lock the item."),
+      onSuccess: () => toastRef.current.success(locked ? 'Protection removed' : 'Item protected'),
+      onError: () => toastRef.current.error(locked ? "Couldn't remove protection." : "Couldn't protect the item."),
     })
   }, [toggleLockMutate, askVaultPin])
   const handleDuplicateItem = useCallback((it) => duplicateMutate(it, {
