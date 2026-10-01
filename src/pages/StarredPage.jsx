@@ -16,6 +16,7 @@ import { STARRED_ITEMS } from '../hooks/useSpaceItems'
 import { useToast } from '../context/ToastCore'
 import { useRegisterPageActions } from '../context/PageActionsCore'
 import SpaceItem from '../components/SpaceItem'
+import { IconButton } from '../components/ui/Button'
 import ItemBoardModals from '../components/ItemBoardModals'
 import { SpaceCard } from '../components/space/SpaceCard'
 import { SpaceModal } from '../components/space/SpaceModal'
@@ -156,14 +157,7 @@ export default function StarredPage() {
     <div className="min-h-screen bg-bg-base pb-24">
       <header className="sticky top-0 z-20 glass">
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/app')}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-          >
-            <ArrowLeft size={16} />
-            <span className="hidden sm:inline">Back</span>
-          </button>
+          <IconButton icon={ArrowLeft} label="Back" size="md" className="-ml-1.5" onClick={() => navigate('/app')} />
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold text-text-primary">Starred</h1>
             <p className="text-xs text-text-muted mt-0.5">

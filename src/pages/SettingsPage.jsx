@@ -18,6 +18,8 @@ import { useSpaces } from '../hooks/useSpaces'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { exportSpaces, importSpaces } from '../lib/exportImport'
 import PinInput from '../components/PinInput'
+import { IconButton } from '../components/ui/Button'
+import { buttonClass } from '../components/ui/buttonStyles'
 import PasskeyManager from '../components/PasskeyManager'
 import MfaSettings from '../components/MfaSettings'
 import { validateVaultPin, getWeakPinWarning } from '../lib/crypto/vaultPin'
@@ -30,10 +32,10 @@ import ReauthCode from '../components/ReauthCode'
 import { Modal, ConfirmDialog } from '../components/ui/UI'
 import RecoveryCodeDialog from '../components/RecoveryCodeDialog'
 import { queryKeys } from '../lib/queryKeys'
+import { SettingRow, SettingGroup, FormActions } from '../components/settings/SettingRow'
 import {
-  SettingRow, SettingGroup, FormActions,
   rowButtonClass, rowDangerButtonClass, primaryButtonClass, inputClass, labelClass,
-} from '../components/settings/SettingRow'
+} from '../components/settings/settingStyles'
 
 /** Nav entries; each section's header repeats its title and description. */
 const SECTIONS = [
@@ -447,14 +449,7 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-bg-base">
       <header className="sticky top-0 z-20 glass">
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/app')}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-          >
-            <ArrowLeft size={16} />
-            <span className="hidden sm:inline">Back</span>
-          </button>
+          <IconButton icon={ArrowLeft} label="Back" size="md" className="-ml-1.5" onClick={() => navigate('/app')} />
           <h1 className="text-sm font-semibold text-text-primary">Settings</h1>
         </div>
       </header>
@@ -463,7 +458,7 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-6 md:min-h-0 md:flex-1 md:flex-row md:items-stretch">
           {/* Section nav: tabs on phones, a rail on wider screens */}
           <nav className="w-full shrink-0 md:w-52 md:self-start" aria-label="Settings sections">
-            <div className="flex gap-1 overflow-x-auto rounded-xl border border-bg-border bg-bg-elevated p-1 md:flex-col md:overflow-visible">
+            <div className="flex gap-1 overflow-x-auto rounded-xl bg-bg-elevated p-1 md:flex-col md:overflow-visible">
               {SECTIONS.map(({ id, title, icon: NavIcon }) => {
                 const on = activeSection === id
                 const disabled = !online && id !== 'appearance'
@@ -812,7 +807,7 @@ export default function SettingsPage() {
                     title="Theme"
                     description={selectedTheme?.description}
                     action={
-                      <div role="radiogroup" aria-label="Theme" className="flex rounded-xl border border-bg-border bg-bg-elevated p-0.5">
+                      <div role="radiogroup" aria-label="Theme" className="flex rounded-lg bg-bg-elevated p-0.5">
                         {themeModes.map(option => {
                           const selected = themeMode === option.id
                           return (
@@ -925,14 +920,14 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={resetDeleteFlow}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => setDeleteStep('confirm')}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 I understand
               </button>
@@ -963,14 +958,14 @@ export default function SettingsPage() {
                 type="button"
                 onClick={resetDeleteFlow}
                 disabled={deleteLoading}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors disabled:opacity-50"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={deleteLoading || unlocking}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors disabled:opacity-50"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 {deleteLoading || unlocking ? 'Deleting...' : 'Delete permanently'}
               </button>

@@ -10,7 +10,8 @@ import { useToast } from '../context/ToastCore'
 import PinInput from './PinInput'
 import { ConfirmDialog } from './ui/UI'
 import { VAULT_PIN_MIN_LENGTH } from '../lib/constants'
-import { SettingRow, FormActions, rowButtonClass, rowDangerButtonClass } from './settings/SettingRow'
+import { SettingRow, FormActions } from './settings/SettingRow'
+import { rowButtonClass, rowDangerButtonClass } from './settings/settingStyles'
 
 function formatDate(value) {
   if (!value) return null

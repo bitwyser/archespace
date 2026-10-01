@@ -3,6 +3,7 @@
  */
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
+import { IconButton } from './ui/Button'
 
 /**
  * @param {{
@@ -36,38 +37,32 @@ export default function BulkSelectionBar({ count, onClear, actions }) {
   if (count === 0) return null
 
   return (
-    <div ref={barRef} className="fixed left-1/2 -translate-x-1/2 bottom-4 z-30 w-fit max-w-[calc(100%-1rem)]">
-      <div className="flex flex-wrap items-center gap-2 px-4 py-3 rounded-2xl border border-accent/30 bg-bg-surface shadow-2xl shadow-black/20 backdrop-blur-md">
+    // Centred with inset-x + auto margins (not left-1/2 + translate, which
+    // leaves a fit-content bar only half the screen to size itself in).
+    <div ref={barRef} className="fixed inset-x-0 bottom-4 z-30 mx-auto w-fit max-w-[calc(100%-1rem)]">
+      {/* A floating surface, set off the page by a raised background and its
+          shadow (no outline); the actions inside are quiet round icon
+          buttons, destructive ones in red. */}
+      <div className="flex items-center gap-2 pl-4 pr-2 py-2 rounded-2xl bg-bg-elevated shadow-2xl shadow-black/30">
         <span className="text-sm font-semibold text-text-primary tabular-nums shrink-0">
           {count} selected
         </span>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {actions.filter(Boolean).map(({ id, label, icon: Icon, onClick, variant }) => (
-            <button
+        {/* Only the actions wrap (many of them on a narrow phone); the count
+            and the clear button stay on the bar's row. */}
+        <div className="flex flex-wrap items-center gap-0.5">
+          {actions.filter(Boolean).map(({ id, label, icon, onClick, variant }) => (
+            <IconButton
               key={id}
-              type="button"
+              icon={icon}
+              label={label}
+              size="md"
               onClick={onClick}
-              title={label}
-              aria-label={label}
-              className={`p-2 rounded-lg border text-sm transition-all ${
-                variant === 'danger'
-                  ? 'border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary'
-                  : 'border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary'
-              }`}
-            >
-              <Icon size={16} />
-            </button>
+              className={variant === 'danger' ? '!text-danger hover:!bg-danger-muted' : ''}
+            />
           ))}
         </div>
-        <button
-          type="button"
-          onClick={onClear}
-          title="Clear selection"
-          aria-label="Clear selection"
-          className="p-2 rounded-lg border border-bg-border hover:bg-bg-elevated text-text-muted"
-        >
-          <X size={16} />
-        </button>
+        <span className="h-5 w-px shrink-0 bg-bg-border" aria-hidden="true" />
+        <IconButton icon={X} label="Clear selection" size="md" onClick={onClear} />
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { Folder, FileText } from 'lucide-react'
-import { TYPE_LABELS } from '../lib/itemTypes'
+import { Folder } from 'lucide-react'
+import { TypeBadge } from './ui/TypeBadge'
 import { GLOBAL_SEARCH_RESULT_LIMIT } from '../lib/constants'
 import { SEARCH_ITEM_DISPLAY_LIMIT, searchOptionId } from '../lib/search'
 
@@ -79,11 +79,11 @@ export default function GlobalSearchResults({
                       onClick={() => onSelectItem(item)}
                       className={optionClass(optId === activeOptionId)}
                     >
-                      <FileText size={14} className="text-text-muted shrink-0" />
+                      <TypeBadge type={item.type} size={13} />
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-text-primary truncate">{item.title || 'Untitled'}</p>
                         <p className="text-xs text-text-muted truncate">
-                          {TYPE_LABELS[item.type]} · {itemMeta?.[item.id]?.spaceName}
+                          {itemMeta?.[item.id]?.spaceName}
                         </p>
                       </div>
                     </button>

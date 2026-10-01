@@ -3,6 +3,7 @@
  */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { buttonClass } from '../components/ui/buttonStyles'
 import { ArrowLeft, Check, Eye, EyeOff, KeyRound, Sparkles } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useTheme } from '../context/ThemeCore'
@@ -76,7 +77,7 @@ export default function PasswordResetPage() {
       <button
         type="button"
         onClick={toggle}
-        className="absolute top-4 right-4 p-2.5 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all z-50"
+        className="absolute top-4 right-4 z-50 flex h-9 w-9 items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
         title={`Current theme: ${currentThemeName}`}
         aria-label="Switch app theme"
       >
@@ -85,7 +86,7 @@ export default function PasswordResetPage() {
 
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-6 sm:mb-10">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg shadow-accent/10">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-3 sm:mb-4">
             <KeyRound size={24} className="text-accent" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-semibold text-text-primary mb-1.5 sm:mb-2">Reset Password</h1>
@@ -105,7 +106,7 @@ export default function PasswordResetPage() {
               <button
                 type="button"
                 onClick={() => navigate('/login', { replace: true })}
-                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
               >
                 <ArrowLeft size={14} /> Back to sign in
               </button>
@@ -192,7 +193,7 @@ export default function PasswordResetPage() {
               <button
                 type="submit"
                 disabled={saving || !canSubmit}
-                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-1 active:scale-[0.98] shadow-lg shadow-accent/20"
+                className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full mt-1' })}
               >
                 <KeyRound size={14} />
                 {saving ? 'Updating password...' : 'Update password'}

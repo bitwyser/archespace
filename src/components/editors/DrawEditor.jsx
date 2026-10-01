@@ -100,7 +100,7 @@ export function DrawEditor({ content, onChange, readOnly = false }) {
               title={label}
               aria-label={label}
               aria-pressed={tool === id}
-              className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${tool === id ? 'border-accent bg-accent-muted text-accent' : 'border-bg-border bg-bg-surface text-text-secondary hover:bg-bg-elevated'}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${tool === id ? 'bg-accent-muted text-accent' : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'}`}
             >
               <Icon size={15} />
             </button>
@@ -125,7 +125,7 @@ export function DrawEditor({ content, onChange, readOnly = false }) {
               key={s}
               type="button"
               onClick={() => setSize(s)}
-              className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${size === s ? 'border-accent bg-accent-muted' : 'border-bg-border bg-bg-surface hover:bg-bg-elevated'}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${size === s ? 'bg-accent-muted' : 'hover:bg-bg-hover'}`}
               aria-label={`Pen size ${s}`}
               aria-pressed={size === s}
             >
@@ -140,7 +140,7 @@ export function DrawEditor({ content, onChange, readOnly = false }) {
             title="Landscape"
             aria-label="Landscape canvas"
             aria-pressed={orientation === 'landscape'}
-            className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${orientation === 'landscape' ? 'border-accent bg-accent-muted text-accent' : 'border-bg-border bg-bg-surface text-text-secondary hover:bg-bg-elevated'}`}
+            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${orientation === 'landscape' ? 'bg-accent-muted text-accent' : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'}`}
           >
             <RectangleHorizontal size={15} />
           </button>
@@ -150,7 +150,7 @@ export function DrawEditor({ content, onChange, readOnly = false }) {
             title="Portrait"
             aria-label="Portrait canvas"
             aria-pressed={orientation === 'portrait'}
-            className={`flex h-7 w-7 items-center justify-center rounded-lg border transition-colors ${orientation === 'portrait' ? 'border-accent bg-accent-muted text-accent' : 'border-bg-border bg-bg-surface text-text-secondary hover:bg-bg-elevated'}`}
+            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${orientation === 'portrait' ? 'bg-accent-muted text-accent' : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'}`}
           >
             <RectangleVertical size={15} />
           </button>
@@ -158,7 +158,7 @@ export function DrawEditor({ content, onChange, readOnly = false }) {
             type="button"
             onClick={undo}
             disabled={!hasStrokes}
-            className="flex h-7 items-center gap-1 rounded-lg border border-bg-border bg-bg-surface px-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors disabled:opacity-40"
+            className="flex h-7 items-center gap-1 rounded-lg px-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors disabled:opacity-40"
           >
             <Undo2 size={13} /> Undo
           </button>
@@ -166,7 +166,7 @@ export function DrawEditor({ content, onChange, readOnly = false }) {
             type="button"
             onClick={clear}
             disabled={!hasStrokes}
-            className="flex h-7 items-center gap-1 rounded-lg border border-bg-border bg-bg-surface px-2 text-xs font-medium text-text-secondary hover:text-danger hover:border-danger/30 transition-colors disabled:opacity-40"
+            className="flex h-7 items-center gap-1 rounded-lg px-2 text-xs font-medium text-text-secondary hover:text-danger hover:bg-danger-muted transition-colors disabled:opacity-40"
           >
             <Eraser size={13} /> Clear
           </button>

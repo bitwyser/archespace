@@ -37,6 +37,7 @@ import { CodeEditor } from './editors/CodeEditor'
 import { AuthenticatorEditor } from './editors/AuthenticatorEditor'
 import { ItemTags } from './ItemTags'
 import { ActionMenu } from './ui/ActionMenu'
+import { buttonClass } from './ui/buttonStyles'
 import { getChecklistProgress } from '../lib/checklistProgress'
 import { isOnline, enqueueOffline } from '../lib/offlineQueue'
 import { isReachable, isNetworkError, setReachable } from '../lib/connectivity'
@@ -47,7 +48,7 @@ import { encryptItem } from '../lib/dataProtection'
 import { hideItem, revealContent, useContentHidden } from '../lib/itemLock'
 import { itemToClipboardText } from '../lib/itemClipboard'
 import { exportItemToPdf } from '../lib/pdfExport'
-import { TYPE_LABELS, TYPE_STYLES, TYPE_ICONS } from '../lib/itemTypes'
+import { TypeBadge } from './ui/TypeBadge'
 import { AUTO_SAVE_DELAY_MS } from '../lib/constants'
 
 // When an item's content is taller than this (px), it collapses to a fixed
@@ -135,7 +136,6 @@ function SpaceItem({
 
   const autoSaveTimer = useRef(null)
   const copyTimer = useRef(null)
-  const style = TYPE_STYLES[item.type]
   const checklistProgress = item.type === 'checkbox_list' ? getChecklistProgress(localContent) : null
 
   // Built here (rather than passed as a fresh object from the parent) so that
@@ -404,14 +404,14 @@ function SpaceItem({
 
   // Styled like a space card: borderless on a soft shadow that deepens on
   // hover, a thin accent ring when selected, and no border when pinned (the
-  // pin icon marks it). The space card's hover lift, press shrink and hover
-  // background are left out: this card is an inline editor, so they would
-  // fire while typing or clicking into content (and clash with the fade).
+  // pin icon marks it). The space card's press shrink and hover background
+  // are left out: this card is an inline editor, so they would fire while
+  // typing or clicking into content (and clash with the fade).
   const itemCard = (
     <div className={`${
       isFullscreen
         ? 'fixed inset-0 z-[80] flex flex-col rounded-none border-0 bg-bg-base'
-        : 'relative rounded-2xl bg-bg-card shadow-sm hover:shadow-xl hover:shadow-accent/5 transition-shadow duration-200'
+        : 'relative rounded-2xl bg-bg-card shadow-sm hover:shadow-md transition-shadow duration-200'
     } ${denseView ? 'text-[13px]' : ''} ${
       isFullscreen ? '' : selected ? 'ring-[1.5px] ring-accent-border'
         // Soft ring + lift while one of its text fields has the cursor
@@ -440,18 +440,7 @@ function SpaceItem({
         {/* Pin indicator */}
         {item.pinned && <Pin size={14} className="text-accent shrink-0 fill-accent" />}
         {/* Type badge: the type's colored icon in a tinted pill. */}
-        {(() => {
-          const TypeIcon = TYPE_ICONS[item.type]
-          return (
-            <span
-              className={`shrink-0 inline-flex items-center justify-center p-1 rounded-lg ${style.bg} ${style.text} border ${style.border}`}
-              title={TYPE_LABELS[item.type]}
-              aria-label={TYPE_LABELS[item.type]}
-            >
-              {TypeIcon ? <TypeIcon size={14} /> : null}
-            </span>
-          )
-        })()}
+        <TypeBadge type={item.type} />
 
         {/* Title (inline editable), plus where the item lives when shown
             outside its space (the Starred view). */}
@@ -544,7 +533,7 @@ function SpaceItem({
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-accent hover:bg-accent-hover text-accent-fg transition-colors disabled:opacity-60"
+                className={buttonClass({ variant: 'primary', size: 'xs' })}
               >
                 {saving
                   ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
@@ -553,7 +542,7 @@ function SpaceItem({
               </button>
               <button
                 onClick={handleDiscard}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary transition-all"
+                className={buttonClass({ variant: 'secondary', size: 'xs' })}
               >
                 <X size={14} /> Discard
               </button>
@@ -563,10 +552,10 @@ function SpaceItem({
             <>
               {editingTitle ? (
                 <>
-                  <button onClick={saveTitle} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-success/15 border border-success/30 text-success hover:bg-success/25 transition-all">
+                  <button onClick={saveTitle} className={buttonClass({ variant: 'primary', size: 'xs' })}>
                     <Check size={14} /> Save
                   </button>
-                  <button onClick={() => { setTitleVal(item.title); setEditingTitle(false) }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary transition-all">
+                  <button onClick={() => { setTitleVal(item.title); setEditingTitle(false) }} className={buttonClass({ variant: 'secondary', size: 'xs' })}>
                     <X size={14} /> Cancel
                   </button>
                 </>
@@ -576,7 +565,7 @@ function SpaceItem({
                   <button
                     type="button"
                     onClick={handleCollapseClick}
-                    className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
+                    className="p-1.5 rounded-full text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
                     aria-label={headerCollapsed ? 'Expand item' : 'Collapse item'}
                     title={headerCollapsed ? 'Expand' : 'Collapse'}
                   >
@@ -587,7 +576,7 @@ function SpaceItem({
                   <button
                     type="button"
                     onClick={handleFullscreenClick}
-                    className={`p-1.5 rounded-lg transition-colors ${
+                    className={`p-1.5 rounded-full transition-colors ${
                       isFullscreen
                         ? 'bg-accent-muted text-accent'
                         : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
@@ -602,7 +591,7 @@ function SpaceItem({
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className={`p-1.5 rounded-lg transition-colors ${
+                    className={`p-1.5 rounded-full transition-colors ${
                       copied
                         ? 'text-success'
                         : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
@@ -724,13 +713,13 @@ function SpaceItem({
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent hover:bg-accent-hover text-accent-fg transition-colors"
+              className={buttonClass({ variant: 'primary', size: 'xs' })}
             >
               <Save size={14} /> Save & collapse
             </button>
             <button
               onClick={() => { handleDiscard(); onCollapsedChange?.(item.id, true) }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary transition-all"
+              className={buttonClass({ variant: 'secondary', size: 'xs' })}
             >
               Discard & collapse
             </button>
@@ -739,7 +728,7 @@ function SpaceItem({
               onClick={() => setCollapseGuard(false)}
               aria-label="Dismiss warning"
               title="Dismiss"
-              className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-all"
+              className="p-1.5 rounded-full text-text-muted hover:text-text-primary hover:bg-bg-hover transition-all"
             >
               <X size={14} />
             </button>

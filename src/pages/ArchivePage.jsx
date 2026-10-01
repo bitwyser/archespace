@@ -11,7 +11,9 @@ import BulkSelectionBar from '../components/BulkSelectionBar'
 import { BULK_ICONS } from '../components/BulkSelectionIcons'
 import SelectableRow from '../components/SelectableRow'
 import { Spinner } from '../components/ui/UI'
-import { TYPE_LABELS } from '../lib/itemTypes'
+import { Button, IconButton } from '../components/ui/Button'
+import { buttonClass } from '../components/ui/buttonStyles'
+import { TypeBadge } from '../components/ui/TypeBadge'
 import { timeAgo } from '../lib/timeAgo'
 
 export default function ArchivePage() {
@@ -82,14 +84,7 @@ export default function ArchivePage() {
     <div className="min-h-screen bg-bg-base pb-32">
       <header className="sticky top-0 z-20 glass">
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/app')}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-          >
-            <ArrowLeft size={16} />
-            <span className="hidden sm:inline">Back</span>
-          </button>
+          <IconButton icon={ArrowLeft} label="Back" size="md" className="-ml-1.5" onClick={() => navigate('/app')} />
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold text-text-primary">Archive</h1>
             <p className="text-xs text-text-muted mt-0.5">
@@ -97,26 +92,21 @@ export default function ArchivePage() {
             </p>
           </div>
           {selectMode && selectableTotal > 0 && (
-            <button
-              type="button"
-              onClick={selectAll}
-              title="Select all"
-              aria-label="Select all"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary text-sm font-medium transition-all"
-            >
-              <ListChecks size={14} />
-              <span className="hidden sm:inline">Select all</span>
-            </button>
+            <Button variant="ghost" size="sm" icon={ListChecks} iconOnlyOnMobile aria-label="Select all" onClick={selectAll}>
+              Select all
+            </Button>
           )}
           {selectableTotal > 0 && (
-            <button
-              type="button"
+            <Button
+              variant={selectMode ? 'secondary' : 'ghost'}
+              size="sm"
+              icon={CheckSquare}
+              iconOnlyOnMobile
+              aria-label={selectMode ? 'Done selecting' : 'Select'}
               onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary text-sm font-medium transition-all"
             >
-              <CheckSquare size={14} />
-              <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
-            </button>
+              {selectMode ? 'Done' : 'Select'}
+            </Button>
           )}
         </div>
       </header>
@@ -155,7 +145,7 @@ export default function ArchivePage() {
                               onSuccess: () => toast.success('Space restored from archive'),
                               onError: () => toast.error("Couldn't restore it."),
                             })}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-success/10 hover:text-success text-text-secondary text-xs font-medium"
+                            className={buttonClass({ variant: 'secondary', size: 'sm' })}
                           >
                             <RotateCcw size={14} /> Unarchive
                           </button>
@@ -166,7 +156,7 @@ export default function ArchivePage() {
                               onError: () => toast.error("Couldn't move it to the bin."),
                             })}
                             title="Move to bin"
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary text-xs font-medium transition-all"
+                            className={buttonClass({ variant: 'danger', size: 'sm' })}
                           >
                             <Trash2 size={14} /> Delete
                           </button>
@@ -201,7 +191,7 @@ export default function ArchivePage() {
                               onSuccess: () => toast.success('Item restored'),
                               onError: () => toast.error("Couldn't restore it."),
                             })}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-success/10 hover:text-success text-text-secondary text-xs font-medium"
+                            className={buttonClass({ variant: 'secondary', size: 'sm' })}
                           >
                             <RotateCcw size={14} /> Unarchive
                           </button>
@@ -212,17 +202,20 @@ export default function ArchivePage() {
                               onError: () => toast.error("Couldn't move it to the bin."),
                             })}
                             title="Move to bin"
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary text-xs font-medium transition-all"
+                            className={buttonClass({ variant: 'danger', size: 'sm' })}
                           >
                             <Trash2 size={14} /> Delete
                           </button>
                         </>
                       }
                     >
-                      <span className="text-xs text-text-muted bg-bg-elevated px-2 py-0.5 rounded border border-bg-border">
-                        {TYPE_LABELS[item.type]}
-                      </span>
-                      <p className="text-sm font-semibold text-text-primary truncate mt-1">{item.title || 'Untitled'}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <TypeBadge type={item.type} />
+                        <p className="min-w-0 text-sm font-semibold text-text-primary truncate">{item.title || 'Untitled'}</p>
+                      </div>
+                      {item.archived_at && (
+                        <p className="text-xs text-text-muted mt-1">Archived {timeAgo(item.archived_at)}</p>
+                      )}
                     </SelectableRow>
                   ))}
                 </div>

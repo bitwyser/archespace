@@ -5,7 +5,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, LayoutGrid, List, FolderPlus, Search, SearchX, X, PencilOff, Shield, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Plus, CheckSquare, ListChecks, FileDown, FolderPlus, Search, SearchX, X, PencilOff, Shield, ShieldCheck } from 'lucide-react'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useSpaces } from '../hooks/useSpaces'
 import { useItemBoard } from '../hooks/useItemBoard'
@@ -22,6 +22,9 @@ import BulkSelectionBar from '../components/BulkSelectionBar'
 import { BULK_ICONS } from '../components/BulkSelectionIcons'
 import { ConfirmDialog } from '../components/ui/UI'
 import { SortMenu } from '../components/ui/SortMenu'
+import { ActionMenu } from '../components/ui/ActionMenu'
+import { Button, IconButton } from '../components/ui/Button'
+import { ViewToggle } from '../components/ui/ViewToggle'
 import { usePersistedSort } from '../hooks/usePersistedSort'
 import { useSpaceStats } from '../hooks/useSpaceStats'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
@@ -321,14 +324,13 @@ export default function SpacePage() {
       <div className="min-h-screen bg-bg-base flex flex-col">
         <header className="sticky top-0 z-20 glass">
           <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
-            <button
+            <IconButton
+              icon={ArrowLeft}
+              label="Back"
+              size="md"
+              className="-ml-1.5"
               onClick={() => navigate(parentSpace ? `/space/${parentSpace.id}` : '/app')}
-              title="Back"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-            >
-              <ArrowLeft size={16} />
-              <span className="hidden sm:inline">Back</span>
-            </button>
+            />
             <h1 className="flex-1 min-w-0 text-sm font-semibold text-text-primary truncate">{spaceName}</h1>
           </div>
         </header>
@@ -339,13 +341,7 @@ export default function SpacePage() {
             </div>
             <p className="text-text-primary font-semibold">Protected</p>
             <p className="text-text-muted text-sm mt-1">Enter your vault PIN to open this space.</p>
-            <button
-              type="button"
-              onClick={unlockSpace}
-              className="mt-5 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
-            >
-              Open
-            </button>
+            <Button variant="primary" className="mt-5" onClick={unlockSpace}>Open</Button>
           </div>
         </main>
       </div>
@@ -447,14 +443,13 @@ export default function SpacePage() {
       <header className="sticky top-0 z-20 glass">
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
           {/* Back button - to the parent space for a sub-space, else the dashboard */}
-          <button
+          <IconButton
+            icon={ArrowLeft}
+            label={parentSpace ? `Back to ${parentSpace.name}` : 'Back'}
+            size="md"
+            className="-ml-1.5"
             onClick={() => navigate(parentSpace ? `/space/${parentSpace.id}` : '/app')}
-            title={parentSpace ? `Back to ${parentSpace.name}` : 'Back'}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-          >
-            <ArrowLeft size={16} />
-            <span className="hidden sm:inline max-w-[140px] truncate">{parentSpace ? parentSpace.name : 'Back'}</span>
-          </button>
+          />
 
           {/* Space title & description */}
           <div className="flex-1 min-w-0">
@@ -471,82 +466,64 @@ export default function SpacePage() {
             </span>
           )}
 
-          {/* Header actions */}
-          {/* Header actions: things done to the space itself. The view, sort and
-              select controls live in the search row above the items. */}
-          <div className="flex items-center gap-2 shrink-0 relative">
+          {/* Header actions: things done to the space itself, as quiet icon
+              toggles (tinted while on), then the one main action. The view,
+              sort and select controls live in the search row above the items. */}
+          <div className="flex items-center gap-1 shrink-0 relative">
             {space && !selectMode && (
-              <button
-                type="button"
-                onClick={handleToggleLock}
-                disabled={!online}
-                aria-pressed={locked}
-                title={!online ? 'Unavailable offline' : locked ? 'Protected - click to remove protection' : 'Protect'}
+              <IconButton
+                icon={Shield}
+                label={!online ? 'Unavailable offline' : locked ? 'Protected - click to remove protection' : 'Protect'}
                 aria-label={locked ? 'Protected, remove protection' : 'Protect'}
-                className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                  locked
-                    ? 'border-accent-border bg-accent-muted text-accent'
-                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-                }`}
-              >
-                <Shield size={14} />
-                <span className="hidden sm:inline">Protect</span>
-              </button>
+                active={locked}
+                disabled={!online}
+                onClick={handleToggleLock}
+              />
             )}
             {space && !selectMode && (
-              <button
-                type="button"
-                onClick={handleToggleReadOnly}
-                disabled={!online}
-                aria-pressed={readOnly}
-                title={!online ? 'Unavailable offline' : readOnly ? 'Read-only - click to allow editing' : 'Read-only'}
+              <IconButton
+                icon={PencilOff}
+                label={!online ? 'Unavailable offline' : readOnly ? 'Read-only - click to allow editing' : 'Read-only'}
                 aria-label={readOnly ? 'Read-only, allow editing' : 'Read-only'}
-                className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                  readOnly
-                    ? 'border-accent-border bg-accent-muted text-accent'
-                    : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-                }`}
-              >
-                <PencilOff size={14} />
-                <span className="hidden sm:inline">Read-only</span>
-              </button>
+                active={readOnly}
+                disabled={!online}
+                onClick={handleToggleReadOnly}
+              />
             )}
             {items.length > 0 && !selectMode && (
-              <button
-                type="button"
+              <IconButton
+                icon={FileDown}
+                label="Export space as PDF"
                 onClick={() => exportSpaceToPdf(space, items)}
-                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
-                title="Export space as PDF"
-                aria-label="Export space as PDF"
-              >
-                <FileDown size={14} />
-                <span className="hidden sm:inline">Export</span>
-              </button>
+              />
             )}
-            {isTopLevel && !selectMode && !readOnly && (
-              <button
-                type="button"
-                onClick={() => setSpaceModal({ type: 'create' })}
+            {/* New: a menu of New item / New sub-space where both apply (like
+                the mobile + button); inside a sub-space, Add item directly. */}
+            {!readOnly && !selectMode && (isTopLevel ? (
+              <ActionMenu
+                label={online ? 'New' : 'Unavailable offline'}
+                triggerLabel="New"
+                icon={Plus}
+                openOnHover={false}
                 disabled={!online}
-                title={online ? 'New sub-space' : 'Unavailable offline'}
-                className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-              >
-                <FolderPlus size={16} strokeWidth={2.5} />
-                <span className="hidden sm:inline">New space</span>
-              </button>
-            )}
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={openAddItem}
+                actions={[
+                  { id: 'item', label: 'New item', icon: Plus, onClick: openAddItem },
+                  { id: 'space', label: 'New space', icon: FolderPlus, onClick: () => setSpaceModal({ type: 'create' }) },
+                ]}
+              />
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                icon={Plus}
                 disabled={!online}
-                className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                 title={online ? 'Add item' : 'Unavailable offline'}
+                onClick={openAddItem}
+                className="ml-1"
               >
-                <Plus size={16} strokeWidth={2.5} />
-                <span className="hidden sm:inline">Add item</span>
-              </button>
-            )}
+                Add item
+              </Button>
+            ))}
           </div>
         </div>
       </header>
@@ -581,14 +558,16 @@ export default function SpacePage() {
             <p className="text-text-secondary font-medium">Nothing here yet</p>
             {!readOnly && <p className="text-text-muted text-sm mt-1">Add your first item to this space</p>}
             {!readOnly && (
-            <button
-              onClick={openAddItem}
-              disabled={!online}
-              title={online ? undefined : 'Unavailable offline'}
-              className="mt-4 inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Plus size={16} /> Add first item
-            </button>
+              <Button
+                variant="primary"
+                icon={Plus}
+                className="mt-4"
+                disabled={!online}
+                title={online ? undefined : 'Unavailable offline'}
+                onClick={openAddItem}
+              >
+                Add first item
+              </Button>
             )}
           </div>
         ) : (
@@ -597,11 +576,11 @@ export default function SpacePage() {
             {/* Search row: compact in-space search (item titles and tags) on the
                 left; the view, sort and select controls right-aligned. In select
                 mode the search gives way to Select all + Done, with Done where
-                Select was. Heights match SortMenu (32px phone, 38px desktop). */}
+                Select was. */}
             {items.length > 0 && (
               <div className="mb-3 flex items-center gap-2">
                 {!selectMode && (
-                  <div className="flex h-8 sm:h-[38px] min-w-0 flex-1 sm:max-w-md items-center gap-2 rounded-full bg-bg-card pl-3.5 pr-1.5 focus-within:ring-1 focus-within:ring-accent-border transition-shadow">
+                  <div className="flex h-8 sm:h-9 min-w-0 flex-1 sm:max-w-md items-center gap-2 rounded-full bg-bg-card pl-3.5 pr-1.5 focus-within:ring-1 focus-within:ring-accent-border transition-shadow">
                     <Search size={15} className="shrink-0 text-text-muted" />
                     <input
                       type="text"
@@ -631,64 +610,35 @@ export default function SpacePage() {
                     )}
                   </div>
                 )}
-                <div className="ml-auto flex shrink-0 items-center gap-2">
+                <div className="ml-auto flex shrink-0 items-center gap-1.5">
                   {!selectMode && (
-                    <div className="flex items-center gap-1 p-0.5 sm:p-1 rounded-xl border border-bg-border bg-bg-surface">
-                      <button
-                        type="button"
-                        onClick={() => changeViewMode('grid')}
-                        aria-label="Grid view"
-                        aria-pressed={viewMode === 'grid'}
-                        title="Grid view"
-                        className={`p-[5px] sm:p-1.5 rounded-lg transition-colors ${
-                          viewMode === 'grid'
-                            ? 'bg-accent-muted text-accent'
-                            : 'text-text-muted hover:text-text-primary'
-                        }`}
-                      >
-                        <LayoutGrid size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => changeViewMode('list')}
-                        aria-label="List view"
-                        aria-pressed={viewMode === 'list'}
-                        title="List view"
-                        className={`p-[5px] sm:p-1.5 rounded-lg transition-colors ${
-                          viewMode === 'list'
-                            ? 'bg-accent-muted text-accent'
-                            : 'text-text-muted hover:text-text-primary'
-                        }`}
-                      >
-                        <List size={16} />
-                      </button>
-                    </div>
+                    <ViewToggle value={viewMode} onChange={changeViewMode} />
                   )}
                   {!selectMode && items.length > 1 && (
                     <SortMenu value={itemSort} onChange={setItemSort} />
                   )}
                   {selectMode && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedIds(new Set(items.map(i => i.id)))}
-                      title="Select all"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={ListChecks}
+                      iconOnlyOnMobile
                       aria-label="Select all"
-                      className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
+                      onClick={() => setSelectedIds(new Set(items.map(i => i.id)))}
                     >
-                      <ListChecks size={14} />
-                      <span className="hidden sm:inline">Select all</span>
-                    </button>
+                      Select all
+                    </Button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-                    title={selectMode ? 'Done' : 'Select'}
+                  <Button
+                    variant={selectMode ? 'secondary' : 'ghost'}
+                    size="sm"
+                    icon={CheckSquare}
+                    iconOnlyOnMobile
                     aria-label={selectMode ? 'Done selecting' : 'Select items'}
-                    className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
+                    onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
                   >
-                    <CheckSquare size={14} />
-                    <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
-                  </button>
+                    {selectMode ? 'Done' : 'Select'}
+                  </Button>
                 </div>
               </div>
             )}
@@ -699,7 +649,7 @@ export default function SpacePage() {
                     `text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
                       active
                         ? 'bg-accent-muted border-accent-border text-accent'
-                        : 'bg-bg-surface border-bg-border text-text-secondary hover:text-text-primary'
+                        : 'bg-bg-elevated border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-hover'
                     }`
                   return (
                     <>

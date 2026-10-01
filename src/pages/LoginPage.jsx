@@ -3,6 +3,7 @@
  */
 import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
+import { buttonClass } from '../components/ui/buttonStyles'
 import { useAuth } from '../context/AuthContextCore'
 import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Check } from 'lucide-react'
 import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '../lib/constants'
@@ -311,7 +312,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setForgot(false); setResetSent(false); setError(''); setInfo('') }}
-                className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
               >
                 <ArrowLeft size={14} /> Back to sign in
               </button>
@@ -503,7 +504,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !canSubmit || (isCoolingDown && !isSignUp && !isForgot)}
-              className="w-full bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-3 text-sm font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-1 active:scale-[0.98] shadow-lg shadow-accent/20"
+              className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full mt-1' })}
             >
               {isForgot ? <Mail size={14} /> : isSignUp ? <UserPlus size={14} /> : <Lock size={14} />}
               {loading

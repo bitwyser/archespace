@@ -10,6 +10,7 @@
 import { useState } from 'react'
 import { Copy, Check, AlertTriangle } from 'lucide-react'
 import { Modal } from './ui/UI'
+import { buttonClass } from './ui/buttonStyles'
 
 export default function RecoveryCodeDialog({
   code,
@@ -59,7 +60,7 @@ export default function RecoveryCodeDialog({
             type="button"
             onClick={finish}
             disabled={busy || !confirmed}
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+            className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
           >
             {acknowledgeLabel}
           </button>
@@ -79,7 +80,7 @@ export default function RecoveryCodeDialog({
           <button
             type="button"
             onClick={copy}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border border-bg-border bg-bg-surface py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all"
+            className={buttonClass({ variant: 'secondary', className: 'w-full' })}
           >
             {copied ? (
               <>

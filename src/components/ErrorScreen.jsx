@@ -7,6 +7,7 @@
  */
 
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { buttonClass } from './ui/buttonStyles'
 
 export default function ErrorScreen({ variant = 'error', title, message, errorMessage }) {
   const isChunk = variant === 'chunk'
@@ -46,7 +47,7 @@ export default function ErrorScreen({ variant = 'error', title, message, errorMe
           </button>
           <button
             onClick={() => { window.location.href = '/app' }}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium transition-colors bg-bg-surface border border-bg-border text-text-secondary"
+            className={buttonClass({ variant: 'secondary' })}
           >
             Go to dashboard
           </button>

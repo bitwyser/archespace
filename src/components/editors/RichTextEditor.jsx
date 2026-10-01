@@ -25,6 +25,7 @@ import { richTextExtensions } from '../../lib/richText/extensions'
 import { toRichDoc } from '../../lib/richText/convert'
 import { registerSearchOpener } from '../../lib/richText/searchReplace'
 import { LINE_HEIGHTS } from '../../lib/richText/lineHeight'
+import { buttonClass } from '../ui/buttonStyles'
 
 // Plain text that reads like markdown is pasted as formatting.
 const MARKDOWN_HINT = /(^|\n)\s{0,3}(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|- \[[ xX]\]\s)|\*\*[^*\n]+\*\*|\[[^\]\n]+\]\([^)\n]+\)/
@@ -580,7 +581,7 @@ function SearchPanel({ editor, anchorRef, count, index, invalid, onClose }) {
           type="button"
           disabled={!count}
           onClick={() => editor.commands.replaceMatch()}
-          className="rounded-xl border border-bg-border bg-bg-surface px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary disabled:opacity-40"
+          className={buttonClass({ variant: 'secondary', size: 'sm' })}
         >
           Replace
         </button>

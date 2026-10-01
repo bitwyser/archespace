@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MoreHorizontal } from 'lucide-react'
+import { buttonClass } from './buttonStyles'
 // The trigger icon is configurable (defaults to horizontal dots); pass a
 // different lucide icon via the `icon` prop (e.g. MoreVertical).
 
@@ -11,7 +12,22 @@ const MENU_WIDTH = 176
 const VIEWPORT_PADDING = 8
 const MENU_GAP = 8
 
-export function ActionMenu({ actions, label = 'Actions', align = 'right', bordered = true, compact = false, icon: TriggerIcon = MoreHorizontal }) {
+/**
+ * `triggerLabel` turns the trigger into a primary button with that text (the
+ * "+ New" menu); otherwise it's a round icon button. `openOnHover` (default
+ * true) opens it on pointer hover as well as click.
+ */
+export function ActionMenu({
+  actions,
+  label = 'Actions',
+  align = 'right',
+  bordered = true,
+  compact = false,
+  icon: TriggerIcon = MoreHorizontal,
+  triggerLabel,
+  openOnHover = true,
+  disabled = false,
+}) {
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState({ top: 0, left: 0, origin: 'top' })
   const menuId = useId()
@@ -154,32 +170,34 @@ export function ActionMenu({ actions, label = 'Actions', align = 'right', border
     <div
       ref={rootRef}
       className="relative shrink-0"
-      onMouseEnter={openMenu}
-      onMouseLeave={scheduleClose}
+      onMouseEnter={openOnHover ? openMenu : undefined}
+      onMouseLeave={openOnHover ? scheduleClose : undefined}
       onBlur={handleBlur}
       onClick={(event) => event.stopPropagation()}
     >
       <button
         ref={buttonRef}
         type="button"
+        disabled={disabled}
         onClick={() => open ? closeMenu() : openMenuFocused()}
         onKeyDown={handleTriggerKeyDown}
-        className={`${compact ? 'p-1.5' : 'p-2'} rounded-lg transition-all ${
-          bordered
-            ? `border ${open
-                ? 'border-accent/30 bg-accent-muted text-accent'
-                : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'}`
-            : open
-              ? 'text-accent bg-bg-hover'
-              : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
-        }`}
+        className={triggerLabel
+          ? buttonClass({ variant: 'primary', size: 'sm' })
+          // A round, borderless icon trigger; `bordered` only adds a soft
+          // fill so it reads as a control on a busy surface.
+          : `${compact ? 'p-1.5' : 'p-2'} rounded-full transition-colors ${
+              open
+                ? 'bg-accent-muted text-accent'
+                : `${bordered ? 'bg-bg-elevated' : ''} text-text-muted hover:text-text-primary hover:bg-bg-hover`
+            }`}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
         aria-label={label}
         title={label}
       >
-        <TriggerIcon size={14} />
+        <TriggerIcon size={triggerLabel ? 15 : 14} strokeWidth={triggerLabel ? 2.5 : 2} />
+        {triggerLabel}
       </button>
 
       {open && createPortal(

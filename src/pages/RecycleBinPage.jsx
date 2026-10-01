@@ -13,7 +13,9 @@ import BulkSelectionBar from '../components/BulkSelectionBar'
 import { BULK_ICONS } from '../components/BulkSelectionIcons'
 import SelectableRow from '../components/SelectableRow'
 import { Spinner, Modal } from '../components/ui/UI'
-import { TYPE_LABELS } from '../lib/itemTypes'
+import { Button, IconButton } from '../components/ui/Button'
+import { buttonClass } from '../components/ui/buttonStyles'
+import { TypeBadge } from '../components/ui/TypeBadge'
 import { timeAgo } from '../lib/timeAgo'
 
 export default function RecycleBinPage() {
@@ -113,14 +115,7 @@ export default function RecycleBinPage() {
     <div className="min-h-screen bg-bg-base pb-32">
       <header className="sticky top-0 z-20 glass">
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/app')}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
-          >
-            <ArrowLeft size={16} />
-            <span className="hidden sm:inline">Back</span>
-          </button>
+          <IconButton icon={ArrowLeft} label="Back" size="md" className="-ml-1.5" onClick={() => navigate('/app')} />
 
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-semibold text-text-primary">Recycle Bin</h1>
@@ -129,38 +124,28 @@ export default function RecycleBinPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {selectMode && selectableTotal > 0 && (
-              <button
-                type="button"
-                onClick={selectAll}
-                title="Select all"
-                aria-label="Select all"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary text-sm font-medium transition-all"
-              >
-                <ListChecks size={14} />
-                <span className="hidden sm:inline">Select all</span>
-              </button>
+              <Button variant="ghost" size="sm" icon={ListChecks} iconOnlyOnMobile aria-label="Select all" onClick={selectAll}>
+                Select all
+              </Button>
             )}
             {selectableTotal > 0 && (
-              <button
-                type="button"
+              <Button
+                variant={selectMode ? 'secondary' : 'ghost'}
+                size="sm"
+                icon={CheckSquare}
+                iconOnlyOnMobile
+                aria-label={selectMode ? 'Done selecting' : 'Select'}
                 onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary text-sm font-medium transition-all"
               >
-                <CheckSquare size={14} />
-                <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
-              </button>
+                {selectMode ? 'Done' : 'Select'}
+              </Button>
             )}
             {total > 0 && !selectMode && (
-              <button
-                type="button"
-                onClick={() => setConfirmEmpty(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary transition-all text-sm font-medium"
-              >
-                <Trash2 size={14} />
-                <span className="hidden sm:inline">Empty bin</span>
-              </button>
+              <Button variant="danger" size="sm" icon={Trash2} iconOnlyOnMobile aria-label="Empty bin" onClick={() => setConfirmEmpty(true)}>
+                Empty bin
+              </Button>
             )}
           </div>
         </div>
@@ -201,14 +186,14 @@ export default function RecycleBinPage() {
                               onSuccess: () => toast.success('Space restored'),
                               onError: () => toast.error("Couldn't restore space."),
                             })}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-success/10 hover:border-success/30 hover:text-success text-text-secondary transition-all text-xs font-medium"
+                            className={buttonClass({ variant: 'secondary', size: 'sm' })}
                           >
                             <RotateCcw size={14} /> Restore
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmPurge({ type: 'space', id: col.id, name: col.name })}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary transition-all text-xs font-medium"
+                            className={buttonClass({ variant: 'danger', size: 'sm' })}
                           >
                             <Trash2 size={14} /> Delete permanently
                           </button>
@@ -248,25 +233,23 @@ export default function RecycleBinPage() {
                               onSuccess: () => toast.success('Item restored'),
                               onError: () => toast.error("Couldn't restore item."),
                             })}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-success/10 hover:border-success/30 hover:text-success text-text-secondary transition-all text-xs font-medium"
+                            className={buttonClass({ variant: 'secondary', size: 'sm' })}
                           >
                             <RotateCcw size={14} /> Restore
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmPurge({ type: 'item', id: item.id, name: item.title || 'Untitled' })}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-danger/10 hover:border-danger/30 hover:text-danger text-text-secondary transition-all text-xs font-medium"
+                            className={buttonClass({ variant: 'danger', size: 'sm' })}
                           >
                             <Trash2 size={14} /> Delete permanently
                           </button>
                         </>
                       }
                     >
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-medium text-text-muted bg-bg-elevated px-2 py-0.5 rounded-md border border-bg-border">
-                          {TYPE_LABELS[item.type]}
-                        </span>
-                        <p className="text-sm font-semibold text-text-primary truncate">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <TypeBadge type={item.type} />
+                        <p className="min-w-0 text-sm font-semibold text-text-primary truncate">
                           {item.title || 'Untitled'}
                         </p>
                       </div>
@@ -295,7 +278,7 @@ export default function RecycleBinPage() {
               <button
                 type="button"
                 onClick={() => setConfirmEmpty(false)}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
@@ -303,7 +286,7 @@ export default function RecycleBinPage() {
                 type="button"
                 onClick={handleEmptyBin}
                 disabled={emptyBin.isPending}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 {emptyBin.isPending && <Spinner size={14} />}
                 Empty bin permanently
@@ -331,14 +314,14 @@ export default function RecycleBinPage() {
               <button
                 type="button"
                 onClick={() => setConfirmBulkPurge(false)}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary rounded-xl border border-bg-border hover:bg-bg-elevated"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={runBulkPurge}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 Delete permanently
               </button>
@@ -358,14 +341,14 @@ export default function RecycleBinPage() {
               <button
                 type="button"
                 onClick={() => setConfirmPurge(null)}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handlePurge}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 Delete permanently
               </button>

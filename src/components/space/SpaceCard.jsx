@@ -7,9 +7,10 @@
  * by their surface, a soft space-colour strip, tags coloured by name shown
  * inline with the item count, and a vertical 3-dot menu in the top-right.
  */
-import { Check, Pin, PinOff, Star, StarOff, Pencil, PencilOff, PencilLine, Trash2, Copy, Archive, CheckSquare, Square, MoreVertical, Shield, ShieldCheck, ShieldOff } from 'lucide-react'
+import { Pin, PinOff, Star, StarOff, Pencil, PencilOff, PencilLine, Trash2, Copy, Archive, MoreVertical, Shield, ShieldCheck, ShieldOff } from 'lucide-react'
 import { getColorPreset, softColorValue, tagColorValue } from '../../lib/spaceColors'
 import { ActionMenu } from '../ui/ActionMenu'
+import { SelectCheck } from '../ui/SelectCheck'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { useToast } from '../../context/ToastCore'
 import { useVaultPinPrompt } from '../../context/VaultPinPromptCore'
@@ -191,11 +192,6 @@ export function SpaceCard({
           borderLeftColor: softColor,
         }}
       >
-        {selectMode && (
-          <span className="shrink-0 text-accent">
-            {selected ? <CheckSquare size={16} /> : <Square size={16} className="text-text-muted" />}
-          </span>
-        )}
         {col.pinned && <Pin size={14} className="shrink-0 text-accent fill-accent" />}
         {/* The name column, with the star right after the name inside the
             same fixed width. */}
@@ -221,9 +217,10 @@ export function SpaceCard({
 
         <p className="text-text-muted text-xs shrink-0 whitespace-nowrap tabular-nums">{itemLabel}</p>
 
-        {!selectMode && (
-          <ActionMenu label="Space actions" actions={menuActions} bordered={false} icon={MoreVertical} />
-        )}
+        {/* The check box sits where the menu is, as on the grid card. */}
+        {selectMode
+          ? <SelectCheck selected={selected} />
+          : <ActionMenu label="Space actions" actions={menuActions} bordered={false} icon={MoreVertical} />}
       </div>
     )
   }
@@ -238,7 +235,7 @@ export function SpaceCard({
       tabIndex={0}
       aria-pressed={selectMode ? selected : undefined}
       aria-label={ariaLabel}
-      className={`group relative rounded-2xl p-3.5 cursor-pointer bg-bg-card shadow-sm hover:shadow-xl hover:shadow-accent/5 hover:-translate-y-0.5 hover:bg-bg-elevated active:scale-[0.99] transition-all duration-200 animate-fade-in-up ${selectedRing} ${
+      className={`group relative rounded-2xl p-3.5 cursor-pointer bg-bg-card shadow-sm hover:shadow-md hover:bg-bg-elevated active:scale-[0.99] transition-all duration-200 animate-fade-in-up ${selectedRing} ${
         !selectMode && dragOverIndex === index && dragIndex !== index ? 'ring-2 ring-accent' : ''
       } ${!selectMode && dragIndex === index ? 'opacity-40' : ''}`}
       style={{
@@ -261,13 +258,7 @@ export function SpaceCard({
           )}
         </div>
         {selectMode ? (
-          <span
-            className={`shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
-              selected ? 'bg-accent border-accent text-accent-fg' : 'border-bg-border text-transparent'
-            }`}
-          >
-            <Check size={14} />
-          </span>
+          <SelectCheck selected={selected} className="mt-0.5" />
         ) : (
           <ActionMenu label="Space actions" actions={menuActions} bordered={false} icon={MoreVertical} />
         )}

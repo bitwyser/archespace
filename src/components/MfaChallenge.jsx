@@ -8,6 +8,7 @@ import { ShieldCheck, KeyRound } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { getVerifiedTotpFactorId, verifyTotp, redeemBackupCode, validateTotpCode, normalizeTotpCode, TOTP_CODE_LENGTH } from '../lib/mfa'
 import { validateRecoveryCode, normalizeRecoveryCode } from '../lib/crypto/recoveryCode'
+import { buttonClass } from './ui/buttonStyles'
 
 export default function MfaChallenge({ onVerified }) {
   const { signOut } = useAuth()
@@ -82,7 +83,7 @@ export default function MfaChallenge({ onVerified }) {
           <button
             type="submit"
             disabled={loading || !code.trim()}
-            className="w-full px-4 py-3 rounded-xl bg-accent hover:bg-accent-hover text-accent-fg text-sm font-semibold transition-colors disabled:opacity-50"
+            className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
           >
             {loading ? 'Verifying…' : 'Verify'}
           </button>

@@ -21,7 +21,7 @@ function DelBtn({ onClick, label = 'Delete item' }) {
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger/10 transition-all shrink-0"
+      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full text-text-muted hover:text-danger hover:bg-danger/10 transition-all shrink-0"
     >
       <Trash2 size={14} />
     </button>
@@ -38,7 +38,7 @@ function ReorderBtn({ onDragStart, onDragEnd, onKeyDown }) {
       onKeyDown={onKeyDown}
       title="Drag to reorder. Use Arrow Up or Arrow Down while focused."
       aria-label="Reorder item"
-      className="opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-text-muted hover:text-accent hover:bg-accent-muted transition-all shrink-0"
+      className="opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-grab active:cursor-grabbing p-1.5 rounded-full text-text-muted hover:text-accent hover:bg-accent-muted transition-all shrink-0"
     >
       <GripVertical size={14} />
     </button>

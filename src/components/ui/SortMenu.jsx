@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpDown, Check } from 'lucide-react'
 import { SORT_OPTIONS } from '../../lib/sortEntities'
+import { buttonClass } from './buttonStyles'
 
 export function SortMenu({ value, onChange }) {
   const [open, setOpen] = useState(false)
@@ -35,17 +36,17 @@ export function SortMenu({ value, onChange }) {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-sm font-medium transition-all ${
-          open
-            ? 'border-accent/30 bg-accent-muted text-accent'
-            : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-        }`}
+        className={buttonClass({
+          variant: 'ghost',
+          size: 'sm',
+          className: `max-sm:w-8 max-sm:px-0 ${open ? '!bg-accent-muted !text-accent' : ''}`,
+        })}
         aria-haspopup="menu"
         aria-expanded={open}
         title="Sort"
       >
         <ArrowUpDown size={14} />
-        <span className="hidden sm:inline">{active.label}</span>
+        <span className="max-sm:hidden">{active.label}</span>
       </button>
 
       {open && (

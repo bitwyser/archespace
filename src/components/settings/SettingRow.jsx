@@ -6,24 +6,8 @@
  * until its action opens it, so the page reads as a list of settings rather
  * than a wall of fields. Rows sit in labelled groups.
  */
-
-/** Secondary action button used on the right of a row. */
-export const rowButtonClass =
-  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-bg-border bg-bg-surface px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50'
-
-/** Destructive variant of the row action. */
-export const rowDangerButtonClass =
-  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-bg-border bg-bg-surface px-3 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-muted disabled:cursor-not-allowed disabled:opacity-50'
-
-/** Primary submit button inside an opened row form. */
-export const primaryButtonClass =
-  'inline-flex items-center justify-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50'
-
-/** Text input inside a row form. */
-export const inputClass =
-  'w-full rounded-xl border border-bg-border bg-bg-elevated px-4 py-3 text-sm text-text-primary focus:border-accent focus:outline-none'
-
-export const labelClass = 'mb-1.5 block text-xs font-medium text-text-secondary'
+// The row button and field styles live in settingStyles.js.
+import { primaryButtonClass, rowButtonClass } from './settingStyles'
 
 /**
  * @param {{ title: string, description?: React.ReactNode, action?: React.ReactNode, open?: boolean, children?: React.ReactNode }} props

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from 'react'
 import { X } from 'lucide-react'
+import { buttonClass } from './buttonStyles'
 
 /**
  * Animated loading spinner.
@@ -121,7 +122,7 @@ export function Modal({ title, onClose, children, footer, onSubmit, size = 'md' 
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors"
+            className="p-1.5 rounded-full text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
           >
             <X size={16} />
           </button>
@@ -176,7 +177,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors disabled:opacity-50"
+            className={buttonClass({ variant: 'secondary' })}
           >
             {cancelLabel}
           </button>
@@ -184,11 +185,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className={`px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent transition-colors disabled:opacity-50 ${
-              destructive
-                ? 'bg-danger hover:bg-danger-hover text-white'
-                : 'bg-accent hover:bg-accent-hover text-accent-fg'
-            }`}
+            className={buttonClass({ variant: destructive ? 'dangerSolid' : 'primary' })}
           >
             {busy ? 'Working…' : confirmLabel}
           </button>

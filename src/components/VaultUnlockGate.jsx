@@ -11,6 +11,7 @@ import { validateVaultPin, getWeakPinWarning } from '../lib/crypto/vaultPin'
 import WeakPinWarning from './WeakPinWarning'
 import { ConfirmDialog, Spinner } from './ui/UI'
 import RecoveryCodeDialog from './RecoveryCodeDialog'
+import { buttonClass } from './ui/buttonStyles'
 
 export default function VaultUnlockGate({ children }) {
   const { user, signIn, signOut, loading: authLoading } = useAuth()
@@ -325,7 +326,7 @@ export default function VaultUnlockGate({ children }) {
             <button
               type="button"
               onClick={() => setRecoverySetupWarning('')}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold"
+              className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
             >
               Continue
             </button>
@@ -360,7 +361,7 @@ export default function VaultUnlockGate({ children }) {
               type="button"
               onClick={handleEnableBiometric}
               disabled={unlocking}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+              className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
             >
               <Fingerprint size={14} />
               {unlocking ? 'Waiting for device…' : 'Enable biometric unlock'}
@@ -470,7 +471,7 @@ export default function VaultUnlockGate({ children }) {
             <button
               type="submit"
               disabled={unlocking || !canReset}
-              className="w-full flex items-center justify-center gap-2 bg-danger hover:bg-danger-hover text-white rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+              className={buttonClass({ variant: 'dangerSolid', size: 'lg', className: 'w-full' })}
             >
               <AlertTriangle size={14} />
               {pendingAction === 'pin' ? 'Resetting…' : 'Delete data & reset vault'}
@@ -538,7 +539,7 @@ export default function VaultUnlockGate({ children }) {
                 type="button"
                 onClick={handlePasskeyUnlock}
                 disabled={unlocking}
-                className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+                className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
               >
                 <Fingerprint size={16} />
                 {pendingAction === 'passkey' ? 'Waiting…' : 'Unlock with passkey'}
@@ -619,7 +620,8 @@ export default function VaultUnlockGate({ children }) {
           <button
             type="submit"
             disabled={unlocking || !canSubmit}
-            className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+            // With a passkey offered above, PIN is the second way in.
+            className={buttonClass({ variant: showPasskeyUnlock && !forgotPin ? 'secondary' : 'primary', size: 'lg', className: 'w-full' })}
           >
             <Lock size={14} />
             {pendingAction === 'pin'

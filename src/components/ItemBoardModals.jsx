@@ -10,6 +10,7 @@ import { LayoutDashboard } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { useToast } from '../context/ToastCore'
 import { Modal } from './ui/UI'
+import { buttonClass } from './ui/buttonStyles'
 
 export default function ItemBoardModals({ board, spaces }) {
   const { toast } = useToast()
@@ -40,7 +41,7 @@ export default function ItemBoardModals({ board, spaces }) {
                 key={type}
                 type="button"
                 onClick={() => handleAddItem(type)}
-                className="flex items-start gap-2.5 p-2.5 bg-bg-card border border-bg-border hover:border-accent/30 rounded-lg text-left transition-all"
+                className="flex items-start gap-2.5 p-2.5 bg-bg-elevated hover:bg-bg-hover rounded-lg text-left transition-colors"
               >
                 <div className={`w-7 h-7 shrink-0 rounded-lg ${bg} flex items-center justify-center`}>
                   <Icon size={15} className={color} />
@@ -64,13 +65,13 @@ export default function ItemBoardModals({ board, spaces }) {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => navBlocker.reset()}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Stay
               </button>
               <button
                 onClick={() => navBlocker.proceed()}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 Leave anyway
               </button>
@@ -93,7 +94,7 @@ export default function ItemBoardModals({ board, spaces }) {
               <button
                 type="button"
                 onClick={() => setBulkDeleteConfirm(null)}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
@@ -109,7 +110,7 @@ export default function ItemBoardModals({ board, spaces }) {
                     onError: () => toast.error("Couldn't delete items."),
                   })
                 }}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 Move to bin
               </button>
@@ -135,7 +136,7 @@ export default function ItemBoardModals({ board, spaces }) {
               <button
                 type="button"
                 onClick={() => setMoveRequest(null)}
-                className="w-full px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary', className: 'w-full' })}
               >
                 Close
               </button>
@@ -147,7 +148,7 @@ export default function ItemBoardModals({ board, spaces }) {
                   type="button"
                   onClick={() => handleMoveItems(null, 'Dashboard')}
                   disabled={move.isPending}
-                  className="w-full flex items-center gap-3 rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base px-4 py-3 text-left transition-colors disabled:opacity-50"
+                  className="w-full flex items-center gap-3 rounded-xl bg-bg-elevated hover:bg-bg-hover px-4 py-3 text-left transition-colors disabled:opacity-50"
                 >
                   <LayoutDashboard size={16} className="shrink-0 text-text-muted" />
                   <span className="min-w-0">
@@ -162,7 +163,7 @@ export default function ItemBoardModals({ board, spaces }) {
                   type="button"
                   onClick={() => handleMoveItems(candidate.id, candidate.name || 'space')}
                   disabled={move.isPending}
-                  className="w-full rounded-xl border border-bg-border bg-bg-elevated hover:bg-bg-base px-4 py-3 text-left transition-colors disabled:opacity-50"
+                  className="w-full rounded-xl bg-bg-elevated hover:bg-bg-hover px-4 py-3 text-left transition-colors disabled:opacity-50"
                 >
                   <span className="block text-sm font-semibold text-text-primary truncate">{candidate.name}</span>
                   {candidate.description && (
@@ -184,7 +185,7 @@ export default function ItemBoardModals({ board, spaces }) {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
@@ -196,7 +197,7 @@ export default function ItemBoardModals({ board, spaces }) {
                   })
                   setDeleteConfirm(null)
                 }}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 Move to bin
               </button>

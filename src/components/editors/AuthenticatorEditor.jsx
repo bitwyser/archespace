@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, Copy, Check } from 'lucide-react'
 import { generateTotp, secondsRemaining, parseOtpauthUri, isValidTotpSecret } from '../../lib/crypto/totp'
+import { buttonClass } from '../ui/buttonStyles'
 
 function formatCode(code) {
   if (!code) return '------'
@@ -138,10 +139,10 @@ export function AuthenticatorEditor({ content, onChange, readOnly = false }) {
               onClick={() => copyCode(entry.id)}
               aria-label={copiedId === entry.id ? 'Copied' : 'Copy code'}
               title={copiedId === entry.id ? 'Copied' : 'Copy code'}
-              className={`shrink-0 p-2 rounded-lg border transition-all ${
+              className={`shrink-0 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
                 copiedId === entry.id
-                  ? 'border-success/30 bg-success/10 text-success'
-                  : 'border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                  ? 'bg-success/10 text-success'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
               }`}
             >
               {copiedId === entry.id ? <Check size={14} /> : <Copy size={14} />}
@@ -152,7 +153,7 @@ export function AuthenticatorEditor({ content, onChange, readOnly = false }) {
               onClick={() => removeEntry(entry.id)}
               aria-label="Remove account"
               title="Remove account"
-              className="shrink-0 p-2 rounded-lg border border-bg-border bg-bg-surface text-text-secondary hover:text-danger hover:border-danger/30 transition-all"
+              className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:text-danger hover:bg-danger-muted transition-colors"
             >
               <Trash2 size={14} />
             </button>
@@ -190,7 +191,7 @@ export function AuthenticatorEditor({ content, onChange, readOnly = false }) {
             <button
               type="button"
               onClick={addEntry}
-              className="rounded-lg bg-accent hover:bg-accent-hover text-accent-fg px-3 py-2 text-xs font-semibold transition-colors"
+              className={buttonClass({ variant: 'primary', size: 'sm' })}
             >
               Add account
             </button>
@@ -198,7 +199,7 @@ export function AuthenticatorEditor({ content, onChange, readOnly = false }) {
               <button
                 type="button"
                 onClick={() => { setAdding(false); setForm({ issuer: '', label: '', secret: '' }); setFormError('') }}
-                className="rounded-lg border border-bg-border bg-bg-surface px-3 py-2 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary', size: 'sm' })}
               >
                 Cancel
               </button>

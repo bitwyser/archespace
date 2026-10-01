@@ -5,6 +5,7 @@
  * The code is the reauthentication OTP Supabase sends to the current email.
  */
 import { useState } from 'react'
+import { buttonClass } from './ui/buttonStyles'
 
 export default function ReauthCode({ email, onConfirm, onCancel, onResend, busy }) {
   const [code, setCode] = useState('')
@@ -29,14 +30,14 @@ export default function ReauthCode({ email, onConfirm, onCancel, onResend, busy 
           type="button"
           disabled={busy || code.length < 6}
           onClick={() => onConfirm(code)}
-          className="flex-1 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl py-3 text-sm font-semibold disabled:opacity-50"
+          className={buttonClass({ variant: 'primary', size: 'lg', className: 'flex-1' })}
         >
           {busy ? 'Confirming…' : 'Confirm'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-3 rounded-xl border border-bg-border bg-bg-elevated text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+          className={buttonClass({ variant: 'secondary', size: 'lg' })}
         >
           Cancel
         </button>

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Ban } from 'lucide-react'
 import { Modal, Spinner } from '../ui/UI'
 import { SPACE_COLORS, parseTags } from '../../lib/spaceColors'
+import { buttonClass } from '../ui/buttonStyles'
 
 export function SpaceModal({ initial, onSave, onClose }) {
   const [name, setName] = useState(initial?.name || '')
@@ -100,7 +101,7 @@ export function SpaceModal({ initial, onSave, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+            className={buttonClass({ variant: 'secondary' })}
           >
             Cancel
           </button>
@@ -108,7 +109,7 @@ export function SpaceModal({ initial, onSave, onClose }) {
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="px-4 py-2 text-sm font-semibold bg-accent hover:bg-accent-hover text-accent-fg rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
+            className={buttonClass({ variant: 'primary' })}
           >
             {saving && <Spinner size={14} />}
             {initial ? 'Save changes' : 'Create'}

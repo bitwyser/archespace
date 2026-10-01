@@ -10,6 +10,7 @@ import { useEncryption } from './EncryptionCore'
 import { VaultPinPromptContext } from './VaultPinPromptCore'
 import { Modal } from '../components/ui/UI'
 import PinInput from '../components/PinInput'
+import { buttonClass } from '../components/ui/buttonStyles'
 
 export function VaultPinPromptProvider({ children }) {
   const [request, setRequest] = useState(null)
@@ -80,14 +81,14 @@ function VaultPinDialog({
             type="button"
             onClick={() => onDone(false)}
             disabled={busy}
-            className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors disabled:opacity-50"
+            className={buttonClass({ variant: 'secondary' })}
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={busy || !pin}
-            className="px-4 py-2.5 text-sm font-semibold rounded-xl bg-accent hover:bg-accent-hover text-accent-fg transition-colors disabled:opacity-50"
+            className={buttonClass({ variant: 'primary' })}
           >
             {busy ? 'Checking…' : confirmLabel}
           </button>

@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, Folder, FolderPlus,
   Trash2, Archive, Command, CheckSquare, ListChecks, Settings, Lock, Menu, Keyboard, LogOut,
-  LayoutGrid, List, Palette, Star,
+  Palette, Star,
 } from 'lucide-react'
 import SpaceItem from '../components/SpaceItem'
 import ItemBoardModals from '../components/ItemBoardModals'
@@ -37,11 +37,15 @@ import { useGlobalSearchData } from '../hooks/useGlobalSearch'
 import { filterGlobalSearch, searchOptionId, SEARCH_ITEM_DISPLAY_LIMIT } from '../lib/search'
 import { Modal, ConfirmDialog } from '../components/ui/UI'
 import { SortMenu } from '../components/ui/SortMenu'
+import { ActionMenu } from '../components/ui/ActionMenu'
+import { Button, IconButton } from '../components/ui/Button'
+import { ViewToggle } from '../components/ui/ViewToggle'
 import { SpaceModal } from '../components/space/SpaceModal'
 import { SpaceCard } from '../components/space/SpaceCard'
 import { usePersistedSort } from '../hooks/usePersistedSort'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { sortEntities } from '../lib/sortEntities'
+import { buttonClass } from '../components/ui/buttonStyles'
 
 export default function DashboardPage() {
   const { signOut } = useAuth()
@@ -478,39 +482,35 @@ export default function DashboardPage() {
           {/* Actions - mobile: lock + ordered menu (search is the bar below) */}
           <div className="flex sm:hidden items-center gap-2">
             {isUnlocked && (
-              <button
-                type="button"
+              <IconButton
+                icon={Lock}
+                label="Lock vault"
+                size="md"
                 onClick={() => {
                   lock()
                   toast.info('Vault locked')
                 }}
-                className="p-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary transition-all"
-                title="Lock vault"
-                aria-label="Lock vault"
-              >
-                <Lock size={16} />
-              </button>
+              />
             )}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(v => !v)}
-              className="p-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary transition-all"
+            <IconButton
+              icon={Menu}
+              label="More actions"
               title="More"
+              size="md"
+              active={mobileMenuOpen}
               aria-expanded={mobileMenuOpen}
-              aria-label="More actions"
-            >
-              <Menu size={16} />
-            </button>
+              onClick={() => setMobileMenuOpen(v => !v)}
+            />
           </div>
         </div>
 
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-bg-border bg-bg-surface px-4 py-3 flex flex-col gap-2">
+          <div className="sm:hidden border-t border-bg-border bg-bg-surface px-3 py-2 flex flex-col gap-0.5">
             {/* Navigation first (Serial Position: most-used destinations lead). */}
             <button
               type="button"
               onClick={() => { navigate('/starred'); setMobileMenuOpen(false) }}
-              className="relative flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+              className="relative flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
             >
               <Star size={16} />
               Starred
@@ -521,7 +521,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => { navigate('/archive'); setMobileMenuOpen(false) }}
-              className="relative flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+              className="relative flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
             >
               <Archive size={16} />
               Archive
@@ -534,7 +534,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => { navigate('/recycle-bin'); setMobileMenuOpen(false) }}
-              className="relative flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+              className="relative flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
             >
               <Trash2 size={16} />
               Recycle bin
@@ -547,7 +547,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => { navigate('/settings'); setMobileMenuOpen(false) }}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+              className="relative flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
             >
               <Settings size={16} />
               Settings
@@ -557,7 +557,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => { openPalette(); setMobileMenuOpen(false) }}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+              className="relative flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
             >
               <Command size={16} />
               Commands
@@ -565,7 +565,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => { window.dispatchEvent(new CustomEvent('arche:open-shortcuts')); setMobileMenuOpen(false) }}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-bg-elevated text-text-secondary hover:text-text-primary transition-all text-sm font-medium"
+              className="relative flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
             >
               <Keyboard size={16} />
               Keyboard shortcuts
@@ -577,7 +577,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => { setMobileMenuOpen(false); setConfirmSignOut(true) }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-bg-border hover:bg-danger/10 hover:border-danger/30 text-text-secondary hover:text-danger transition-all text-sm font-medium"
+                className="w-full flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-danger-muted text-text-secondary hover:text-danger transition-colors text-sm font-medium"
               >
                 <LogOut size={16} />
                 Sign out
@@ -605,7 +605,7 @@ export default function DashboardPage() {
         <div className="hidden sm:block sticky top-0 z-30 bg-bg-base -mx-4 sm:-mx-6 px-4 sm:px-6 pt-6 pb-3 mb-3 -mt-6">
           <div className="flex items-center gap-2">
           <div className="relative w-full max-w-xl">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             <input
               ref={searchInputRef}
               placeholder="Search…"
@@ -619,7 +619,7 @@ export default function DashboardPage() {
               aria-controls="global-search-listbox"
               aria-activedescendant={activeOptionId}
               aria-autocomplete="list"
-              className="w-full bg-bg-elevated border border-bg-border rounded-xl pl-9 pr-12 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+              className="w-full h-9 bg-bg-card rounded-full pl-9 pr-12 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent-border transition-shadow"
             />
             <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted font-mono">/</kbd>
             {showSearchResults && (
@@ -636,22 +636,20 @@ export default function DashboardPage() {
               />
             )}
           </div>
-          <button
-            type="button"
+          <IconButton
+            icon={Palette}
+            label="Shuffle accent and theme"
+            size="md"
+            className="ml-auto"
             onClick={shuffleAppearance}
-            title="Shuffle accent and theme"
-            aria-label="Shuffle accent and theme"
-            className="ml-auto shrink-0 p-2.5 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-accent hover:bg-bg-elevated transition-all"
-          >
-            <Palette size={16} />
-          </button>
+          />
           </div>
         </div>
 
         {/* Mobile search */}
         <div className="sm:hidden mb-4">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             <input
               ref={mobileSearchInputRef}
               placeholder="Search…"
@@ -665,7 +663,7 @@ export default function DashboardPage() {
               aria-controls="global-search-listbox-mobile"
               aria-activedescendant={activeOptionId}
               aria-autocomplete="list"
-              className="w-full bg-bg-surface border border-bg-border rounded-xl pl-9 pr-3 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+              className="w-full h-10 bg-bg-card rounded-full pl-9 pr-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent-border transition-shadow"
             />
             {showSearchResults && (
               <GlobalSearchResults
@@ -689,88 +687,44 @@ export default function DashboardPage() {
             <h2 className="text-xl font-semibold text-text-primary">{firstSectionLabel}</h2>
           </div>
           <div className="flex items-center gap-2">
+            {/* View, sort and select are quiet tools; the one main action is
+                New, a menu of New item / New space (like the mobile + button). */}
             {hasEntries && !selectMode && (
-              <div className="flex items-center gap-1 p-1 rounded-xl border border-bg-border bg-bg-surface">
-                <button
-                  type="button"
-                  onClick={() => changeViewMode('grid')}
-                  aria-label="Grid view"
-                  aria-pressed={viewMode === 'grid'}
-                  title="Grid view"
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    viewMode === 'grid'
-                      ? 'bg-accent-muted text-accent'
-                      : 'text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  <LayoutGrid size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => changeViewMode('list')}
-                  aria-label="List view"
-                  aria-pressed={viewMode === 'list'}
-                  title="List view"
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-accent-muted text-accent'
-                      : 'text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  <List size={16} />
-                </button>
-              </div>
+              <ViewToggle value={viewMode} onChange={changeViewMode} />
             )}
-            {/* View, sort, select, then create - the same order as inside a space. */}
             {topLevelSpaces.length + dashboardItems.length > 1 && !selectMode && (
               <SortMenu value={spaceSort} onChange={setSpaceSort} />
             )}
             {selectMode && hasEntries && (
-              <button
-                type="button"
-                onClick={selectAll}
-                title="Select all"
-                aria-label="Select all"
-                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
-              >
-                <ListChecks size={14} />
-                <span className="hidden sm:inline">Select all</span>
-              </button>
+              <Button variant="ghost" size="sm" icon={ListChecks} iconOnlyOnMobile aria-label="Select all" onClick={selectAll}>
+                Select all
+              </Button>
             )}
             {hasEntries && (
-              <button
-                type="button"
+              <Button
+                variant={selectMode ? 'secondary' : 'ghost'}
+                size="sm"
+                icon={CheckSquare}
+                iconOnlyOnMobile
+                aria-label={selectMode ? 'Done selecting' : 'Select'}
                 onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-                title={selectMode ? 'Done' : 'Select'}
-                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-bg-border bg-bg-surface text-text-secondary hover:text-text-primary hover:bg-bg-elevated text-sm font-medium transition-all"
               >
-                <CheckSquare size={14} />
-                <span className="hidden sm:inline">{selectMode ? 'Done' : 'Select'}</span>
-              </button>
+                {selectMode ? 'Done' : 'Select'}
+              </Button>
             )}
-            {/* Same pair as inside a space: FolderPlus = space, Plus = item. */}
             {!selectMode && (
-              <button
-                type="button"
-                onClick={() => setModal({ type: 'create' })}
+              <ActionMenu
+                label={online ? 'New' : 'Unavailable offline'}
+                triggerLabel="New"
+                icon={Plus}
+                openOnHover={false}
                 disabled={!online}
-                title={online ? 'New space' : 'Unavailable offline'}
-                className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-              >
-                <FolderPlus size={16} strokeWidth={2.5} />
-                <span className="hidden sm:inline">New space</span>
-              </button>
+                actions={[
+                  { id: 'item', label: 'New item', icon: Plus, onClick: openAddItem },
+                  { id: 'space', label: 'New space', icon: FolderPlus, onClick: () => setModal({ type: 'create' }) },
+                ]}
+              />
             )}
-            <button
-              type="button"
-              onClick={openAddItem}
-              disabled={!online}
-              title={online ? 'Add item' : 'Unavailable offline'}
-              className="flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl p-2 sm:px-3 sm:py-2 text-sm font-semibold transition-colors shadow-lg shadow-accent/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-              <span className="hidden sm:inline">Add item</span>
-            </button>
           </div>
         </div>
 
@@ -782,7 +736,7 @@ export default function DashboardPage() {
                 `text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
                   active
                     ? 'bg-accent-muted border-accent-border text-accent'
-                    : 'bg-bg-surface border-bg-border text-text-secondary hover:text-text-primary'
+                    : 'bg-bg-elevated border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-hover'
                 }`
               return (
                 <>
@@ -857,30 +811,26 @@ export default function DashboardPage() {
             <p className="text-text-secondary font-medium">{search ? 'Nothing matches your search' : 'Nothing here yet'}</p>
             <p className="text-text-muted text-sm mt-1">{search ? `Nothing found for "${search.trim()}"` : 'Create a space or add an item to get started'}</p>
             {search ? (
-              <button
-                onClick={closeSearch}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-bg-border bg-bg-surface px-4 py-2.5 text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors"
-              >
-                Clear search
-              </button>
+              <Button className="mt-4" onClick={closeSearch}>Clear search</Button>
             ) : (
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                <button
-                  onClick={() => setModal({ type: 'create' })}
+                <Button
+                  variant="primary"
+                  icon={Plus}
                   disabled={!online}
                   title={online ? undefined : 'Unavailable offline'}
-                  className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <FolderPlus size={16} /> New space
-                </button>
-                <button
                   onClick={openAddItem}
+                >
+                  Add item
+                </Button>
+                <Button
+                  icon={FolderPlus}
                   disabled={!online}
                   title={online ? undefined : 'Unavailable offline'}
-                  className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-accent-fg rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  onClick={() => setModal({ type: 'create' })}
                 >
-                  <Plus size={16} /> Add item
-                </button>
+                  New space
+                </Button>
               </div>
             )}
           </div>
@@ -1031,7 +981,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setBulkDeleteConfirm(null)}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary rounded-xl border border-bg-border hover:bg-bg-elevated"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
@@ -1051,7 +1001,7 @@ export default function DashboardPage() {
                     toast.error("Couldn't delete the selection.")
                   }
                 }}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 Move to recycle bin
               </button>
@@ -1077,7 +1027,7 @@ export default function DashboardPage() {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors"
+                className={buttonClass({ variant: 'secondary' })}
               >
                 Cancel
               </button>
@@ -1089,7 +1039,7 @@ export default function DashboardPage() {
                   })
                   setDeleteConfirm(null)
                 }}
-                className="px-4 py-2.5 text-sm font-semibold border border-transparent bg-danger hover:bg-danger-hover text-white rounded-xl transition-colors"
+                className={buttonClass({ variant: 'dangerSolid' })}
               >
                 Move to recycle bin
               </button>

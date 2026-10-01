@@ -8,7 +8,8 @@ import { Copy, Check, RefreshCw } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useToast } from '../context/ToastCore'
 import { Modal } from './ui/UI'
-import { rowButtonClass, rowDangerButtonClass } from './settings/SettingRow'
+import { rowButtonClass, rowDangerButtonClass } from './settings/settingStyles'
+import { buttonClass } from './ui/buttonStyles'
 import { supabase } from '../lib/supabase'
 import {
   enrollTotp, verifyTotp, unenrollFactor, getVerifiedTotpFactorId,
@@ -188,13 +189,8 @@ export default function MfaSettings() {
 
       {enabled && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={regenerate}
-            disabled={busy}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary text-xs font-medium transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={13} /> Regenerate backup code
+          <button type="button" onClick={regenerate} disabled={busy} className={rowButtonClass}>
+            <RefreshCw size={14} /> Regenerate backup code
           </button>
           <button
             type="button"
@@ -234,8 +230,8 @@ export default function MfaSettings() {
             />
             {error && <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{error}</p>}
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={cancelEnroll} disabled={busy} className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors disabled:opacity-50">Cancel</button>
-              <button type="button" onClick={confirmEnroll} disabled={busy || !code.trim()} className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent bg-accent hover:bg-accent-hover text-accent-fg transition-colors disabled:opacity-50">{busy ? 'Verifying…' : 'Verify & enable'}</button>
+              <button type="button" onClick={cancelEnroll} disabled={busy} className={buttonClass({ variant: 'secondary' })}>Cancel</button>
+              <button type="button" onClick={confirmEnroll} disabled={busy || !code.trim()} className={buttonClass({ variant: 'primary' })}>{busy ? 'Verifying…' : 'Verify & enable'}</button>
             </div>
           </div>
         </Modal>
@@ -252,10 +248,10 @@ export default function MfaSettings() {
               {backupCodes[0]}
             </div>
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={copyCodes} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors">
+              <button type="button" onClick={copyCodes} className={buttonClass({ variant: 'secondary' })}>
                 {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy'}
               </button>
-              <button type="button" onClick={() => setBackupCodes(null)} className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent bg-accent hover:bg-accent-hover text-accent-fg transition-colors">Done</button>
+              <button type="button" onClick={() => setBackupCodes(null)} className={buttonClass({ variant: 'primary' })}>Done</button>
             </div>
           </div>
         </Modal>
@@ -277,8 +273,8 @@ export default function MfaSettings() {
             />
             {disableError && <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{disableError}</p>}
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={closeDisable} disabled={busy} className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary rounded-xl border border-bg-border hover:bg-bg-elevated transition-colors disabled:opacity-50">Cancel</button>
-              <button type="button" onClick={disable} disabled={busy || !disablePassword.trim()} className="px-4 py-2.5 text-sm font-semibold rounded-xl border border-transparent bg-danger hover:bg-danger-hover text-white transition-colors disabled:opacity-50">{busy ? 'Turning off…' : 'Turn off'}</button>
+              <button type="button" onClick={closeDisable} disabled={busy} className={buttonClass({ variant: 'secondary' })}>Cancel</button>
+              <button type="button" onClick={disable} disabled={busy || !disablePassword.trim()} className={buttonClass({ variant: 'dangerSolid' })}>{busy ? 'Turning off…' : 'Turn off'}</button>
             </div>
           </div>
         </Modal>
