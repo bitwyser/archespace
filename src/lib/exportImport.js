@@ -176,6 +176,18 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
       continue
     }
 
+    // Markdown (a removed type) comes in as Rich text. The converter pulls in
+    // the editor, so it only loads for a backup that has Markdown notes.
+    if (item.type === 'markdown') {
+      try {
+        const { toRichDoc } = await import('./richText/convert')
+        item = { ...item, type: 'richtext', content: { doc: toRichDoc('markdown', item.content) } }
+      } catch {
+        skipped++
+        continue
+      }
+    }
+
     const title = (typeof item.title === 'string' ? item.title.trim() : '')
       .slice(0, MAX_TITLE_LENGTH)
     const encryptedItem = await encryptItem({ title, content: item.content }, cryptoKey)

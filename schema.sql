@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS spaces (
   position    integer     NOT NULL DEFAULT 0,
   pinned      boolean     NOT NULL DEFAULT false,
   color       text        DEFAULT NULL,
-  theme       text        DEFAULT NULL,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,
   parent_id   uuid        REFERENCES spaces(id) ON DELETE CASCADE DEFAULT NULL,  -- one-level nesting; NULL = top-level
   deleted_at  timestamptz DEFAULT NULL,          -- soft-delete; NULL = active
@@ -41,7 +40,7 @@ CREATE TABLE IF NOT EXISTS space_items (
   id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   space_id    uuid        REFERENCES spaces(id) ON DELETE CASCADE,
   user_id     uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'richtext', 'code', 'draw', 'table', 'authenticator')),
+  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'code', 'draw', 'table', 'authenticator')),
   title       text        NOT NULL DEFAULT '',
   content     jsonb       NOT NULL DEFAULT '{}'::jsonb,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,   -- encrypted client-side
@@ -55,12 +54,33 @@ CREATE TABLE IF NOT EXISTS space_items (
 
 -- Keep the allowed item types in sync on existing databases (CREATE TABLE above
 -- only applies to fresh installs). Re-running this file updates the constraint.
--- 'secret' was removed: the apps turn existing secrets into Notes after unlock
--- (their text can only be opened on-device). Until every secret is converted,
--- adding this constraint fails - nothing is lost, just run it again later.
-ALTER TABLE space_items DROP CONSTRAINT IF EXISTS space_items_type_check;
-ALTER TABLE space_items ADD CONSTRAINT space_items_type_check
-  CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'markdown', 'richtext', 'code', 'draw', 'table', 'authenticator'));
+-- 'secret' and 'markdown' were removed: after unlock, the apps turn secrets
+-- into Notes and Markdown notes into Rich text (the content can only be opened
+-- on-device). A removed type that still has items is kept, with a notice, until
+-- they're converted - re-run this file later to finish.
+DO $$
+DECLARE
+  allowed text[] := ARRAY['textbox', 'checkbox_list', 'menu_list', 'numbered_list',
+                          'card_list', 'richtext', 'code', 'draw', 'table', 'authenticator'];
+  old text;
+  left_count int;
+BEGIN
+  FOREACH old IN ARRAY ARRAY['secret', 'markdown'] LOOP
+    SELECT count(*) INTO left_count FROM space_items WHERE type = old;
+    IF left_count > 0 THEN
+      allowed := allowed || old;
+      RAISE NOTICE '% kept: % item(s) still to convert', old, left_count;
+    END IF;
+  END LOOP;
+  ALTER TABLE space_items DROP CONSTRAINT IF EXISTS space_items_type_check;
+  EXECUTE format(
+    'ALTER TABLE space_items ADD CONSTRAINT space_items_type_check CHECK (type = ANY (%L::text[]))',
+    allowed
+  );
+END $$;
+
+-- Spaces once had a `theme` column that nothing uses. Safe to re-run.
+ALTER TABLE spaces DROP COLUMN IF EXISTS theme;
 
 -- Item tags (added later; encrypted client-side like space tags). Safe to re-run.
 ALTER TABLE space_items ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]'::jsonb;
