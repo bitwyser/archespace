@@ -40,9 +40,13 @@ function VaultPinDialog({
   title = 'Enter vault PIN',
   message = 'Enter your vault PIN to continue.',
   confirmLabel = 'Unlock',
+  // Checks a PIN; defaults to this vault's PIN. A backup from another vault
+  // passes its own check.
+  verify,
   onDone,
 }) {
-  const { verifyVaultPin } = useEncryption()
+  const { verifyVaultPin: verifyThisVault } = useEncryption()
+  const verifyVaultPin = verify || verifyThisVault
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)

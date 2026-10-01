@@ -1,12 +1,13 @@
 /**
  * exportImport.js - JSON backup export and import for ArcheSpace.
  *
- * Export produces a versioned, decrypted snapshot of the active spaces and items
- * (only the fields that define the content - no internal ids, user ids, or
- * timestamps). Import re-encrypts everything with the current vault key and
- * recreates the spaces and items; it accepts both the current versioned format
- * and the older bare-array format, validates every item type, and skips any it
- * can't recognize rather than failing the whole import.
+ * Export produces an encrypted snapshot of the active spaces and items (only
+ * the fields that define the content - no internal ids, user ids, or
+ * timestamps); see backupCrypto.js. Import opens it (with the vault PIN when
+ * it's from another vault), re-encrypts everything with the current vault key
+ * and recreates the spaces and items. It also accepts the older readable
+ * formats (versioned and bare-array), validates every item type, and skips any
+ * it can't recognize rather than failing the whole import.
  */
 
 import { supabase } from './supabase'
@@ -15,6 +16,8 @@ import { encryptSpace, encryptItem, decryptItems } from './dataProtection'
 import { secretToNoteContent } from './secretMigration'
 import { isRichDoc } from './richText/doc'
 import { parseTags } from './spaceColors'
+import { isEncryptedBackup, openBackupWithKey, openBackupWithPin, sealBackup } from './backupCrypto'
+import { getVaultBackupMeta } from './crypto/vault'
 import {
   MAX_IMPORT_FILE_SIZE,
   MAX_IMPORT_SPACES,
@@ -25,21 +28,18 @@ import {
   MAX_TITLE_LENGTH,
 } from './constants'
 
-const BACKUP_VERSION = 2
-
 /**
- * Export all active spaces (and their non-deleted, non-archived items) as a
- * versioned JSON file download.
+ * Export all active spaces (and their non-deleted, non-archived items) as an
+ * encrypted JSON file download.
  *
  * @param {Array} spaces - The current (decrypted) spaces array
  * @param {CryptoKey} cryptoKey - Vault key for decrypting items from the DB
- * @param {{ confirmLocked?: () => Promise<boolean> }} [options] - Asked before
- *   a backup that includes locked items is saved (the vault PIN); resolving
- *   false cancels the export, which then returns false.
- * @returns {Promise<boolean>} Whether the backup was saved
  */
-export async function exportSpaces(spaces, cryptoKey, { confirmLocked } = {}) {
+export async function exportSpaces(spaces, cryptoKey) {
   if (!cryptoKey) throw new Error('Vault must be unlocked to export')
+  const { data: { session } } = await supabase.auth.getSession()
+  const userId = session?.user?.id
+  if (!userId) throw new Error('Not authenticated')
 
   // Active items of one space, or the dashboard's items (no space) for `null`.
   const loadItems = async (spaceId) => {
@@ -76,21 +76,12 @@ export async function exportSpaces(spaces, cryptoKey, { confirmLocked } = {}) {
       }))
     )
 
-    const payload = {
-      app: 'ArcheSpace',
-      version: BACKUP_VERSION,
-      exportedAt: new Date().toISOString(),
+    const contents = {
       spaces: exportedSpaces,
-      // Items that live on the dashboard, outside any space. Optional: older
-      // backups don't have it, and older app versions ignore it.
+      // Items that live on the dashboard, outside any space.
       items: await loadItems(null),
     }
-
-    // The file holds everything readable, so locked spaces and items need the
-    // PIN first.
-    const hasLocked = exportedSpaces.some(s => s.locked) ||
-      [...payload.items, ...exportedSpaces.flatMap(s => s.items)].some(it => it.locked)
-    if (hasLocked && confirmLocked && !(await confirmLocked())) return false
+    const payload = await sealBackup(contents, cryptoKey, await getVaultBackupMeta(userId))
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
@@ -102,11 +93,7 @@ export async function exportSpaces(spaces, cryptoKey, { confirmLocked } = {}) {
     a.click()
     URL.revokeObjectURL(url)
 
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session?.user) {
-      await logAudit({ action: 'export', details: { count: spaces.length } })
-    }
-    return true
+    await logAudit({ action: 'export', details: { count: spaces.length } })
   } catch (error) {
     console.error('Export failed:', error)
     throw error
@@ -219,10 +206,14 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
  * @param {File} file - The .json File object from an <input>
  * @param {string} userId - The authenticated user's UUID
  * @param {CryptoKey} cryptoKey - Vault key for encrypting the imported data
- * @returns {Promise<{ spaces: number, items: number, skipped: number }>}
+ * @param {{ askBackupPin?: (check: (pin: string) => Promise<boolean>) => Promise<boolean> }} [options]
+ *   Asks for the vault PIN of an encrypted backup made in another vault;
+ *   `check` tries a PIN. Resolving false cancels the import.
+ * @returns {Promise<{ spaces: number, items: number, skipped: number } | null>}
+ *   Null when the import was cancelled at the PIN prompt.
  * @throws {Error} If the file is malformed or exceeds the import limits
  */
-export async function importSpaces(file, userId, cryptoKey) {
+export async function importSpaces(file, userId, cryptoKey, { askBackupPin } = {}) {
   if (!cryptoKey) throw new Error('Vault must be unlocked to import')
   if (file.size > MAX_IMPORT_FILE_SIZE) {
     throw new Error(`File is too large. The maximum size is ${MAX_IMPORT_FILE_SIZE / (1024 * 1024)}MB.`)
@@ -233,6 +224,29 @@ export async function importSpaces(file, userId, cryptoKey) {
     parsed = JSON.parse(await file.text())
   } catch (error) {
     throw new Error('Invalid backup: the file is not valid JSON.', { cause: error })
+  }
+
+  // An encrypted backup opens with this vault's key when it's from this
+  // vault; otherwise with the vault PIN it was made with.
+  if (isEncryptedBackup(parsed)) {
+    let contents = await openBackupWithKey(parsed, cryptoKey)
+    if (!contents) {
+      if (!askBackupPin) throw new Error('This backup is from another vault.')
+      const ok = await askBackupPin(async (pin) => {
+        try {
+          contents = await openBackupWithPin(parsed, pin)
+          return true
+        } catch (err) {
+          if ((err?.message || '').includes('Incorrect PIN')) return false
+          throw err
+        }
+      })
+      if (!ok) return null
+    }
+    if (!contents || typeof contents !== 'object') {
+      throw new Error('Invalid backup: the encrypted contents are damaged.')
+    }
+    parsed = contents
   }
 
   // Current format is { version, spaces: [...] }; older backups are a bare array.

@@ -483,6 +483,27 @@ async function unlockRecoveryWrappedVault(meta, recoveryCode) {
   return masterKey
 }
 
+/**
+ * The vault's PIN-wrapped key, for an encrypted backup to carry: the same
+ * values the server stores (public salt plus ciphertext), useless without
+ * the PIN. Uses the offline copy when the server can't be reached.
+ * @param {string} userId
+ * @returns {Promise<{ salt: string, wrapped_key: string, key_check: string }>}
+ */
+export async function getVaultBackupMeta(userId) {
+  const meta = await fetchVaultMeta(userId)
+  if (!meta?.wrapped_key) throw new Error('No vault PIN configured.')
+  return { salt: meta.salt, wrapped_key: meta.wrapped_key, key_check: meta.key_check }
+}
+
+/**
+ * Unwrap a vault key from its PIN-wrapped form (a backup's `vault` block).
+ * Throws 'Incorrect PIN...' when the PIN doesn't open it.
+ */
+export async function unwrapVaultKey(meta, pin) {
+  return unlockPinWrappedVault(meta, pin)
+}
+
 async function unlockPinWrappedVault(meta, pin) {
   const pinKey = await deriveVaultKey(pin, meta.salt)
   let rawB64

@@ -387,14 +387,8 @@ export default function SettingsPage() {
 
   const handleExport = async () => {
     try {
-      const saved = await exportSpaces(spaces, cryptoKey, {
-        confirmLocked: () => askVaultPin({
-          title: 'Export locked content',
-          message: 'The backup includes locked items or spaces, saved readable in the file. Enter your vault PIN to export.',
-          confirmLabel: 'Export',
-        }),
-      })
-      if (saved) toast.success("Backup exported")
+      await exportSpaces(spaces, cryptoKey)
+      toast.success("Backup exported")
     } catch {
       toast.error("Couldn't export backup.")
     }
@@ -404,7 +398,19 @@ export default function SettingsPage() {
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      const result = await importSpaces(file, user.id, cryptoKey)
+      const result = await importSpaces(file, user.id, cryptoKey, {
+        // A backup from another vault (another account, or before a reset).
+        askBackupPin: (check) => askVaultPin({
+          title: 'Open backup',
+          message: 'This backup was made in another vault. Enter the vault PIN you had when you exported it.',
+          confirmLabel: 'Open',
+          verify: check,
+        }),
+      })
+      if (!result) {
+        e.target.value = ''
+        return
+      }
       await queryClient.invalidateQueries({ queryKey: queryKeys.spaces() })
       await queryClient.invalidateQueries({ queryKey: queryKeys.bin() })
       const spacesLabel = `${result.spaces} space${result.spaces === 1 ? '' : 's'}`
@@ -864,7 +870,7 @@ export default function SettingsPage() {
                 <SettingGroup>
                   <SettingRow
                     title="Export backup"
-                    description="Downloads all your spaces and items as a JSON file."
+                    description="Downloads all your spaces and items as an encrypted file."
                     action={
                       <button type="button" onClick={handleExport} className={rowButtonClass}>
                         <Download size={15} /> Export
@@ -889,8 +895,8 @@ export default function SettingsPage() {
                   className="hidden"
                 />
                 <p className="mt-3 flex items-start gap-2 px-1 text-xs leading-relaxed text-text-muted">
-                  <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-400" />
-                  The backup file is not encrypted: anyone who opens it can read your data. Keep it somewhere safe.
+                  <Lock size={14} className="mt-0.5 shrink-0 text-accent" />
+                  Backups are encrypted. They open in this vault as they are, and anywhere else with the vault PIN you had when exporting. After a PIN change, older backups still need the earlier PIN.
                 </p>
               </SettingsSection>
             </div>
