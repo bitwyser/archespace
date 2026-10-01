@@ -835,7 +835,7 @@ export default function SettingsPage() {
                   />
                   <SettingRow
                     title="Accent colour"
-                    description={selectedAccent ? `${selectedAccent.name}. Used for buttons, highlights and marks.` : undefined}
+                    description={selectedAccent?.name}
                     action={
                       <div role="radiogroup" aria-label="Accent colour" className="flex items-center gap-2">
                         {accentColors.map(option => {
@@ -902,7 +902,6 @@ export default function SettingsPage() {
             </div>
 
             <p className="mt-6 shrink-0 text-center text-xs text-text-muted">
-              ArcheSpace{' · '}
               <a
                 href={COMMIT_URL}
                 target="_blank"

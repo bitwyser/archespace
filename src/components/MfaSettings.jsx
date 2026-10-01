@@ -4,7 +4,7 @@
  * removes the factor and its backup codes.
  */
 import { useEffect, useState } from 'react'
-import { ShieldCheck, ShieldOff, Copy, Check, RefreshCw } from 'lucide-react'
+import { Copy, Check, RefreshCw } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useToast } from '../context/ToastCore'
 import { Modal } from './ui/UI'
@@ -159,26 +159,20 @@ export default function MfaSettings() {
     <div className="px-4 py-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-            {enabled ? <ShieldCheck size={16} className="text-success" /> : <ShieldOff size={16} className="text-text-muted" />}
-            Two-factor authentication
-          </h3>
+          <h3 className="text-sm font-semibold text-text-primary">Two-factor authentication</h3>
           <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
             {enabled
               ? `On. You'll enter a code from your authenticator app when you sign in.${remaining === 0 ? ' No backup code left - regenerate one so you can get back in if you lose your authenticator.' : ''}`
               : 'Require a one-time code from an authenticator app (Google Authenticator, Authy, 1Password) each time you sign in, on top of your password.'}
           </p>
         </div>
+        {/* Off: the Set up action. On: its status in the same place, with
+            the actions for a running 2FA below. */}
         {!checking && (
           enabled ? (
-            <button
-              type="button"
-              onClick={() => setConfirmDisable(true)}
-              disabled={busy}
-              className={`shrink-0 ${rowDangerButtonClass}`}
-            >
-              Turn off
-            </button>
+            <span className="shrink-0 self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent-muted text-accent text-xs font-semibold">
+              <Check size={13} strokeWidth={2.5} /> On
+            </span>
           ) : (
             <button
               type="button"
@@ -193,14 +187,24 @@ export default function MfaSettings() {
       </div>
 
       {enabled && (
-        <button
-          type="button"
-          onClick={regenerate}
-          disabled={busy}
-          className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary text-xs font-medium transition-colors disabled:opacity-50"
-        >
-          <RefreshCw size={13} /> Regenerate backup code
-        </button>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={regenerate}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-bg-border bg-bg-surface hover:bg-bg-elevated text-text-secondary hover:text-text-primary text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={13} /> Regenerate backup code
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmDisable(true)}
+            disabled={busy}
+            className={rowDangerButtonClass}
+          >
+            Turn off
+          </button>
+        </div>
       )}
 
       {/* Enrolment modal: scan QR, enter a code */}
