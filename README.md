@@ -10,7 +10,7 @@
 [![Live](https://img.shields.io/badge/live-archespace.app-32d3aa)](https://archespace.app)
 [![License](https://img.shields.io/github/license/bitwyser/archespace)](LICENSE)
 
-ArcheSpace is an open source, encrypted workspace for organising everything you're working on. Group your information, knowledge, projects, notes, secrets, code, checklists, and ideas into spaces, and fill each space with the content type that fits: notes, rich text and markdown, checklists and lists, tables, code snippets, drawings, PIN-protected secrets, and even two-factor (TOTP) codes. Everything is taggable, searchable, and kept in one place across your devices.
+ArcheSpace is an open source, encrypted workspace for organising everything you're working on. Group your information, knowledge, projects, notes, secrets, code, checklists, and ideas into spaces, and fill each space with the content type that fits: plain notes, rich text documents, checklists and lists, tables, code snippets, drawings, and even two-factor (TOTP) codes. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable, and kept in one place across your devices.
 
 Privacy is built in, not bolted on. ArcheSpace is a self-hostable web app with Supabase sync and a client-side encrypted vault, so your content stays private even from the app's owner and developers. It follows a zero-knowledge architecture: everything is encrypted in your browser and the backend only ever stores ciphertext, so the server, its operators, and the developers never see your data in readable form.
 
@@ -34,13 +34,16 @@ A companion Android/Flutter app lives in a [separate repository](https://github.
 ## Features
 
 - **Spaces** for separating projects and ideas, with one level of nesting (sub-spaces), tags, pinning, and drag-and-drop or keyboard reordering.
-- **Many item types** for different kinds of content, from notes to a built-in authenticator (see [Item types](#item-types)).
+- **Many item types** for different kinds of content, from notes and rich text documents to a built-in authenticator (see [Item types](#item-types)).
+- **Protect** any item or space so its content only opens with your vault PIN; its name stays visible (see [Security](#security)).
+- **Read-only spaces**: lock a space against edits (enforced by the database) while still viewing, copying, and exporting it.
+- **Starred** view for quick access to the spaces and items you use most, wherever they live.
 - **Grid or list views**, per-view sort (default / name / newest), and a unified search across spaces, tags, and item content.
 - **Command palette** (`Ctrl/Cmd+K`) and keyboard shortcuts throughout; press `?` for the in-app list.
 - **Auto-save**, one-click copy, bulk actions, and duplicate / move / archive / restore / delete workflows.
 - **Archive** and a **recycle bin** (restore or permanently delete).
 - **PDF export** of a whole space or a single item, with a branded header, footer URL, and page numbers.
-- **JSON backup** import and export.
+- **Encrypted backups**: export everything to a backup file that only opens with your vault, and import it on any account.
 - **Appearance**: System / Dark / Light modes and five accent colours (mint, lavender, amber, sky, rose).
 - **Encrypted vault** with configurable auto-lock and optional passkey / biometric unlock (see [Security](#security)).
 - **Optional two-factor sign-in** (TOTP) with a one-time backup code.
@@ -53,18 +56,16 @@ A companion Android/Flutter app lives in a [separate repository](https://github.
 | Type | Description |
 |------|-------------|
 | Note | Free-form plain text. |
-| Rich Text | Formatted text (bold, italic, underline, font size) stored as sanitised HTML. |
-| Markdown | Markdown with click-to-edit preview. |
-| List / Numbered List | Bullet or automatically numbered lists. |
+| Rich text | A full document editor: headings, bullet, numbered and task lists, quotes, code blocks, tables, links, highlight, text alignment, superscript and subscript, line spacing, and find and replace (with regular expressions). Pasted Markdown is converted to formatting as you paste. |
+| List | Bullet or numbered list (a Numbered checkbox switches between them). |
 | Checklist | Checkboxes with progress tracking. |
 | Cards | Title and description pairs for planning. |
 | Table | Rows and columns; copies as tab-separated values for spreadsheets. |
-| Secret | PIN-protected text; the content is hidden until you re-enter your vault PIN. |
 | Drawing | Freehand vector sketch with pen, colours, and sizes. |
 | Code | Monospace snippet with automatic syntax highlighting. |
 | Authenticator | On-device TOTP codes with live countdowns; secrets are encrypted in your vault. |
 
-All list-style types support add, remove, and drag-and-drop or `Arrow Up` / `Arrow Down` reordering.
+All list-style types support add, remove, and drag-and-drop or `Arrow Up` / `Arrow Down` reordering. Older item types are converted automatically after unlock: Markdown notes and older rich text become Rich text, and Secrets become Notes (protect them to keep them behind your PIN).
 
 ## Security
 
@@ -75,6 +76,8 @@ You sign in with Supabase Auth (login password), then unlock a separate vault **
 - **Sessions.** The unlocked key is a non-extractable key in the browser, auto-locks after a configurable idle period (default 24h), and clears on sign-out. Login sessions last a week; "sign out of all devices" revokes every session. Failed login and PIN attempts are rate limited, and repeated PIN failures lock the vault server-side. Supabase Row Level Security restricts each user to their own rows.
 - **Passkey / biometric unlock.** Optionally unlock with Face ID, Touch ID, or Windows Hello via the WebAuthn PRF extension. The wrapped key stays on-device (browser IndexedDB), never on the server; the PIN and recovery code remain fallbacks.
 - **Two-factor (2FA).** Optional TOTP, off by default. When on, sign-in asks for the code after the password and before the vault, and RLS enforces AAL2 on the content tables so it can't be bypassed via the API.
+- **Protected items and spaces.** A protected item keeps its title and tags visible, and a protected space its name; the content stays hidden until you enter your vault PIN again, including in search, Starred, PDF export, and copy. Opened content hides again when the vault locks. Wrong PINs count towards the same lockout as unlocking. Protection is a PIN check inside an already unlocked vault (the content is encrypted with the same vault key as everything else), so it guards against someone using your unlocked device, not against someone who can inspect the running app.
+- **Encrypted backups.** A backup file holds your spaces and items encrypted with the vault key, plus that key wrapped with your vault PIN (as the server stores it). It opens directly in the same vault, and anywhere else (another account, or after a vault reset) with the vault PIN you had when exporting. After a PIN change, older backups still need the earlier PIN. Older readable backups still import.
 - **Recovery.** A one-time recovery code is shown once at vault setup and can reset a forgotten PIN. If **both** the PIN and recovery code are lost, the vault can be reset by re-entering your account password, which wipes the (unrecoverable) encrypted data and starts a fresh vault. There is no backdoor.
 - **Audit log.** An owner-only `audit_log` records authentication and security events (never content), written only by `SECURITY DEFINER` triggers and a whitelisted RPC.
 
@@ -82,7 +85,7 @@ You sign in with Supabase Auth (login password), then unlock a separate vault **
 
 - The app cannot recover encrypted content without the current vault PIN or recovery code; there is no backdoor.
 - If both the vault PIN and recovery code are lost, encrypted space data cannot be decrypted.
-- JSON exports are downloaded to your machine and should be stored carefully; imported backups are encrypted before upload.
+- Backups are encrypted, but a short vault PIN can be guessed offline if a backup file leaks; a longer PIN or passphrase makes backups much harder to open. Store them carefully.
 - Client-side encryption is only as safe as the code your browser runs: a tampered build or malicious dependency could bypass it. Self-hosting, HTTPS, and reviewed dependencies reduce this, and Settings shows the exact build commit (linked to GitHub) so you can verify the running code.
 
 **Privacy & legal.** Accepting the Terms of Service and Privacy Policy is required at sign-up and recorded server-side. The policies are served at `/privacy` and `/terms`. To report a vulnerability, see [SECURITY.md](SECURITY.md) (and `/.well-known/security.txt`).
@@ -126,6 +129,7 @@ Deploys are automatic on Cloudflare's Git-connected builds: pushing to `main` ru
 | Server-side email | `pg_net` + Resend HTTP API (account-deletion email), with the key in Supabase Vault |
 | Auth email delivery | Resend SMTP (via Supabase Auth) |
 | Encryption | Web Crypto API (AES-GCM), Argon2id key derivation via `@noble/hashes` |
+| Rich text editor | Tiptap 3 (ProseMirror), shared with the mobile app as a bundled offline editor |
 | Icons | Lucide React |
 | Drawing | `perfect-freehand` for vector ink strokes |
 | Syntax highlighting | `highlight.js` (automatic language detection for the Code item type) |
@@ -157,6 +161,8 @@ archespace/
     hooks/
     lib/
       crypto/
+      richText/
+        webview/
     pages/
     test/
     App.jsx
@@ -174,12 +180,13 @@ archespace/
 Key areas:
 
 - `src/pages/` contains the public home page, login, password reset, dashboard, space view, archive, recycle bin, and settings pages.
-- `src/components/` contains reusable UI, item editors, layout shell, action menus, vault unlock gate, and space components.
-- `src/context/` contains auth, encryption, appearance/theme, toast, shortcuts, command palette, and page action providers.
-- `src/hooks/` contains data hooks for spaces, items, archive, recycle bin, global search, offline sync, online status, drag reordering, and session timeout.
+- `src/components/` contains reusable UI (shared buttons, menus, type badges, dialogs), item editors, layout shell, vault unlock gate, and space components.
+- `src/context/` contains auth, encryption, vault PIN prompt, appearance/theme, toast, shortcuts, command palette, and page action providers.
+- `src/hooks/` contains data hooks for spaces, items, starred, archive, recycle bin, global search, offline sync, online status, drag reordering, and session timeout.
+- `src/lib/richText/` contains the Tiptap editor setup (extensions, find and replace, line spacing), conversion of older notes, and `webview/`, the source of the offline editor bundled into the mobile app (`npm run build:mobile-editor`).
 - `src/lib/crypto/` contains AES-GCM encryption, Argon2id and PBKDF2 key derivation, vault setup and unlock, non-extractable session key storage, PIN recovery code, and WebAuthn PRF passkey wrapping/unlock with a local (IndexedDB) passkey store.
-- `src/lib/` contains the Supabase client, data protection helpers, item type definitions, clipboard serialization, import/export, offline queue and encrypted cache, connectivity detection, rate limiting, audit logging, two-factor (TOTP) and backup-code helpers, PDF export, password policy, and build info.
-- `schema.sql` contains tables, indexes, RLS policies, triggers, RPC functions, realtime setup, vault recovery and PIN lockout, the `mfa_backup_codes` table with AAL2 enforcement for two-factor auth, the account-deletion email trigger, and the auth audit log. (Passkey unlock stores its wrapped key on each client, so there is no passkey table.)
+- `src/lib/` contains the Supabase client, data protection helpers, item type definitions, protected-content state, clipboard serialization, encrypted backup import/export, offline queue and encrypted cache, connectivity detection, rate limiting, audit logging, two-factor (TOTP) and backup-code helpers, PDF export, password policy, and build info.
+- `schema.sql` contains tables, indexes, RLS policies, triggers (including read-only spaces), RPC functions, realtime setup, vault recovery and PIN lockout, the `mfa_backup_codes` table with AAL2 enforcement for two-factor auth, the account-deletion email trigger, and the auth audit log. (Passkey unlock stores its wrapped key on each client, so there is no passkey table.)
 - `email-templates/` contains ready-to-paste Supabase auth email templates; `scripts/generate-icons.mjs` renders the PWA icons and social image; `public/_headers` holds deployment headers for hosts such as Cloudflare Pages.
 
 ## Releases
@@ -240,7 +247,7 @@ Need help with setup, self-hosting, or account/vault recovery? Email **[help@arc
 
 ## Credits
 
-- Built with React, Vite, Tailwind CSS, Supabase, TanStack Query, Lucide, JSZip, pdfmake, and the Web Crypto API.
+- Built with React, Vite, Tailwind CSS, Supabase, TanStack Query, Tiptap, Lucide, JSZip, pdfmake, and the Web Crypto API.
 - Backend and authentication powered by Supabase.
 - Hosted and deployed on Cloudflare.
 - Email delivery powered by Resend.
