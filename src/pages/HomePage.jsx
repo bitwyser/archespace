@@ -328,7 +328,7 @@ export default function HomePage() {
         Skip to content
       </a>
 
-      {/* ── Sticky header: familiar layout, one dominant action ──────── */}
+      {/* Sticky header: familiar layout, one dominant action */}
       <header
         ref={headerRef}
         className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
@@ -430,7 +430,7 @@ export default function HomePage() {
         )}
       </header>
 
-      {/* ── Hero: one message, one primary path ─────────────────────── */}
+      {/* Hero: one message, one primary path */}
       <section
         id="top"
         className="relative flex min-h-[100svh] items-center overflow-hidden px-4 sm:px-6"
@@ -482,7 +482,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Features, grouped into four chunks ──────────────────────── */}
+      {/* Features, grouped into four chunks */}
       <section id="features" className="scroll-mt-20 border-t border-white/5 bg-[#101820] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <SectionHeading eyebrow="Why ArcheSpace" title="Made for the way you actually work" />
@@ -510,7 +510,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Formats ─────────────────────────────────────────────────── */}
+      {/* Formats */}
       <section id="formats" className="scroll-mt-20 bg-[#0f1117] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <SectionHeading center eyebrow="One space, many formats" title="Every shape a thought takes">
@@ -536,7 +536,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── How it works: a short, visible progression ──────────────── */}
+      {/* How it works: a short, visible progression */}
       <section id="how-it-works" className="scroll-mt-20 border-y border-white/5 bg-[#101820] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <SectionHeading eyebrow="How it works" title="Set up once, then just work" />
@@ -608,7 +608,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Built in the open ───────────────────────────────────────── */}
+      {/* Built in the open */}
       <section id="open-source" className="scroll-mt-20 bg-[#0f1117] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <SectionHeading eyebrow="Built in the open" title="Use ours, or run your own" />
@@ -688,7 +688,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Mobile app ──────────────────────────────────────────────── */}
+      {/* Mobile app */}
       <section id="mobile" className="scroll-mt-20 border-t border-white/5 bg-[#101820] px-4 py-20 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -744,7 +744,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Final CTA: a strong, clear close ────────────────────────── */}
+      {/* Final CTA: a strong, clear close */}
       <section className="relative overflow-hidden border-t border-white/5 bg-[#12141b] px-4 py-24 text-center sm:px-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(50,211,170,0.12),transparent_55%)]" />
         <div className="relative mx-auto max-w-3xl">
@@ -768,7 +768,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────────── */}
+      {/* Footer */}
       <footer className="border-t border-white/10 bg-[#0d0f14] px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">

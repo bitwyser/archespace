@@ -1,11 +1,6 @@
 /**
- * index.css - Global styles & design tokens for ArcheSpace.
- *
- * Uses CSS custom properties for product themes so every
- * component can reference the same palette through Tailwind's
- * extended color config (see tailwind.config.js).
- *
- * Font: DM Sans (Google Fonts).
+ * index.css - Global styles and the theme tokens (CSS variables) that
+ * tailwind.config.js maps to its colours. Font: DM Sans (Google Fonts).
  */
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
@@ -15,28 +10,8 @@
 
 * { box-sizing: border-box; }
 
-/* ── Theme mode tokens ──────────────────────────────────── */
-:root {
-  color-scheme: dark;
-  --bg-base:       #0f1117;
-  --bg-card:       #141a20;
-  --bg-sunken:     #12171e;
-  --bg-surface:    #151b21;
-  --bg-elevated:   #1b2427;
-  --bg-hover:      #24302f;
-  --bg-border:     #2c3938;
-  --text-primary:  #f5f7f2;
-  --text-content:  #d4dad4;
-  --text-secondary:#a8b7ad;
-  --text-muted:    #6d7e76;
-  --success:       #34d399;
-  --danger:        #fb7185;
-  --danger-hover:  #f43f5e;
-  --danger-muted:  rgba(251,113,133,0.16);
-  --glass-bg:      rgba(15,17,23,0.88);
-  --glass-border:  rgba(255,255,255,0.06);
-}
-
+/* Theme mode tokens (dark is the default) */
+:root,
 [data-theme-mode="dark"] {
   color-scheme: dark;
   --bg-base:       #0f1117;
@@ -88,15 +63,13 @@
   --tw-shadow: 0 1px 2px rgba(15,23,42,0.06), 0 0 0 1px rgba(15,23,42,0.06);
 }
 
-/* ── Accent color tokens ────────────────────────────────── */
+/* Accent color tokens */
 :root,
 [data-accent="mint"] {
   --accent:        #32d3aa;
   --accent-hover:  #77ead0;
   --accent-muted:  rgba(50,211,170,0.14);
-  /* Pre-mixed softer accent for the pinned/selected border (Tailwind 3 can't
-     apply an /opacity modifier to a bare var() colour, so it needs its own
-     token). */
+  /* Softer accent for pinned and selected borders. */
   --accent-border: rgba(50,211,170,0.5);
   /* Text/icon colour on a solid accent fill (buttons, checked boxes, badges).
      Every accent is a bright-to-mid tone, so dark text stays readable on all
@@ -176,21 +149,18 @@
    dark, so it keeps its own shades. */
 [data-theme-mode="light"] .text-blue-400    { color: #2563eb; }
 [data-theme-mode="light"] .text-rose-400    { color: #e11d48; }
-[data-theme-mode="light"] .text-teal-400    { color: #0f766e; }
 [data-theme-mode="light"] .text-purple-400  { color: #9333ea; }
-[data-theme-mode="light"] .text-pink-400    { color: #db2777; }
 [data-theme-mode="light"] .text-green-400   { color: #15803d; }
 [data-theme-mode="light"] .text-amber-300,
 [data-theme-mode="light"] .text-amber-400   { color: #b45309; }
 [data-theme-mode="light"] .text-sky-400     { color: #0369a1; }
-[data-theme-mode="light"] .text-indigo-400  { color: #4f46e5; }
 [data-theme-mode="light"] .text-fuchsia-400 { color: #c026d3; }
 [data-theme-mode="light"] .text-orange-400  { color: #c2410c; }
 [data-theme-mode="light"] .text-emerald-300:not(.home-page *),
 [data-theme-mode="light"] .text-emerald-400:not(.home-page *) { color: #047857; }
 [data-theme-mode="light"] .text-red-400     { color: #dc2626; }
 
-/* ── Base body styles ───────────────────────────────────── */
+/* Base body styles */
 body {
   background: var(--bg-base);
   color: var(--text-primary);
@@ -199,7 +169,7 @@ body {
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-/* ── Custom scrollbars (WebKit) ─────────────────────────── */
+/* Custom scrollbars (WebKit) */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -214,12 +184,16 @@ body {
 /* Firefox */
 * { scrollbar-width: thin; scrollbar-color: var(--bg-border) transparent; }
 
-/* ── Keyboard focus visibility (a11y) ───────────────────── */
-/* Enforced with !important so it wins over the scattered Tailwind
-   `focus:outline-none` resets - keyboard users always get a ring.
-   `:focus-visible` only matches keyboard/assistive focus, so mouse
-   clicks don't draw it. Modern browsers round the outline to the
-   element's border-radius automatically. */
+/* A slimmer scrollbar with no arrows (the sidebar's space list). Chromium
+   only uses the WebKit styles when the standard properties are unset. */
+@supports selector(::-webkit-scrollbar) {
+  .scrollbar-slim { scrollbar-width: auto; scrollbar-color: auto; }
+  .scrollbar-slim::-webkit-scrollbar { width: 4px; }
+  .scrollbar-slim::-webkit-scrollbar-thumb { border: 0; border-radius: 2px; }
+}
+
+/* Keyboard focus ring. !important wins over Tailwind's `focus:outline-none`
+   resets; `:focus-visible` only matches keyboard focus, not mouse clicks. */
 :focus-visible {
   outline: 2px solid var(--accent) !important;
   outline-offset: 2px;
@@ -233,20 +207,20 @@ select:focus-visible,
   outline: none !important;
 }
 
-/* ── Toast stack lifts above the bulk-selection bar ─────── */
+/* Toast stack lifts above the bulk-selection bar */
 .toast-stack { transition: bottom 0.2s ease; }
 body.bulk-bar-active .toast-stack {
   bottom: calc(var(--bulk-bar-height, 4rem) + 1.5rem);
 }
 
-/* ── Glass header utility (used by sticky headers) ──────── */
+/* Glass header utility (used by sticky headers) */
 .glass {
   background: var(--glass-bg);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--glass-border);
 }
 
-/* ── Custom Animations ──────────────────────────────────── */
+/* Custom Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -407,7 +381,7 @@ body.bulk-bar-active .toast-stack {
   border-radius: 8px;
 }
 
-/* ── Landing-page motion: nav underline, scroll reveals, hero entrance ── */
+/* Landing-page motion: nav underline, scroll reveals, hero entrance */
 /* Animated underline for the section nav links (grows on hover / when the
    section is active), sliding in from the left. */
 .home-nav-link { position: relative; }
@@ -457,14 +431,8 @@ body.bulk-bar-active .toast-stack {
 .hero-enter > *:nth-child(2) { animation-delay: 0.18s; }
 .hero-enter > *:nth-child(3) { animation-delay: 0.28s; }
 
-/* Delay utilities for staggered animations */
-.delay-75 { animation-delay: 75ms; }
-.delay-150 { animation-delay: 150ms; }
-.delay-300 { animation-delay: 300ms; }
-
-/* ── Reduced motion (a11y) ──────────────────────────────── */
-/* Respect the OS "reduce motion" setting: near-instant animations,
-   no infinite loops (home floats, spinner), and instant transitions. */
+/* Respect the OS "reduce motion" setting: near-instant animations, no
+   infinite loops, and instant transitions. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -476,7 +444,7 @@ body.bulk-bar-active .toast-stack {
   }
 }
 
-/* Markdown Prose Styling */
+/* Prose: old Markdown items and Rich text */
 .prose-custom h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary); }
 .prose-custom h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); }
 .prose-custom h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); }
@@ -488,7 +456,7 @@ body.bulk-bar-active .toast-stack {
 .prose-custom code { background: var(--bg-base); padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.875em; color: var(--accent); border: 1px solid var(--bg-border); }
 .prose-custom pre code { background: transparent; padding: 0; border: none; color: inherit; }
 
-/* ── Rich text item (Tiptap) ─────────────────────────────────
+/* Rich text item (Tiptap)
    Base typography comes from .prose-custom; these cover what the editor adds:
    the empty placeholder, task lists, tables and the last block's spacing. */
 .rich-text-editor > :last-child { margin-bottom: 0; }
@@ -523,7 +491,7 @@ body.bulk-bar-active .toast-stack {
 .rich-text-editor .search-match { background: color-mix(in srgb, var(--accent) 22%, transparent); border-radius: 2px; }
 .rich-text-editor .search-match-current { background: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 0 0 1px var(--accent); }
 
-/* ── Code item: highlight.js token colours ──────────────────
+/* Code item: highlight.js token colours
    A single mid-tone palette (One-Dark/Light-ish) chosen to stay legible on
    both the light and dark elevated surface, so no per-theme highlight CSS or
    external theme file is needed. */
@@ -568,7 +536,7 @@ input:-webkit-autofill {
   animation-duration: 1ms;
 }
 
-/* ── Legal document prose (privacy / terms) ─────────────── */
+/* Legal document prose (privacy / terms) */
 .legal-prose h2 {
   color: var(--text-primary);
   font-size: 1.05rem;
@@ -590,8 +558,7 @@ input:-webkit-autofill {
 .legal-prose a { color: var(--accent); }
 .legal-prose strong { color: var(--text-primary); font-weight: 600; }
 
-/* ── Item card being edited ─────────────────────────────── */
-/* While the cursor is in one of a card's text fields (not when a header button
+/* Item card being edited: while the cursor is in one of a card's text fields (not when a header button
    has focus), a soft accent ring and gentle lift mark the item being worked
    on. Softer than the selection ring so the two never read the same. */
 .item-card-editable:has(:is(input, textarea, [contenteditable="true"]):focus) {
