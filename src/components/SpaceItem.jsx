@@ -11,7 +11,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, mem
 import { createPortal } from 'react-dom'
 import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Star, StarOff,
-  Pin, PinOff, Save, AlertTriangle, GripVertical, Copy, Archive,
+  Pin, PinOff, Save, AlertTriangle, Copy, Archive,
   Maximize2, Minimize2, MoveRight, MoreVertical,
   ClipboardCopy, ClipboardCheck, FileDown, PencilOff, Shield, ShieldCheck, ShieldOff, EyeOff,
 } from 'lucide-react'
@@ -105,18 +105,7 @@ function SpaceItem({
   const [copied, setCopied] = useState(false)
   // The Rich text editor instance, for its toolbar on the tags row.
   const [richEditor, setRichEditor] = useState(null)
-  // On mobile the header keeps only Collapse + Full screen direct; Copy moves
-  // into the action menu to leave room for the title.
   const online = useOnlineStatus()
-  const [isSmallScreen, setIsSmallScreen] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
-  )
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)')
-    const onChange = e => setIsSmallScreen(e.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
 
   const latestState = useRef({ title: item.title, content: item.content })
   
@@ -363,6 +352,9 @@ function SpaceItem({
   // Clamping applies in the normal list card, not in fullscreen or the dense
   // grid preview (which has its own tap-to-open behaviour).
   const canClamp = !isFullscreen && !denseView
+  // The header drags the card only where reordering works, and not while the
+  // title is being edited (so its text can be selected).
+  const canDrag = !selectMode && !readOnly && !isFullscreen && !denseView && !editingTitle
   // Long-content clamp: a body taller than the threshold shows as a fixed-height
   // preview (with a fade) until tapped to reveal in full. Independent of the
   // header collapse, and never while editing (unsaved) so typing can't clamp the
@@ -410,23 +402,18 @@ function SpaceItem({
     }`}
     >
       {/* Header */}
-      <div className={`flex items-center gap-2 flex-wrap gap-y-2 ${
-        denseView ? 'px-2.5 py-[7px]' : 'px-4 py-[9px]'
-      } ${
-        isFullscreen ? 'sticky top-0 z-10 bg-bg-surface/95 backdrop-blur-md' : ''
-      } ${
-        !headerCollapsed || collapseGuard ? 'border-b border-bg-border' : ''
-      }`}>
-        {!selectMode && !readOnly && (
-          <div
-            {...dragHandleProps}
-            className="cursor-grab active:cursor-grabbing shrink-0 text-text-muted hover:text-text-secondary transition-colors"
-            title="Drag to reorder"
-          >
-            <GripVertical size={14} />
-          </div>
-        )}
-
+      {/* The header is the drag area (no handle icon): the cursor turns into a
+          grab hand over it. */}
+      <div
+        {...(canDrag ? dragHandleProps : {})}
+        className={`flex items-center gap-2 flex-wrap gap-y-2 ${
+          denseView ? 'px-2.5 py-[7px]' : 'px-4 py-[9px]'
+        } ${
+          isFullscreen ? 'sticky top-0 z-10 bg-bg-surface/95 backdrop-blur-md' : ''
+        } ${
+          !headerCollapsed || collapseGuard ? 'border-b border-bg-border' : ''
+        } ${canDrag ? 'cursor-grab active:cursor-grabbing' : ''}`}
+      >
         {/* Pin indicator */}
         {item.pinned && <Pin size={14} className="text-accent shrink-0 fill-accent" />}
         {/* Type badge: the type's colored icon in a tinted pill. */}
@@ -484,7 +471,7 @@ function SpaceItem({
           )}
         </div>
 
-        {headerCollapsed && checklistProgress && !hidden && (
+        {checklistProgress?.total > 0 && !hidden && (
           <span className="shrink-0 text-xs text-text-muted font-medium tabular-nums">
             {checklistProgress.done}/{checklistProgress.total} done
           </span>
@@ -577,21 +564,6 @@ function SpaceItem({
                     {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                   </button>
                   )}
-                  {!isSmallScreen && canCopy && (
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className={`p-1.5 rounded-full transition-colors ${
-                      copied
-                        ? 'text-success'
-                        : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
-                    }`}
-                    aria-label={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
-                    title={copied ? 'Copied' : 'Copy to clipboard'}
-                  >
-                    {copied ? <ClipboardCheck size={14} /> : <ClipboardCopy size={14} />}
-                  </button>
-                  )}
                   <ActionMenu
                     label="Item actions"
                     bordered={false}
@@ -614,9 +586,7 @@ function SpaceItem({
                         disabled: !online,
                         onClick: () => onToggleStar(item.id, item.starred),
                       },
-                      // Copy is a direct header button on larger screens; on
-                      // mobile it lives here instead to keep the header compact.
-                      isSmallScreen && canCopy && {
+                      canCopy && {
                         id: 'copy',
                         label: copied ? 'Copied' : 'Copy',
                         icon: copied ? ClipboardCheck : ClipboardCopy,
