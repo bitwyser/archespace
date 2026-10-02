@@ -5,7 +5,7 @@
  * only appears once signed in AND the vault is unlocked; while locked (or signed
  * out) it renders just the route (the unlock gate / redirect) full-width.
  */
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContextCore'
@@ -27,7 +27,8 @@ function activeFromPath(pathname) {
   if (pathname.startsWith('/archive')) return 'archive'
   if (pathname.startsWith('/recycle-bin')) return 'bin'
   if (pathname.startsWith('/settings')) return 'settings'
-  if (pathname.startsWith('/app') || pathname.startsWith('/space')) return 'spaces'
+  if (pathname.startsWith('/space/')) return 'space'
+  if (pathname.startsWith('/app')) return 'spaces'
   return null
 }
 
@@ -62,6 +63,13 @@ export default function AppShell() {
   const { total: binTotal = 0 } = useRecycleBin()
   const { data: starredItemCount = 0 } = useStarredItemCount()
   const starredTotal = spaces.filter(s => s.starred).length + starredItemCount
+  const topLevelSpaces = useMemo(() => spaces.filter(s => !s.parent_id), [spaces])
+
+  // The open space's top-level space (a sub-space highlights its parent).
+  const active = activeFromPath(location.pathname)
+  const openId = active === 'space' ? location.pathname.split('/')[2] : null
+  const openSpace = openId ? spaces.find(s => s.id === openId) : null
+  const activeSpaceId = openSpace?.parent_id || openId
 
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem('arche:sidebar-collapsed') === '1' } catch { return false }
@@ -82,10 +90,10 @@ export default function AppShell() {
       <AppSidebar
         collapsed={collapsed}
         onToggleCollapsed={toggleCollapsed}
-        active={activeFromPath(location.pathname)}
-        user={user}
+        active={active}
+        activeSpaceId={activeSpaceId}
         isUnlocked={isUnlocked}
-        spacesCount={spaces.length}
+        spaces={topLevelSpaces}
         starredTotal={starredTotal}
         archiveTotal={archiveTotal}
         binTotal={binTotal}
