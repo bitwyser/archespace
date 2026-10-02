@@ -434,7 +434,7 @@ export default function DashboardPage() {
       ))}
     </div>
   ) : (
-    <div className="grid grid-cols-1 gap-2 max-w-[52rem] mx-auto">
+    <div className="grid grid-cols-1 gap-2">
       {nodes}
     </div>
   ))
@@ -836,7 +836,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            <div className="pb-32">
+            <div className={`pb-32 ${viewMode === 'list' ? 'max-w-[52rem] mx-auto' : ''}`}>
               {showSpacesSection && renderSection(sortedSpaces.map(renderSpaceCard))}
               {showItemsSection && (
                 <>

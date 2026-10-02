@@ -529,7 +529,7 @@ export default function SpacePage() {
       </header>
 
       {/* ── Main content ─────────────────────────────── */}
-      <main className={`flex-1 flex flex-col px-2 sm:px-4 pt-6 ${selectMode ? 'pb-32' : 'pb-6'} ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto w-full'}`}>
+      <main className={`flex-1 flex flex-col px-2 sm:px-4 pt-6 ${selectMode ? 'pb-32' : 'pb-6'}`}>
         {readOnly && (
           <p className="mb-3 px-1 flex items-center gap-2 text-sm text-text-muted">
             <PencilOff size={14} className="shrink-0" />
@@ -537,7 +537,7 @@ export default function SpacePage() {
           </p>
         )}
         {isLoading ? (
-          <div className="space-y-3">
+          <div className={`space-y-3 ${viewMode === 'grid' ? '' : 'max-w-5xl mx-auto w-full'}`}>
             {[...Array(3)].map((_, i) => (
               <div key={i} className="border border-bg-border rounded-2xl p-4 bg-bg-surface animate-pulse">
                 <div className="flex items-center gap-2 mb-3">
@@ -691,10 +691,14 @@ export default function SpacePage() {
                 </p>
               </div>
             )}
-            {labelSections && <h2 className={sectionLabelClass}>Spaces</h2>}
-            {subSpaceNodes.length > 0 && renderSection(subSpaceNodes)}
-            {labelSections && <h2 className={`${sectionLabelClass} mt-6`}>Items</h2>}
-            {itemNodes.length > 0 && renderSection(itemNodes)}
+            {/* Only the cards narrow and centre in list view; the search row
+                and tags above stay where they are. */}
+            <div className={viewMode === 'grid' ? '' : 'max-w-5xl mx-auto w-full'}>
+              {labelSections && <h2 className={sectionLabelClass}>Spaces</h2>}
+              {subSpaceNodes.length > 0 && renderSection(subSpaceNodes)}
+              {labelSections && <h2 className={`${sectionLabelClass} mt-6`}>Items</h2>}
+              {itemNodes.length > 0 && renderSection(itemNodes)}
+            </div>
 
             <BulkSelectionBar
               count={selectedCount}
