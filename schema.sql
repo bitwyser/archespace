@@ -2,20 +2,14 @@
 -- ArcheSpace - Database Schema (Supabase / PostgreSQL)
 -- ============================================================
 --
--- This is the complete schema for the ArcheSpace app.
--- Run it once in the Supabase SQL Editor on a
--- new project to create every table (with all columns already in
--- place), index, function, trigger, RLS policy, and realtime
--- publication in one pass.
+-- The complete schema. Run it in the Supabase SQL Editor to create every
+-- table, index, function, trigger, RLS policy and realtime publication.
 --
--- Safe to re-run: every statement uses IF NOT EXISTS / IF EXISTS
--- guards so nothing breaks if the objects already exist.
+-- Safe to re-run: every statement uses IF NOT EXISTS / IF EXISTS guards, and
+-- section 1b brings an existing database up to date.
 -- ============================================================
 
-
--- ────────────────────────────────────────────────────────────
 -- 1. TABLES
--- ────────────────────────────────────────────────────────────
 
 -- Spaces: top-level containers owned by a single user.
 CREATE TABLE IF NOT EXISTS spaces (
@@ -28,6 +22,9 @@ CREATE TABLE IF NOT EXISTS spaces (
   color       text        DEFAULT NULL,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,
   parent_id   uuid        REFERENCES spaces(id) ON DELETE CASCADE DEFAULT NULL,  -- one-level nesting; NULL = top-level
+  starred     boolean     NOT NULL DEFAULT false, -- in the Starred view; never affects ordering
+  locked      boolean     NOT NULL DEFAULT false, -- Protect: the content needs the vault PIN again
+  read_only   boolean     NOT NULL DEFAULT false, -- enforced by trg_spaces_read_only (section 3)
   deleted_at  timestamptz DEFAULT NULL,          -- soft-delete; NULL = active
   archived_at timestamptz DEFAULT NULL,
   created_at  timestamptz NOT NULL DEFAULT now(),
@@ -46,18 +43,68 @@ CREATE TABLE IF NOT EXISTS space_items (
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,   -- encrypted client-side
   position    integer     NOT NULL DEFAULT 0,
   pinned      boolean     NOT NULL DEFAULT false,
+  starred     boolean     NOT NULL DEFAULT false,
+  locked      boolean     NOT NULL DEFAULT false, -- Protect
   deleted_at  timestamptz DEFAULT NULL,
   archived_at timestamptz DEFAULT NULL,
   created_at  timestamptz NOT NULL DEFAULT now(),
   updated_at  timestamptz NOT NULL DEFAULT now()
 );
 
--- Keep the allowed item types in sync on existing databases (CREATE TABLE above
--- only applies to fresh installs). Re-running this file updates the constraint.
--- 'secret' and 'markdown' were removed: after unlock, the apps turn secrets
--- into Notes and Markdown notes into Rich text (the content can only be opened
--- on-device). A removed type that still has items is kept, with a notice, until
--- they're converted - re-run this file later to finish.
+-- Audit log: auth events only, owner-only access (see section 4).
+CREATE TABLE IF NOT EXISTS audit_log (
+  id         uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    uuid        REFERENCES auth.users(id) ON DELETE SET NULL,
+  action     text        NOT NULL,
+  details    jsonb       NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- User Encryption: the vault's Argon2id salts, the PIN- and recovery-wrapped
+-- master key and a verifier, never the raw key.
+CREATE TABLE IF NOT EXISTS user_encryption (
+  user_id              uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  salt                 text        NOT NULL,
+  key_check            text        NOT NULL,
+  wrapped_key          text        DEFAULT NULL,
+  recovery_salt        text        DEFAULT NULL,
+  recovery_wrapped_key text        DEFAULT NULL,
+  pin_failed_attempts  integer     NOT NULL DEFAULT 0,
+  pin_locked_until     timestamptz DEFAULT NULL,
+  created_at           timestamptz NOT NULL DEFAULT now()
+);
+
+-- Passkey / biometric unlock stores its wrapped master key locally on each
+-- client (the browser's IndexedDB on web, the OS keystore on mobile), never on
+-- the server, so there is no passkey table here.
+
+-- User Settings: per-user application preferences.
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id      uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  theme_mode   text        NOT NULL DEFAULT 'system' CHECK (theme_mode IN ('system', 'dark', 'light')),
+  accent_color text        NOT NULL DEFAULT 'mint'   CHECK (accent_color IN ('mint', 'lavender', 'amber', 'sky', 'rose')),
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  updated_at   timestamptz NOT NULL DEFAULT now()
+);
+
+-- User Consent: proof that a user agreed to the Terms + Privacy Policy at
+-- sign-up (GDPR/DPDP audit trail). Written ONLY by the log_auth_event trigger
+-- (section 10), never by clients - the row records the policy version the
+-- client reported and a server-stamped acceptance time, so it can't be forged
+-- or back-dated. terms_version matches src/lib/legal.js TERMS_VERSION.
+CREATE TABLE IF NOT EXISTS user_consent (
+  user_id           uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  terms_version     text        NOT NULL,
+  terms_accepted_at timestamptz NOT NULL DEFAULT now(),
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- 1b. UPDATES FOR EXISTING DATABASES
+
+-- The allowed item types. 'secret' and 'markdown' were removed: after unlock,
+-- the apps turn secrets into Notes and Markdown notes into Rich text (only a
+-- device can open the content). A removed type that still has items is kept,
+-- with a notice, until they're converted - re-run this file later to finish.
 DO $$
 DECLARE
   allowed text[] := ARRAY['textbox', 'checkbox_list', 'menu_list', 'numbered_list',
@@ -79,91 +126,15 @@ BEGIN
   );
 END $$;
 
--- Spaces once had a `theme` column that nothing uses. Safe to re-run.
-ALTER TABLE spaces DROP COLUMN IF EXISTS theme;
+-- Every accent the apps offer.
+ALTER TABLE user_settings DROP CONSTRAINT IF EXISTS user_settings_accent_color_check;
+ALTER TABLE user_settings ADD CONSTRAINT user_settings_accent_color_check
+  CHECK (accent_color IN ('mint', 'lavender', 'amber', 'sky', 'rose'));
 
--- Item tags (added later; encrypted client-side like space tags). Safe to re-run.
-ALTER TABLE space_items ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]'::jsonb;
+-- The vault format marker is no longer used (every vault is PIN-wrapped).
+ALTER TABLE user_encryption DROP COLUMN IF EXISTS vault_format;
 
--- Top-level (dashboard) items (added later): an item may belong to no space.
--- Ownership and RLS use space_items.user_id, never the space, so this doesn't
--- widen access. Safe to re-run.
-ALTER TABLE space_items ALTER COLUMN space_id DROP NOT NULL;
-
--- Starred (added later): a quick-access flag for the Starred view. Plain
--- metadata like `pinned`, but it never affects ordering. Safe to re-run.
-ALTER TABLE spaces      ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
-ALTER TABLE space_items ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
-
--- Locked spaces and items (added later): the content shows only after the
--- vault PIN is entered again (a locked space's name, a locked item's title
--- stay visible). A flag like `starred` - the content is encrypted as always -
--- so it can be toggled in read-only spaces too. Safe to re-run.
-ALTER TABLE spaces      ADD COLUMN IF NOT EXISTS locked boolean NOT NULL DEFAULT false;
-ALTER TABLE space_items ADD COLUMN IF NOT EXISTS locked boolean NOT NULL DEFAULT false;
-
--- Read-only spaces (added later): the space's details and its items' content
--- can't be changed until it's turned off (enforced by trg_*_read_only in
--- section 3). Safe to re-run.
-ALTER TABLE spaces ADD COLUMN IF NOT EXISTS read_only boolean NOT NULL DEFAULT false;
-
--- One-level space nesting (added later; NULL = top-level space). Safe to re-run.
-ALTER TABLE spaces ADD COLUMN IF NOT EXISTS parent_id uuid
-  REFERENCES spaces(id) ON DELETE CASCADE DEFAULT NULL;
-
--- Audit log: auth events only, owner-only access (see section 4).
-CREATE TABLE IF NOT EXISTS audit_log (
-  id         uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id    uuid        REFERENCES auth.users(id) ON DELETE SET NULL,
-  action     text        NOT NULL,
-  details    jsonb       NOT NULL DEFAULT '{}'::jsonb,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
--- User Encryption: per-user metadata for client-side encrypted vaults.
--- Stores PBKDF2 salt + encrypted verifier, never the raw key.
-CREATE TABLE IF NOT EXISTS user_encryption (
-  user_id              uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  salt                 text        NOT NULL,
-  key_check            text        NOT NULL,
-  wrapped_key          text        DEFAULT NULL,
-  recovery_salt        text        DEFAULT NULL,
-  recovery_wrapped_key text        DEFAULT NULL,
-  vault_format         text        DEFAULT 'legacy',
-  pin_failed_attempts  integer     NOT NULL DEFAULT 0,
-  pin_locked_until     timestamptz DEFAULT NULL,
-  created_at           timestamptz NOT NULL DEFAULT now()
-);
-
--- Passkey / biometric unlock stores its wrapped master key locally on each
--- client (the browser's IndexedDB on web, the OS keystore on mobile), never on
--- the server, so there is no passkey table here.
-
--- User Settings: per-user application preferences.
-CREATE TABLE IF NOT EXISTS user_settings (
-  user_id      uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  theme_mode   text        NOT NULL DEFAULT 'system' CHECK (theme_mode IN ('system', 'dark', 'light')),
-  accent_color text        NOT NULL DEFAULT 'mint'   CHECK (accent_color IN ('mint', 'lavender', 'amber')),
-  created_at   timestamptz NOT NULL DEFAULT now(),
-  updated_at   timestamptz NOT NULL DEFAULT now()
-);
-
--- User Consent: proof that a user agreed to the Terms + Privacy Policy at
--- sign-up (GDPR/DPDP audit trail). Written ONLY by the log_auth_event trigger
--- (section 10), never by clients - the row records the policy version the
--- client reported and a server-stamped acceptance time, so it can't be forged
--- or back-dated. terms_version matches src/lib/legal.js TERMS_VERSION.
-CREATE TABLE IF NOT EXISTS user_consent (
-  user_id           uuid        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  terms_version     text        NOT NULL,
-  terms_accepted_at timestamptz NOT NULL DEFAULT now(),
-  created_at        timestamptz NOT NULL DEFAULT now()
-);
-
-
--- ────────────────────────────────────────────────────────────
 -- 2. INDEXES
--- ────────────────────────────────────────────────────────────
 
 -- Spaces
 CREATE INDEX IF NOT EXISTS spaces_user_id_idx     ON spaces(user_id);
@@ -190,10 +161,7 @@ CREATE INDEX IF NOT EXISTS items_archived_at_idx  ON space_items(archived_at) WH
 CREATE INDEX IF NOT EXISTS audit_log_user_id_idx       ON audit_log(user_id);
 CREATE INDEX IF NOT EXISTS audit_log_created_at_idx    ON audit_log(created_at);
 
-
--- ────────────────────────────────────────────────────────────
 -- 3. TRIGGERS & FUNCTIONS
--- ────────────────────────────────────────────────────────────
 
 -- Auto-update updated_at on every row change.
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -308,10 +276,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-
--- ────────────────────────────────────────────────────────────
 -- 4. ROW LEVEL SECURITY (RLS)
--- ────────────────────────────────────────────────────────────
 
 ALTER TABLE spaces          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE space_items     ENABLE ROW LEVEL SECURITY;
@@ -351,7 +316,6 @@ DO $$ BEGIN
   END IF;
 END $$;
 
-
 -- User settings: full CRUD for the owning user only.
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_settings' AND policyname = 'Users manage own settings') THEN
@@ -372,10 +336,7 @@ END $$;
 -- audit_log: no policies + grants revoked = owner / service_role only.
 REVOKE ALL ON TABLE audit_log FROM anon, authenticated;
 
-
--- ────────────────────────────────────────────────────────────
 -- 4b. TWO-FACTOR AUTH (MFA): backup code + AAL2 enforcement
--- ────────────────────────────────────────────────────────────
 -- The TOTP factor itself lives in Supabase's auth.mfa_factors (managed by the
 -- auth.mfa.* client API). This section adds a recoverable one-time backup code
 -- and enforces 2FA at BOTH layers: the app's login gate requires the TOTP
@@ -498,28 +459,16 @@ BEGIN
         )
     $f$, t);
   END LOOP;
-  -- Remove the policy from tables an earlier version may have gated - they must
-  -- stay readable (user_encryption drives the vault-exists check; user_settings
-  -- loads before 2FA completes).
-  FOREACH t IN ARRAY ARRAY['user_encryption','user_settings'] LOOP
-    EXECUTE format('DROP POLICY IF EXISTS "Require aal2 when MFA enrolled" ON %I', t);
-  END LOOP;
 END $$;
 
-
--- ────────────────────────────────────────────────────────────
 -- 5. REALTIME
--- ────────────────────────────────────────────────────────────
 
 DROP PUBLICATION IF EXISTS supabase_realtime;
 CREATE PUBLICATION supabase_realtime;
 ALTER PUBLICATION supabase_realtime ADD TABLE spaces;
 ALTER PUBLICATION supabase_realtime ADD TABLE space_items;
 
-
--- ────────────────────────────────────────────────────────────
 -- 6. RPC FUNCTIONS FOR BULK UPDATES
--- ────────────────────────────────────────────────────────────
 
 -- Bulk-update space positions (ownership enforced via auth.uid()).
 CREATE OR REPLACE FUNCTION update_space_positions(updates jsonb)
@@ -543,12 +492,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-
--- ────────────────────────────────────────────────────────────
 -- 7. VAULT PIN BRUTE-FORCE PROTECTION
--- ────────────────────────────────────────────────────────────
--- (pin_failed_attempts / pin_locked_until columns are defined
---  on user_encryption in section 1 above)
+-- (pin_failed_attempts / pin_locked_until are on user_encryption, section 1)
 
 CREATE OR REPLACE FUNCTION get_vault_pin_lock_status()
 RETURNS jsonb AS $$
@@ -611,10 +556,7 @@ GRANT EXECUTE ON FUNCTION get_vault_pin_lock_status()         TO authenticated;
 GRANT EXECUTE ON FUNCTION record_vault_pin_unlock_failure()   TO authenticated;
 GRANT EXECUTE ON FUNCTION record_vault_pin_unlock_success()   TO authenticated;
 
-
--- ────────────────────────────────────────────────────────────
 -- 8. ACCOUNT DELETION
--- ────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION delete_current_user()
 RETURNS void AS $$
@@ -630,14 +572,11 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
 REVOKE ALL   ON FUNCTION delete_current_user() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION delete_current_user() TO authenticated;
 
-
--- ────────────────────────────────────────────────────────────
 -- 9. ACCOUNT-DELETION EMAIL (Resend)
--- ────────────────────────────────────────────────────────────
 -- RESEND_API_KEY stays ENCRYPTED in Supabase Vault; sent server-side inside a Postgres trigger via pg_net (async HTTP), never exposed to the client.
 -- One-time setup:
 -- 1) enable pg_net (statement or Dashboard -> Extensions)
--- 2) add the secret via Dashboard → Vault or run this once in the SQL editor: vault.create_secret('re_your_key','RESEND_API_KEY')
+-- 2) add the secret via Dashboard > Vault or run this once in the SQL editor: vault.create_secret('re_your_key','RESEND_API_KEY')
 -- 3) verify sending domain in Resend
 
 CREATE EXTENSION IF NOT EXISTS pg_net;
@@ -678,9 +617,9 @@ BEGIN
     $html$<div style="margin:0;padding:0;width:100%;background-color:#0f1115;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <div style="padding:64px 40px;">
     <img src="https://archespace.app/archespace-wordmark-email.png" alt="ArcheSpace" width="150" style="display:block;border:0;outline:none;text-decoration:none;height:auto;" />
-    <h1 style="margin:28px 0 18px;font-size:30px;line-height:1.2;font-weight:700;color:#ffffff;">Sorry to see you go 👋</h1>
+    <h1 style="margin:28px 0 18px;font-size:30px;line-height:1.2;font-weight:700;color:#ffffff;">Sorry to see you go</h1>
     <p style="margin:0 0 18px;max-width:560px;font-size:16px;line-height:1.65;color:#c4cad6;">Your ArcheSpace account <strong style="color:#ffffff;">$html$ || OLD.email || $html$</strong> has been permanently deleted, along with all of your spaces, items, and encrypted vault data. This is just a confirmation, so there's nothing left for you to do.</p>
-    <p style="margin:0 0 40px;max-width:560px;font-size:16px;line-height:1.65;color:#c4cad6;">Thank you for giving ArcheSpace a try. If you ever change your mind, you're always welcome back. 💚</p>
+    <p style="margin:0 0 40px;max-width:560px;font-size:16px;line-height:1.65;color:#c4cad6;">Thank you for giving ArcheSpace a try. If you ever change your mind, you're always welcome back.</p>
     <div style="height:1px;width:100%;max-width:560px;background-color:#262b36;margin:0 0 24px;"></div>
     <p style="margin:0;font-size:14px;line-height:1.6;color:#8b93a3;">Need help, or didn't request this? Contact us at <a href="mailto:$html$ || v_support || $html$" style="color:#7fe3c0;text-decoration:none;">$html$ || v_support || $html$</a>.</p>
   </div>
@@ -689,12 +628,12 @@ BEGIN
   -- Plaintext fallback (improves deliverability and covers clients
   -- that don't render HTML).
   v_text :=
-    'Sorry to see you go 👋' || E'\n\n'
+    'Sorry to see you go' || E'\n\n'
     || 'Your ArcheSpace account ' || OLD.email || ' has been permanently deleted, '
     || 'along with all of your spaces, items, and encrypted vault data. '
     || 'This is just a confirmation, so there is nothing left for you to do.' || E'\n\n'
     || 'Thank you for giving ArcheSpace a try. If you ever change your mind, you are '
-    || 'always welcome back. 💚' || E'\n\n'
+    || 'always welcome back.' || E'\n\n'
     || 'Need help, or did not request this? Contact us at ' || v_support || '.';
 
   -- Fire-and-forget async POST to Resend.
@@ -714,16 +653,11 @@ CREATE TRIGGER trg_notify_account_deleted
   AFTER DELETE ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.notify_account_deleted();
 
-
--- ────────────────────────────────────────────────────────────
 -- 10. AUTH AUDIT LOGGING (auth events only, owner-only table)
 
--- ────────────────────────────────────────────────────────────
 -- Server-side: account_created, email_change, password_reset_requested
 --   (account_deleted is written in section 9). Client-side via
---   log_client_event: login, logout, password_change, password_reset,
---   vault_setup, vault_unlock, vault_lock, vault_pin_change,
---   vault_pin_reset, recovery_code_created, export, import.
+--   log_client_event: the actions listed in that function.
 
 CREATE OR REPLACE FUNCTION public.log_auth_event()
 RETURNS TRIGGER
@@ -744,7 +678,7 @@ BEGIN
     -- terms_accepted_at is stamped server-side (now()), so it is authoritative
     -- and cannot be back-dated; the client's own timestamp is kept in the audit
     -- entry above for reference only. Skipped for accounts created without a
-    -- version (e.g. older clients or admin-created users).
+    -- version (e.g. admin-created users).
     IF NEW.raw_user_meta_data ? 'terms_version'
        AND coalesce(NEW.raw_user_meta_data->>'terms_version', '') <> '' THEN
       INSERT INTO user_consent (user_id, terms_version, terms_accepted_at)
@@ -790,8 +724,9 @@ BEGIN
   IF p_action NOT IN (
     'login', 'logout',
     'password_change', 'password_reset',
-    'vault_setup', 'vault_unlock', 'vault_lock',
+    'vault_setup', 'vault_unlock', 'vault_lock', 'vault_reset',
     'vault_pin_change', 'vault_pin_reset', 'recovery_code_created',
+    'vault_passkey_enroll', 'vault_passkey_remove',
     'export', 'import'
   ) THEN
     RAISE EXCEPTION 'Unsupported audit action: %', p_action;

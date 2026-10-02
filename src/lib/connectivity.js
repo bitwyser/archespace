@@ -34,7 +34,6 @@ export function isNetworkError(err) {
   if (err instanceof TypeError) return true // fetch() throws TypeError on network failure
   const text = `${err?.name || ''} ${err?.message || ''}`.toLowerCase()
   return (
-    text.includes('failed to fetch') ||
     text.includes('network') ||
     text.includes('fetch') ||
     text.includes('load failed') // Safari's wording

@@ -1,20 +1,10 @@
 /**
- * SpaceItem.jsx - A single item card inside a space.
+ * SpaceItem.jsx - An item card: type badge, inline-editable title, actions,
+ * and the editor for its type.
  *
- * Renders a collapsible card with:
- *   - Type badge (Note / Checklist / List / Cards)
- *   - Inline-editable title
- *   - Pin / collapse / delete actions
- *   - The appropriate editor component for the item type
- *   - Unsaved-changes indicator + Save / Discard buttons
- *   - Auto-save: debounced save after 5 seconds of inactivity
- *   - Collapse guard: warns before collapsing with unsaved edits
- *   - Drag handle for reordering
- *
- * The component manages its own local copy of `title` and `content`
- * so edits feel instant. Changes are marked "dirty" and flushed
- * to the server either manually (Save button) or automatically
- * (auto-save after 5s).
+ * It keeps a local copy of `title` and `content` so edits feel instant; they
+ * are marked unsaved and saved with the Save button or automatically after
+ * AUTO_SAVE_DELAY_MS, and collapsing with unsaved edits asks first.
  */
 
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, memo, lazy, Suspense } from 'react'
@@ -57,7 +47,7 @@ import { AUTO_SAVE_DELAY_MS } from '../lib/constants'
 const COLLAPSED_MAX_PX = 640
 
 /**
- * @param {{ item: Object, onUpdate: Function, onTogglePin: Function, onDelete: Function, onDirtyChange?: Function, dragHandleProps?: Object }} props
+ * The handlers come from useItemBoard's `cardProps`.
  */
 function SpaceItem({
   item,
@@ -90,11 +80,11 @@ function SpaceItem({
 }) {
   const { cryptoKey } = useEncryption()
   const askVaultPin = useVaultPinPrompt()
-  // A locked item, or one in a locked space, shows its content only after
-  // the vault PIN (see itemLock).
+  // A protected item, or one in a protected space, shows its content only
+  // after the vault PIN (see itemLock).
   const hidden = useContentHidden(item)
 
-  // ── Local state ──
+  // Local state
   const [editingTitle, setEditingTitle]   = useState(false)
   const [titleVal, setTitleVal]           = useState(item.title)
   const [localContent, setLocalContent]   = useState(item.content)
@@ -152,7 +142,7 @@ function SpaceItem({
     [dragDisabled, readOnly, index, onDragStart, onDragEnd]
   )
 
-  // ── Sync from server when not dirty (realtime / parent update) ──
+  // Sync from server when not dirty (realtime / parent update)
   const [syncedItem, setSyncedItem] = useState({ id: item.id, title: item.title, content: item.content })
   if (
     !isDirty &&
@@ -168,7 +158,7 @@ function SpaceItem({
     if (syncedItem.id !== item.id) setExpanded(false)
   }
 
-  // ── Notify parent about dirty state (for beforeunload warning) ──
+  // Notify parent about dirty state (for beforeunload warning)
   useEffect(() => {
     onDirtyChange?.(item.id, isDirty)
   }, [isDirty, item.id, onDirtyChange])
@@ -179,7 +169,7 @@ function SpaceItem({
   // that re-expanding a card re-measures its body.
   const headerCollapsed = !isFullscreen && !selectMode && forcedCollapsed
 
-  // ── Measure content height to decide if the card is "long" ──
+  // Measure content height to decide if the card is "long"
   // scrollHeight reports the full natural height even while the card is clamped,
   // so this stays correct whether the card is collapsed or expanded. While the
   // header is collapsed the body isn't rendered, so this simply re-runs (and
@@ -197,7 +187,7 @@ function SpaceItem({
     return () => observer.disconnect()
   }, [localContent, editorVersion, headerCollapsed])
 
-  // ── Cleanup timers on unmount ──
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       clearTimeout(autoSaveTimer.current)
@@ -419,7 +409,7 @@ function SpaceItem({
         : readOnly ? '' : 'item-card-editable'
     }`}
     >
-      {/* ── Header ────────────────────────────────────── */}
+      {/* Header */}
       <div className={`flex items-center gap-2 flex-wrap gap-y-2 ${
         denseView ? 'px-2.5 py-[7px]' : 'px-4 py-[9px]'
       } ${
@@ -520,11 +510,11 @@ function SpaceItem({
         {/* Saving indicator */}
         {saving && (
           <span className="shrink-0 text-xs text-accent font-medium px-2 py-0.5 bg-accent-muted rounded-md">
-            Saving…
+            Saving...
           </span>
         )}
 
-        {/* ── Action buttons ── */}
+        {/* Action buttons */}
         {!selectMode && (
         <div className="flex items-center gap-1 shrink-0 flex-wrap">
           {isDirty ? (
@@ -677,7 +667,7 @@ function SpaceItem({
         )}
       </div>
 
-      {/* ── Tags ──────────────────────────────────────── */}
+      {/* Tags */}
       {showTags && (
         <div className={denseView ? 'px-2.5 py-2' : 'px-4 py-2.5'}>
           <ItemTags
@@ -688,9 +678,9 @@ function SpaceItem({
         </div>
       )}
 
-      {/* ── Rich text toolbar: a bar across the top of the note with a rule
+      {/* Rich text toolbar: a bar across the top of the note with a rule
           above and below, inset from the card's edges (no box, same
-          background as the card), shown whenever its editor is live. ── */}
+          background as the card), shown whenever its editor is live. */}
       {showRichToolbar && (
         <div
           onMouseDownCapture={() => {
@@ -705,7 +695,7 @@ function SpaceItem({
         </div>
       )}
 
-      {/* ── Unsaved collapse warning ─────────────────── */}
+      {/* Unsaved collapse warning */}
       {collapseGuard && (
         <div className="px-4 py-3 bg-amber-400/8 border-b border-amber-400/20 flex items-center gap-3 flex-wrap">
           <AlertTriangle size={16} className="text-amber-400 shrink-0" />
@@ -736,7 +726,7 @@ function SpaceItem({
         </div>
       )}
 
-      {/* ── Content editor ──
+      {/* Content editor
           The header chevron hides the body entirely (only the header and tags
           stay). When shown, a long body is clamped to a fixed preview height
           (with a fade) that expands to full height when tapped. A protected item
@@ -779,7 +769,7 @@ function SpaceItem({
         {/* In the dense grid, or while clamped, the content is a non-interactive
             preview; tapping it opens full screen / expands instead of editing. */}
         <div className={denseView || clamped ? 'pointer-events-none' : 'contents'}>
-        {/* Render only the editor for this item's type (not all four) */}
+        {/* Only the editor for this item's type */}
         {item.type === 'textbox'       && <TextboxEditor    key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'markdown'      && <MarkdownEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'richtext' && (

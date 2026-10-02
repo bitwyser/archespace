@@ -1,7 +1,6 @@
 /**
- * MarkdownPreview.jsx - Simple markdown renderer for Note items.
- *
- * Supports a practical subset of Markdown:
+ * MarkdownPreview.jsx - Renders old Markdown items until they're converted to
+ * Rich text (and in PDF export). A practical subset of Markdown:
  *   - **bold**, *italic*, ~~strikethrough~~, `inline code`
  *   - # headings (h1-h3)
  *   - [links](url)
@@ -10,7 +9,7 @@
  *   - > blockquotes
  *   - ``` fenced code blocks ```
  *   - --- horizontal rules
- *   - Line breaks (double newline → paragraph)
+ *   - Line breaks (double newline -> paragraph)
  *
  * No external dependencies - pure regex-based parsing.
  *
@@ -83,8 +82,7 @@ function stripEventHandlers(html) {
  * @param {string} md - Raw markdown text
  * @returns {string}   - HTML string safe for dangerouslySetInnerHTML
  */
-// Exported for unit tests (XSS hardening). Not a component; the Fast-Refresh
-// rule doesn't apply to this pure helper.
+// A pure helper (also used by PDF export and the tests), not a component.
 // eslint-disable-next-line react-refresh/only-export-components
 export function markdownToHtml(md) {
   if (!md) return ''
@@ -171,7 +169,7 @@ export function markdownToHtml(md) {
     // Close any open list
     if (inList) { processed.push(`</${listType}>`); inList = false }
 
-    // Empty line → break
+    // Empty line -> break
     if (line.trim() === '') {
       processed.push('<br />')
       continue

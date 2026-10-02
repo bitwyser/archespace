@@ -18,12 +18,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-// Pin the auth storage key instead of letting supabase-js derive it at runtime.
-// The default is `sb-<project-ref>-auth-token`, computed from the URL. If a
-// future supabase-js upgrade (shipped on a normal deploy) changes that
-// derivation, every user's saved session would be orphaned under the old key
-// and they'd all be logged out on the next build. Pinning to the CURRENT
-// default keeps existing sessions valid now and stable across upgrades.
+// The auth storage key is pinned to supabase-js's default
+// (`sb-<project-ref>-auth-token`) so a library upgrade that changes how it's
+// derived can't orphan saved sessions and sign everyone out.
 const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
 
 // "Remember me" preference. When true (default), the auth token lives in
@@ -85,8 +82,7 @@ const authStorage = {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // Must match supabase-js's current default exactly, or existing sessions
-    // are lost once (do not change this value casually).
+    // Changing this signs everyone out once.
     storageKey: `sb-${projectRef}-auth-token`,
     storage: authStorage,
     persistSession: true,

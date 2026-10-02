@@ -9,11 +9,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Plus, Trash2, CheckSquare, Square, GripVertical, Pencil, Eye } from 'lucide-react'
 import MarkdownPreview from './MarkdownPreview'
 
-// ─────────────────────────────────────────────────────────
-// Shared delete button (shown on hover)
-// ─────────────────────────────────────────────────────────
-
-/** Small icon-only delete button, visible only when the row is hovered */
+/** Small icon-only delete button, visible only when the row is hovered. */
 function DelBtn({ onClick, label = 'Delete item' }) {
   return (
     <button
@@ -45,13 +41,8 @@ function ReorderBtn({ onDragStart, onDragEnd, onKeyDown }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────
-// TextboxEditor (Note) - Plain text only, no markdown
-// ─────────────────────────────────────────────────────────
-
 /**
- * Auto-expanding textarea for free-form plain text note content.
- * No markdown support - just simple text editing.
+ * The Note type: an auto-expanding plain text area.
  *
  * @param {{ content: { text: string }, onChange: Function }} props
  */
@@ -82,7 +73,7 @@ export function TextboxEditor({ content, onChange, readOnly = false }) {
         value={text}
         onChange={handleChange}
         readOnly={readOnly}
-        placeholder={readOnly ? 'Empty' : 'Start writing anything…'}
+        placeholder={readOnly ? 'Empty' : 'Start writing anything...'}
         rows={3}
         className="w-full bg-bg-sunken border border-bg-border rounded-xl px-4 py-3 text-text-content placeholder-text-muted focus:outline-none transition-colors text-sm resize-none overflow-hidden leading-relaxed min-h-[80px]"
       />
@@ -90,15 +81,9 @@ export function TextboxEditor({ content, onChange, readOnly = false }) {
   )
 }
 
-
-// ─────────────────────────────────────────────────────────
-// MarkdownEditor - Click-to-edit / blur-to-preview
-// ─────────────────────────────────────────────────────────
-
 /**
- * Markdown editor with two modes:
- *   - Preview mode (default): renders formatted markdown; click to edit
- *   - Edit mode: raw textarea; blur (click outside) returns to preview
+ * An old Markdown item, until it's converted to Rich text. Shows the rendered
+ * preview; a click edits the raw text, and clicking outside previews again.
  *
  * @param {{ content: { text: string }, onChange: Function }} props
  */
@@ -143,7 +128,7 @@ export function MarkdownEditor({ content, onChange, readOnly = false }) {
           value={text}
           onChange={handleChange}
           onBlur={exitEditMode}
-          placeholder="Write markdown here…"
+          placeholder="Write markdown here..."
           rows={3}
           className="w-full bg-bg-sunken border border-bg-border rounded-xl px-4 pt-3 pb-8 text-text-content placeholder-text-muted focus:outline-none transition-colors text-sm resize-none overflow-hidden leading-relaxed min-h-[80px] font-mono"
         />
@@ -186,17 +171,13 @@ export function MarkdownEditor({ content, onChange, readOnly = false }) {
           </div>
         </>
       ) : (
-        <span className="text-text-muted italic">Click to start writing markdown…</span>
+        <span className="text-text-muted italic">Click to start writing markdown...</span>
       )}
     </div>
   )
 }
 
-
-// ─────────────────────────────────────────────────────────
-// ListEditor (shared by ChecklistEditor & MenuListEditor)
-// ─────────────────────────────────────────────────────────
-
+// Shared by ChecklistEditor and ListItemsEditor.
 function ListEditor({ content, onChange, variant, readOnly = false, onNumberedChange }) {
   const isChecklist = variant === 'checkbox'
   const isNumbered = variant === 'numbered'
@@ -324,7 +305,7 @@ function ListEditor({ content, onChange, variant, readOnly = false, onNumberedCh
             }}
             onKeyDown={readOnly ? undefined : e => handleKeyDown(e, idx)}
             readOnly={readOnly}
-            placeholder={readOnly ? '' : isChecklist ? 'List item…' : 'Item…'}
+            placeholder={readOnly ? '' : isChecklist ? 'List item...' : 'Item...'}
             rows={1}
             className={`flex-1 min-w-0 bg-transparent text-sm leading-relaxed focus:outline-none placeholder-text-muted resize-none overflow-hidden whitespace-pre-wrap break-words ${
               isChecklist && item.checked ? 'line-through text-text-muted' : 'text-text-primary'
@@ -383,13 +364,8 @@ export function ListItemsEditor({ numbered = false, ...props }) {
   return <ListEditor {...props} variant={numbered ? 'numbered' : 'bullet'} />
 }
 
-
-// ─────────────────────────────────────────────────────────
-// CardListEditor
-// ─────────────────────────────────────────────────────────
-
 /**
- * Card-based editor - each card has a title and description.
+ * The Cards type: each card has a title and a description.
  *
  * @param {{ content: { items: Array }, onChange: Function }} props
  */
@@ -459,7 +435,7 @@ export function CardListEditor({ content, onChange, readOnly = false }) {
               value={item.title}
               onChange={e => updateItem(item.id, 'title', e.target.value)}
               readOnly={readOnly}
-              placeholder={readOnly ? '' : 'Title…'}
+              placeholder={readOnly ? '' : 'Title...'}
               className="flex-1 bg-transparent text-sm font-semibold focus:outline-none text-text-primary placeholder-text-muted"
             />
             {!readOnly && (
@@ -482,7 +458,7 @@ export function CardListEditor({ content, onChange, readOnly = false }) {
               adjust(e.target)
             }}
             readOnly={readOnly}
-            placeholder={readOnly ? '' : 'Description…'}
+            placeholder={readOnly ? '' : 'Description...'}
             rows={2}
             className="w-full bg-transparent text-sm text-text-secondary focus:outline-none placeholder-text-muted resize-none overflow-hidden leading-relaxed"
           />

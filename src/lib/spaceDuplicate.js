@@ -26,7 +26,7 @@ export async function duplicateSpaceWithItems(source, cryptoKey, position) {
       color: source.color,
       tags: encCol.tags,
       pinned: false,
-      // A copy of a locked space stays locked.
+      // A copy of a protected space stays protected.
       locked: !!source.locked,
     })
     .select()

@@ -483,7 +483,7 @@ export default function SettingsPage() {
           {/* Content pane */}
           <div className="min-w-0 flex-1 md:flex md:min-h-0 md:flex-col">
             <div className="md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-1">
-              {/* ── Account ─────────────────────────────── */}
+              {/* Account */}
               <SettingsSection id="account" active={activeSection}>
                 <SettingGroup label="Sign-in">
                   <SettingRow
@@ -526,7 +526,7 @@ export default function SettingsPage() {
                             {passwordToggle(showEmailPassword, () => setShowEmailPassword(v => !v), 'Toggle email password visibility')}
                           </div>
                         </div>
-                        <FormActions onCancel={closeRow} submitLabel="Send code" busy={emailLoading} busyLabel="Sending code…" />
+                        <FormActions onCancel={closeRow} submitLabel="Send code" busy={emailLoading} busyLabel="Sending code..." />
                       </form>
                     ) : (
                       <ReauthCode
@@ -598,12 +598,12 @@ export default function SettingsPage() {
                           disabled={resetLoading}
                           className="text-left text-xs font-medium text-accent hover:underline disabled:opacity-50"
                         >
-                          {resetLoading ? 'Sending reset link…' : 'Forgot it? Email me a reset link'}
+                          {resetLoading ? 'Sending reset link...' : 'Forgot it? Email me a reset link'}
                         </button>
                         <div className="flex justify-end gap-2">
                           <button type="button" onClick={closeRow} className={rowButtonClass}>Cancel</button>
                           <button type="submit" disabled={passwordLoading} className={primaryButtonClass}>
-                            {passwordLoading ? 'Updating…' : 'Change password'}
+                            {passwordLoading ? 'Updating...' : 'Change password'}
                           </button>
                         </div>
                       </div>
@@ -638,7 +638,7 @@ export default function SettingsPage() {
                 </SettingGroup>
               </SettingsSection>
 
-              {/* ── Vault ───────────────────────────────── */}
+              {/* Vault */}
               <SettingsSection id="vault" active={activeSection}>
                 <SettingGroup label="Unlocking">
                   <SettingRow
@@ -684,7 +684,7 @@ export default function SettingsPage() {
                           <div className="flex justify-end gap-2">
                             <button type="button" onClick={closeRow} className={rowButtonClass}>Cancel</button>
                             <button type="submit" disabled={pinLoading || unlocking} className={primaryButtonClass}>
-                              {pinLoading || unlocking ? 'Updating…' : 'Change PIN'}
+                              {pinLoading || unlocking ? 'Updating...' : 'Change PIN'}
                             </button>
                           </div>
                         </div>
@@ -726,7 +726,7 @@ export default function SettingsPage() {
                           onCancel={closeRow}
                           submitLabel="Reset PIN"
                           busy={pinRecoveryLoading || unlocking}
-                          busyLabel="Updating…"
+                          busyLabel="Updating..."
                         />
                       </form>
                     )}
@@ -756,7 +756,7 @@ export default function SettingsPage() {
                         onCancel={closeRow}
                         submitLabel="Create code"
                         busy={recoverySetupLoading || unlocking}
-                        busyLabel="Creating…"
+                        busyLabel="Creating..."
                         disabled={recoverySetupPin.length < VAULT_PIN_MIN_LENGTH}
                       />
                     </form>
@@ -800,7 +800,7 @@ export default function SettingsPage() {
                 </SettingGroup>
               </SettingsSection>
 
-              {/* ── Appearance ──────────────────────────── */}
+              {/* Appearance */}
               <SettingsSection id="appearance" active={activeSection}>
                 <SettingGroup>
                   <SettingRow
@@ -860,7 +860,7 @@ export default function SettingsPage() {
                 <p className="mt-3 px-1 text-xs text-text-muted">Synced to your account, so every device looks the same.</p>
               </SettingsSection>
 
-              {/* ── Backup ──────────────────────────────── */}
+              {/* Backup */}
               <SettingsSection id="backup" active={activeSection}>
                 <SettingGroup>
                   <SettingRow

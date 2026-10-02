@@ -1,9 +1,9 @@
 /**
  * EncryptionContext.jsx - In-memory vault master key for client-side E2E encryption.
  *
- * The master AES key is unlocked with a vault PIN (independent of login password).
- * While signed in, the unlocked key is kept in sessionStorage so refresh does not
- * require re-entering the PIN until manual lock or 24-hour auto-lock.
+ * The master AES key is unlocked with a vault PIN (independent of the login
+ * password). While signed in, the unlocked key is kept in sessionStorage so a
+ * refresh doesn't ask for the PIN again until the vault locks.
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useAuth } from './AuthContextCore'
@@ -14,7 +14,6 @@ import {
   unlockUserVault,
   changeVaultPinWithVerification,
   createVaultRecoveryCode,
-  changeVaultPinWithRecoveryCode,
   recoverVaultWithRecoveryCode,
   getVaultStatus,
   warmVaultMetaCache,
@@ -176,9 +175,9 @@ export function EncryptionProvider({ children }) {
     }
   }, [userId, applyUnlockedKey])
 
-  // Verify a re-entered PIN without changing session state (for re-confirming
-  // the PIN before a sensitive action, such as a per-item lock). Shares the vault-unlock rate limiter + server lockout, so
-  // a wrong reveal PIN counts like a wrong unlock. Returns true if correct.
+  // Verify a re-entered PIN without changing session state (before a sensitive
+  // action, such as opening a protected item). Shares the unlock rate limiter
+  // and server lockout, so a wrong PIN here counts like a wrong unlock.
   const verifyVaultPin = useCallback(async (pin) => {
     if (!userId) return false
     const rateKey = `vault-unlock:${userId}`
@@ -242,22 +241,21 @@ export function EncryptionProvider({ children }) {
 
   const removePasskey = useCallback(async (id) => {
     if (!userId) throw new Error('Not signed in')
-    await removePasskeyVault(userId, id)
+    await removePasskeyVault(id)
     await refreshPasskeys()
     logAudit({ action: 'vault_passkey_remove' })
   }, [userId, refreshPasskeys])
 
-  // Create the vault but do NOT unlock yet - the caller shows the one-time
+  // Create the vault but do NOT unlock yet: the caller shows the one-time
   // recovery code first and calls commitVaultKey() once it is acknowledged.
-  // (Mirrors the mobile flow; unlocking here raced the recovery-code screen.)
   const setup = useCallback(async (pin) => {
     if (!userId) throw new Error('Not signed in')
     setUnlocking(true)
     setUnlockError('')
     try {
-      const { masterKey, recoveryCode, recoveryUnavailable } = await setupUserVault(userId, pin)
+      const result = await setupUserVault(userId, pin)
       logAudit({ action: 'vault_setup' })
-      return { masterKey, recoveryCode, recoveryUnavailable }
+      return result
     } catch (err) {
       const msg = err?.message || "Couldn't set up vault."
       setUnlockError(msg)
@@ -280,7 +278,7 @@ export function EncryptionProvider({ children }) {
       // Old passkeys wrapped the now-destroyed master key; remove them locally.
       try {
         const existing = await listPasskeys(userId)
-        for (const pk of existing) await removePasskeyVault(userId, pk.id)
+        for (const pk of existing) await removePasskeyVault(pk.id)
       } catch {
         // Best-effort; a stale local passkey just fails to unlock later.
       }
@@ -344,7 +342,7 @@ export function EncryptionProvider({ children }) {
     setUnlockError('')
     try {
       const { masterKey, recoveryCode: nextRecoveryCode } =
-        await changeVaultPinWithRecoveryCode(userId, recoveryCode, newPin)
+        await recoverVaultWithRecoveryCode(userId, recoveryCode, newPin)
       await applyUnlockedKey(masterKey)
       logAudit({ action: 'vault_pin_reset' })
       return { recoveryCode: nextRecoveryCode }
@@ -376,8 +374,8 @@ export function EncryptionProvider({ children }) {
     }
   }, [userId])
 
-  // Wait for auth hydration before clearing or restoring vault session.
-  // Clearing while user is briefly null on refresh was wiping sessionStorage.
+  // Wait for auth to load before clearing or restoring the vault session: the
+  // user is briefly null on refresh, and clearing then would lose the session.
   useEffect(() => {
     if (authLoading) return
 

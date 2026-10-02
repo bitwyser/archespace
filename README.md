@@ -72,12 +72,12 @@ All list-style types support add, remove, and drag-and-drop or `Arrow Up` / `Arr
 You sign in with Supabase Auth (login password), then unlock a separate vault **PIN or passphrase** to access your data. The password proves account ownership; the PIN protects the content.
 
 - **Client-side encryption.** Space and item content is encrypted in the browser with AES-GCM before it reaches Supabase; only non-sensitive metadata (IDs, timestamps, positions, flags) is stored in plain form. The server, its operators, and developers never see readable content.
-- **Key derivation.** A random vault master key is wrapped with a key derived from your PIN using Argon2id (memory-hard). The PIN is never stored. Older PBKDF2 vaults upgrade automatically on the next PIN change.
+- **Key derivation.** A random vault master key is wrapped with a key derived from your PIN using Argon2id (memory-hard). The PIN is never stored.
 - **Sessions.** The unlocked key is a non-extractable key in the browser, auto-locks after a configurable idle period (default 24h), and clears on sign-out. Login sessions last a week; "sign out of all devices" revokes every session. Failed login and PIN attempts are rate limited, and repeated PIN failures lock the vault server-side. Supabase Row Level Security restricts each user to their own rows.
 - **Passkey / biometric unlock.** Optionally unlock with Face ID, Touch ID, or Windows Hello via the WebAuthn PRF extension. The wrapped key stays on-device (browser IndexedDB), never on the server; the PIN and recovery code remain fallbacks.
 - **Two-factor (2FA).** Optional TOTP, off by default. When on, sign-in asks for the code after the password and before the vault, and RLS enforces AAL2 on the content tables so it can't be bypassed via the API.
 - **Protected items and spaces.** A protected item keeps its title and tags visible, and a protected space its name; the content stays hidden until you enter your vault PIN again, including in search, Starred, PDF export, and copy. Opened content hides again when the vault locks. Wrong PINs count towards the same lockout as unlocking. Protection is a PIN check inside an already unlocked vault (the content is encrypted with the same vault key as everything else), so it guards against someone using your unlocked device, not against someone who can inspect the running app.
-- **Encrypted backups.** A backup file holds your spaces and items encrypted with the vault key, plus that key wrapped with your vault PIN (as the server stores it). It opens directly in the same vault, and anywhere else (another account, or after a vault reset) with the vault PIN you had when exporting. After a PIN change, older backups still need the earlier PIN. Older readable backups still import.
+- **Encrypted backups.** A backup file holds your spaces and items encrypted with the vault key, plus that key wrapped with your vault PIN (as the server stores it). It opens directly in the same vault, and anywhere else (another account, or after a vault reset) with the vault PIN you had when exporting. After a PIN change, older backups still need the earlier PIN.
 - **Recovery.** A one-time recovery code is shown once at vault setup and can reset a forgotten PIN. If **both** the PIN and recovery code are lost, the vault can be reset by re-entering your account password, which wipes the (unrecoverable) encrypted data and starts a fresh vault. There is no backdoor.
 - **Audit log.** An owner-only `audit_log` records authentication and security events (never content), written only by `SECURITY DEFINER` triggers and a whitelisted RPC.
 
@@ -98,7 +98,7 @@ cd archespace
 npm install
 ```
 
-1. **Supabase**: create a project, run `schema.sql` in the SQL Editor, enable the Email auth provider, and configure Resend as the SMTP server. Paste the templates from `email-templates/` into Auth → Email Templates, and add your app URL plus `https://your-domain/reset-password` to the redirect URLs.
+1. **Supabase**: create a project, run `schema.sql` in the SQL Editor, enable the Email auth provider, and configure Resend as the SMTP server. Paste the templates from `email-templates/` into Auth > Email Templates, and add your app URL plus `https://your-domain/reset-password` to the redirect URLs.
 2. **Account-deletion email** (server-side, via `pg_net` + Resend): enable `pg_net` (included in `schema.sql`), store your key with `select vault.create_secret('re_your_key', 'RESEND_API_KEY');`, and set the `v_from` / `v_support` addresses in `notify_account_deleted()` to a verified domain.
 3. **Environment**: create `.env`:
 
@@ -134,7 +134,6 @@ Deploys are automatic on Cloudflare's Git-connected builds: pushing to `main` ru
 | Drawing | `perfect-freehand` for vector ink strokes |
 | Syntax highlighting | `highlight.js` (automatic language detection for the Code item type) |
 | PDF export | `pdfmake` (branded header, footer URL, and page numbers) |
-| File handling | JSZip |
 | Asset generation | `sharp` (dev-only script that renders the app icons and social image) |
 | Hosting / deploy | Cloudflare (Git-connected builds), or any static host |
 | CI / tooling | GitHub Actions (lint, test, build, audit), Vitest, Dependabot, ESLint 10 |
@@ -184,7 +183,7 @@ Key areas:
 - `src/context/` contains auth, encryption, vault PIN prompt, appearance/theme, toast, shortcuts, command palette, and page action providers.
 - `src/hooks/` contains data hooks for spaces, items, starred, archive, recycle bin, global search, offline sync, online status, drag reordering, and session timeout.
 - `src/lib/richText/` contains the Tiptap editor setup (extensions, find and replace, line spacing), conversion of older notes, and `webview/`, the source of the offline editor bundled into the mobile app (`npm run build:mobile-editor`).
-- `src/lib/crypto/` contains AES-GCM encryption, Argon2id and PBKDF2 key derivation, vault setup and unlock, non-extractable session key storage, PIN recovery code, and WebAuthn PRF passkey wrapping/unlock with a local (IndexedDB) passkey store.
+- `src/lib/crypto/` contains AES-GCM encryption, Argon2id key derivation, vault setup and unlock, non-extractable session key storage, PIN recovery code, and WebAuthn PRF passkey wrapping/unlock with a local (IndexedDB) passkey store.
 - `src/lib/` contains the Supabase client, data protection helpers, item type definitions, protected-content state, clipboard serialization, encrypted backup import/export, offline queue and encrypted cache, connectivity detection, rate limiting, audit logging, two-factor (TOTP) and backup-code helpers, PDF export, password policy, and build info.
 - `schema.sql` contains tables, indexes, RLS policies, triggers (including read-only spaces), RPC functions, realtime setup, vault recovery and PIN lockout, the `mfa_backup_codes` table with AAL2 enforcement for two-factor auth, the account-deletion email trigger, and the auth audit log. (Passkey unlock stores its wrapped key on each client, so there is no passkey table.)
 - `email-templates/` contains ready-to-paste Supabase auth email templates; `scripts/generate-icons.mjs` renders the PWA icons and social image; `public/_headers` holds deployment headers for hosts such as Cloudflare Pages.
@@ -247,7 +246,7 @@ Need help with setup, self-hosting, or account/vault recovery? Email **[help@arc
 
 ## Credits
 
-- Built with React, Vite, Tailwind CSS, Supabase, TanStack Query, Tiptap, Lucide, JSZip, pdfmake, and the Web Crypto API.
+- Built with React, Vite, Tailwind CSS, Supabase, TanStack Query, Tiptap, Lucide, pdfmake, and the Web Crypto API.
 - Backend and authentication powered by Supabase.
 - Hosted and deployed on Cloudflare.
 - Email delivery powered by Resend.

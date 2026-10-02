@@ -190,7 +190,7 @@ export default function StarredPage() {
         )}
       </main>
 
-      {/* ── Space edit / delete ────────────────────────── */}
+      {/* Space edit / delete */}
       {spaceModal?.type === 'edit' && (
         <SpaceModal
           initial={spaceModal.col}
@@ -220,7 +220,7 @@ export default function StarredPage() {
         />
       )}
 
-      {/* ── Item dialogs: move to bin, move, unsaved guard ── */}
+      {/* Item dialogs: move to bin, move, unsaved guard */}
       <ItemBoardModals board={board} spaces={spaces} />
     </div>
   )

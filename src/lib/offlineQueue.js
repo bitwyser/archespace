@@ -58,7 +58,7 @@ export function isOnline() {
 }
 
 /** Thrown by assertOnline() so callers can show a consistent offline message. */
-export class OfflineError extends Error {
+class OfflineError extends Error {
   constructor(message = "You're offline - reconnect to make changes.") {
     super(message)
     this.name = 'OfflineError'

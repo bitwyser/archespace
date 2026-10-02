@@ -48,6 +48,6 @@ export function richTextExtensions() {
     // Markdown: pasting it converts to formatting, and old Markdown notes
     // convert into this format.
     Markdown,
-    Placeholder.configure({ placeholder: 'Start writing…' }),
+    Placeholder.configure({ placeholder: 'Start writing...' }),
   ]
 }

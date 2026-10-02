@@ -10,7 +10,6 @@ import { useShortcut } from '../../context/ShortcutsCore'
 import { useOfflineSync } from '../../hooks/useOfflineSync'
 import CommandPalette from '../CommandPalette'
 import ShortcutsHelp from '../ShortcutsHelp'
-
 import { usePageActions } from '../../context/PageActionsCore'
 
 export default function AppChrome() {
@@ -48,7 +47,7 @@ export default function AppChrome() {
       toast.info('Session expired after one week. Please sign in again.')
     }
     const onVaultLocked = () => {
-      toast.info('Vault locked after 24 hours. Enter your PIN to unlock.')
+      toast.info('Vault locked after inactivity. Enter your PIN to unlock.')
     }
     window.addEventListener('arche:session-expired', onExpired)
     window.addEventListener('arche:vault-auto-locked', onVaultLocked)

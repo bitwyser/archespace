@@ -14,13 +14,12 @@
 (function () {
   try {
     var MODES = ['system', 'dark', 'light'];
-    var ACCENTS = ['mint', 'lavender', 'amber'];
+    var ACCENTS = ['mint', 'lavender', 'amber', 'sky', 'rose'];
     var DEFAULT_MODE = 'system';
     var DEFAULT_ACCENT = 'mint';
 
-    var legacy = localStorage.getItem('arche-theme');
-    var mode = localStorage.getItem('arche-theme-mode') || legacy;
-    var accent = localStorage.getItem('arche-accent-color') || legacy;
+    var mode = localStorage.getItem('arche-theme-mode');
+    var accent = localStorage.getItem('arche-accent-color');
 
     if (MODES.indexOf(mode) === -1) mode = DEFAULT_MODE;
     if (ACCENTS.indexOf(accent) === -1) accent = DEFAULT_ACCENT;

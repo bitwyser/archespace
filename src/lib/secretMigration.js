@@ -14,7 +14,7 @@ import { decryptItem, encryptItem } from './dataProtection'
 import { decryptString } from './crypto/cipher'
 
 /** A Note's content from a secret's content (its nested ciphertext opened). */
-export async function secretToNoteContent(content, cryptoKey) {
+async function secretToNoteContent(content, cryptoKey) {
   const cipher = typeof content?.cipher === 'string' ? content.cipher : ''
   return { text: cipher ? await decryptString(cipher, cryptoKey) : '' }
 }

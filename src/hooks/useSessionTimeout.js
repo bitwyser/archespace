@@ -35,8 +35,7 @@ export function useSessionTimeout() {
       timer.current = setTimeout(expire, Math.min(remaining, MAX_TIMEOUT_MS))
     }
 
-    // On load, anchor to the stored login time. Existing sessions with no
-    // stored anchor (logged in before this shipped) start from now.
+    // On load, anchor to the stored login time (or now, when there is none).
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return
       let startedAt = Number(localStorage.getItem(STARTED_AT_KEY))

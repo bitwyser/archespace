@@ -3,10 +3,10 @@
  * `spaceId === null`, the dashboard's items, which belong to no space; or with
  * `STARRED_ITEMS`, the starred items from every space (the Starred view).
  */
-import { EMPTY_RICH_DOC } from '../lib/richText/doc'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { EMPTY_RICH_DOC } from '../lib/richText/doc'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { encryptItem, decryptItem, decryptItems, encryptTags } from '../lib/dataProtection'
@@ -34,7 +34,6 @@ const defaultContent = {
   menu_list: { items: [] },
   numbered_list: { items: [] },
   card_list: { items: [] },
-  markdown: { text: '' },
   richtext: { doc: EMPTY_RICH_DOC },
   code: { code: '' },
   draw: { strokes: [] },
@@ -43,7 +42,7 @@ const defaultContent = {
 }
 
 // Query/cache key for the dashboard's items (those with no space).
-export const DASHBOARD_ITEMS_KEY = 'dashboard'
+const DASHBOARD_ITEMS_KEY = 'dashboard'
 // Pass as the `spaceId` for the starred items of every space. Also its key.
 export const STARRED_ITEMS = 'starred'
 
@@ -197,8 +196,8 @@ export function useSpaceItems(spaceId) {
     invalidate: () => invalidateSpaceItems(qc, itemsKey),
   }))
 
-  // Lock / remove lock: a flag only (the content stays encrypted with the
-  // vault key as before); a locked item's content is shown after the PIN.
+  // Protect / remove protection: a flag only (the content stays encrypted with
+  // the vault key as before); a protected item's content shows after the PIN.
   const toggleLock = useMutation(makeToggleFlag({
     table: 'space_items',
     field: 'locked',
@@ -208,8 +207,7 @@ export function useSpaceItems(spaceId) {
   }))
 
   // Tags-only update (encrypted like a space's tags). Optimistic so chips update
-  // instantly. Isolated from create/update so the tags-column migration can't
-  // break item creation or content saves.
+  // instantly.
   const setTags = useMutation({
     mutationFn: async ({ id, tags }) => {
       assertOnline()
@@ -299,7 +297,7 @@ export function useSpaceItems(spaceId) {
           content: encrypted.content,
           position: items.length,
           pinned: false,
-          // A copy of a locked item stays locked.
+          // A copy of a protected item stays protected.
           locked: !!item.locked,
         })
         .select()

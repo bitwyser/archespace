@@ -4,10 +4,17 @@
  * Sensitive fields are encrypted client-side before Supabase.
  * Only ciphertext is stored server-side; decryption requires the user's vault key.
  */
-import { encryptString, decryptString, encryptJson, decryptJson, isEncrypted } from './crypto/cipher'
+import { encryptString, decryptString, encryptJson, decryptJson } from './crypto/cipher'
 import { parseTags } from './spaceColors'
 
-// ── Spaces ─────────────────────────────────────────────
+const LOCKED_MESSAGE = 'Vault is locked - enter your PIN to view this data.'
+
+// Tags left at the column default (an empty array) were never encrypted.
+async function decryptTags(tags, key) {
+  return parseTags(typeof tags === 'string' ? await decryptJson(tags, key) : tags)
+}
+
+// Spaces
 
 export async function encryptSpace(row, key) {
   if (!key || !row) return row
@@ -22,33 +29,18 @@ export async function encryptSpace(row, key) {
 
 export async function decryptSpace(row, key) {
   if (!row) return row
-  if (!key) {
-    if (row.name && isEncrypted(row.name)) {
-      throw new Error('Vault is locked - enter your PIN to view this data.')
-    }
-    return { ...row, tags: parseTags(row.tags) }
-  }
-
-  let tags = row.tags
-  if (typeof tags === 'string' && isEncrypted(tags)) {
-    tags = await decryptJson(tags, key)
-  } else if (Array.isArray(tags)) {
-    tags = parseTags(tags)
-  } else {
-    tags = parseTags(tags)
-  }
-
+  if (!key) throw new Error(LOCKED_MESSAGE)
   return {
     ...row,
-    name: await decryptString(row.name ?? '', key),
-    description: await decryptString(row.description ?? '', key),
-    tags,
+    name: await decryptString(row.name, key),
+    description: await decryptString(row.description, key),
+    tags: await decryptTags(row.tags, key),
   }
 }
 
 export async function decryptSpaces(rows, key) {
   if (!rows?.length) return []
-  // Without a key, let decryptSpace throw the "vault locked" signal as before.
+  // Without a key, let decryptSpace throw the "vault locked" signal.
   if (!key) return Promise.all(rows.map(r => decryptSpace(r, key)))
   // With a key, a single row that can't be decrypted (e.g. left over from a
   // previous vault key) must not blank the whole list - skip it instead.
@@ -63,7 +55,7 @@ export async function decryptSpaces(rows, key) {
   return results.filter(Boolean)
 }
 
-// ── Space items ────────────────────────────────────────
+// Space items
 
 /** Encrypt just an item's tags (for a tags-only update). */
 export async function encryptTags(tags, key) {
@@ -83,41 +75,19 @@ export async function encryptItem(row, key) {
 
 export async function decryptItem(row, key) {
   if (!row) return row
-  if (!key) {
-    if (row.title && isEncrypted(row.title)) {
-      throw new Error('Vault is locked - enter your PIN to view this data.')
-    }
-    return { ...row, tags: parseTags(row.tags) }
-  }
-
-  let content = row.content
-  if (typeof content === 'string' && isEncrypted(content)) {
-    content = await decryptJson(content, key)
-  } else if (typeof content === 'string') {
-    try {
-      content = JSON.parse(content)
-    } catch {
-      content = {}
-    }
-  }
-
-  let tags = row.tags
-  if (typeof tags === 'string' && isEncrypted(tags)) {
-    tags = await decryptJson(tags, key)
-  }
-  tags = parseTags(tags)
-
+  if (!key) throw new Error(LOCKED_MESSAGE)
+  const content = typeof row.content === 'string' ? await decryptJson(row.content, key) : row.content
   return {
     ...row,
-    title: await decryptString(row.title ?? '', key),
+    title: await decryptString(row.title, key),
     content: content ?? {},
-    tags,
+    tags: await decryptTags(row.tags, key),
   }
 }
 
 export async function decryptItems(rows, key) {
   if (!rows?.length) return []
-  // Without a key, let decryptItem throw the "vault locked" signal as before.
+  // Without a key, let decryptItem throw the "vault locked" signal.
   if (!key) return Promise.all(rows.map(r => decryptItem(r, key)))
   // With a key, skip any row that can't be decrypted rather than failing the
   // whole list (or a whole export).

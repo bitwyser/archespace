@@ -1,9 +1,9 @@
 /**
- * itemLock.js - Locked items and spaces. A locked item keeps its title and
- * tags in view, and a locked space its name, but the content needs the vault
- * PIN again. An item in a locked space (or in a sub-space of one) is hidden
- * too, wherever it's listed (Starred, search). The lock is a flag on the row
- * (`locked`); the content is encrypted with the vault key like any other.
+ * itemLock.js - Protected items and spaces. A protected item keeps its title
+ * and tags in view, and a protected space its name, but the content needs the
+ * vault PIN again. An item in a protected space (or in a sub-space of one) is
+ * hidden too, wherever it's listed (Starred, search). Protect is the `locked`
+ * flag on the row; the content is encrypted with the vault key like any other.
  *
  * What has been opened lives only in memory: a reload, or the vault locking,
  * hides it all again.
@@ -26,14 +26,9 @@ function subscribe(fn) {
   return () => listeners.delete(fn)
 }
 
-/** Whether a locked item or space has been opened with the PIN. */
+/** Whether a protected item or space has been opened with the PIN. */
 export function isItemRevealed(id) {
   return revealed.has(id)
-}
-
-/** A space's own lock as last loaded (undefined if not seen yet). */
-export function isSpaceLocked(id) {
-  return spaceLocks.get(id)?.locked
 }
 
 // A space and the spaces above it (spaces nest one level; the bound only
@@ -50,12 +45,12 @@ function spaceChain(spaceId) {
   return chain
 }
 
-/** Whether a space's contents must stay hidden (it or its parent locked). */
+/** Whether a space's contents must stay hidden (it or its parent protected). */
 export function isSpaceHidden(spaceId) {
   return spaceChain(spaceId).some(([id, s]) => s.locked && !revealed.has(id))
 }
 
-/** Whether an item's content must stay hidden (it or its space locked). */
+/** Whether an item's content must stay hidden (it or its space protected). */
 export function isContentHidden(item) {
   if (!item) return false
   return (!!item.locked && !revealed.has(item.id)) || isSpaceHidden(item.space_id)
@@ -67,7 +62,7 @@ export function revealItem(id) {
   emit()
 }
 
-/** Open a space and any locked space above it. */
+/** Open a space and any protected space above it. */
 export function revealSpace(spaceId) {
   let changed = false
   for (const [id, s] of spaceChain(spaceId)) {
@@ -76,7 +71,7 @@ export function revealSpace(spaceId) {
   if (changed) emit()
 }
 
-/** Open everything hiding an item: its own lock and its spaces'. */
+/** Open everything hiding an item: its own protection and its spaces'. */
 export function revealContent(item) {
   if (item.locked) revealed.add(item.id)
   for (const [id, s] of spaceChain(item.space_id)) if (s.locked) revealed.add(id)
@@ -95,7 +90,7 @@ export function hideAllItems() {
   emit()
 }
 
-/** Record which spaces are locked (called whenever the spaces load). */
+/** Record which spaces are protected (called whenever the spaces load). */
 export function setSpaceLocks(spaces) {
   let changed = false
   for (const s of spaces || []) {
@@ -110,7 +105,7 @@ export function setSpaceLocks(spaces) {
   if (changed) emit()
 }
 
-/** A space was just locked or unlocked here (ahead of the next load). */
+/** A space's protection was just changed here (ahead of the next load). */
 export function setSpaceLocked(id, locked) {
   const prev = spaceLocks.get(id)
   spaceLocks.set(id, { locked, parentId: prev?.parentId ?? null })
@@ -118,7 +113,7 @@ export function setSpaceLocked(id, locked) {
   emit()
 }
 
-// Re-render on any open / hide / lock change; the reads stay cheap.
+// Re-render on any open / hide / protect change; the reads stay cheap.
 function useLockVersion() {
   return useSyncExternalStore(subscribe, () => version)
 }

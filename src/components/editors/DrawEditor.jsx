@@ -1,7 +1,7 @@
 /**
  * DrawEditor.jsx - Drawing editor for the "draw" item type.
  *
- * Strokes are vectors ({ points: [[x, y, pressure], …], color, size }) captured
+ * Strokes are vectors ({ points: [[x, y, pressure], ...], color, size }) captured
  * in a fixed logical space and rendered through an SVG viewBox, so a drawing
  * scales to any width and stays editable. Shape tools (line/rect/ellipse) trace
  * the same point format, so they save and render like any freehand stroke. The

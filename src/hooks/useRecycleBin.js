@@ -1,5 +1,5 @@
 /**
- * useRecycleBin.js - Hook for managing soft-deleted items.
+ * useRecycleBin.js - The recycle bin: deleted spaces and items.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'

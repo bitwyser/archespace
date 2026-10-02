@@ -1,16 +1,10 @@
 /**
- * sanitizeHtml.js - Allowlist HTML sanitiser for the Rich Text item type.
+ * sanitizeHtml.js - Allowlist sanitiser for the old Rich text HTML (`{ html }`),
+ * used before it's converted to the Tiptap format or rendered into a PDF.
  *
- * Rich Text content is stored as HTML (bold / italic / underline / font size).
- * Because that HTML is decrypted and rendered with dangerouslySetInnerHTML, it
- * must be sanitised on both save and render. We keep the same no-dependency,
- * hand-rolled philosophy as MarkdownPreview: a strict allowlist of tags and
- * style properties, everything else stripped.
- *
- * Allowed tags come from what the toolbar produces (execCommand) plus common
- * paste output: inline formatting, font size, and simple block/line structure.
+ * Allowed: inline formatting, font size, and simple block/line structure.
  * Unknown tags are unwrapped (their text is kept); scripts, event handlers,
- * links, images and arbitrary attributes are dropped.
+ * links, images and other attributes are dropped.
  */
 
 /** Tags kept as-is (attributes still filtered below). */

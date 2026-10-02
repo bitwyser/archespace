@@ -47,7 +47,7 @@ const FOCUSABLE =
  *   - Optional `onSubmit`: renders the panel as a <form> so a submit
  *     button in the footer works (and Enter submits)
  *
- * @param {{ title: string, onClose: Function, children: React.ReactNode, footer?: React.ReactNode, onSubmit?: Function }} props
+ * @param {{ title: string, onClose: Function, children: React.ReactNode, footer?: React.ReactNode, onSubmit?: Function, size?: 'md'|'lg' }} props
  */
 export function Modal({ title, onClose, children, footer, onSubmit, size = 'md' }) {
   const titleId = useId()
@@ -58,7 +58,7 @@ export function Modal({ title, onClose, children, footer, onSubmit, size = 'md' 
   const onCloseRef = useRef(onClose)
   useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
-  // ── Focus: move into the dialog on open, trap Tab, restore on close ──
+  // Focus: move into the dialog on open, trap Tab, restore on close
   useEffect(() => {
     const opener = document.activeElement
     const panel = panelRef.current
@@ -187,7 +187,7 @@ export function ConfirmDialog({
             disabled={busy}
             className={buttonClass({ variant: destructive ? 'dangerSolid' : 'primary' })}
           >
-            {busy ? 'Working…' : confirmLabel}
+            {busy ? 'Working...' : confirmLabel}
           </button>
         </div>
       }

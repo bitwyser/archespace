@@ -3,9 +3,8 @@
  *
  * `layout="grid"` (default) renders the full card; `layout="list"` renders a
  * compact full-width row. Both share the same navigate / select / drag /
- * action-menu behaviour, and adopt the mobile design: borderless cards set off
- * by their surface, a soft space-colour strip, tags coloured by name shown
- * inline with the item count, and a vertical 3-dot menu in the top-right.
+ * action-menu behaviour: borderless cards, a soft space-colour strip, tags
+ * coloured by name inline with the item count, and a 3-dot menu.
  */
 import { Pin, PinOff, Star, StarOff, Pencil, PencilOff, PencilLine, Trash2, Copy, Archive, MoreVertical, Shield, ShieldCheck, ShieldOff } from 'lucide-react'
 import { getColorPreset, softColorValue, tagColorValue } from '../../lib/spaceColors'
@@ -174,7 +173,7 @@ export function SpaceCard({
   // selected card in select mode gets a soft accent ring.
   const selectedRing = selected ? 'ring-[1.5px] ring-accent-border' : ''
 
-  // ── List row ──────────────────────────────────────────────
+  // List row
   if (layout === 'list') {
     return (
       <div
@@ -225,7 +224,7 @@ export function SpaceCard({
     )
   }
 
-  // ── Grid card ─────────────────────────────────────────────
+  // Grid card
   return (
     <div
       {...dragProps}

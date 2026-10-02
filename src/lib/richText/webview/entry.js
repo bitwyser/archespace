@@ -83,8 +83,8 @@ window.editorApi = {
    * change then saves the new format.
    */
   load({ type, content, editable }) {
+    // Loading isn't an edit, so neither call emits an update.
     editor.commands.setContent(toRichDoc(type, content), { emitUpdate: false })
-    // emitUpdate false: loading isn't an edit.
     editor.setEditable(editable !== false, false)
     // Flush right away if the stored content wasn't Tiptap JSON yet, so the
     // app can save the converted version.

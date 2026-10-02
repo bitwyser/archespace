@@ -28,7 +28,6 @@ const VARIANTS = {
   primary: 'bg-accent text-accent-fg font-semibold hover:bg-accent-hover',
   secondary: 'bg-bg-elevated text-text-primary hover:bg-bg-hover',
   ghost: 'text-text-secondary hover:text-text-primary hover:bg-bg-hover',
-  // Colours are CSS variables, so no `/20`-style opacity: hover goes solid.
   danger: 'bg-danger-muted text-danger hover:bg-danger hover:text-white',
   dangerSolid: 'bg-danger text-white font-semibold hover:bg-danger-hover',
 }

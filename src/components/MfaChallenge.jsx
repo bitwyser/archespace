@@ -37,7 +37,7 @@ export default function MfaChallenge({ onVerified }) {
           setLoading(false)
           return
         }
-        onVerified({ backupUsed: true })
+        onVerified()
         return
       }
       const factorId = await getVerifiedTotpFactorId()
@@ -85,7 +85,7 @@ export default function MfaChallenge({ onVerified }) {
             disabled={loading || !code.trim()}
             className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
           >
-            {loading ? 'Verifying…' : 'Verify'}
+            {loading ? 'Verifying...' : 'Verify'}
           </button>
           <button
             type="button"

@@ -5,7 +5,7 @@
 
 import { richContentToPlainText } from './richText/doc'
 
-const BULLET = '• ' // "• "
+const BULLET = '• '
 
 function listToText(items, ordered = false) {
   return (items || [])

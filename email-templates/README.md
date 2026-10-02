@@ -1,6 +1,6 @@
 # ArcheSpace email templates
 
-Paste the HTML into **Supabase Dashboard → Authentication → Email Templates**.
+Paste the HTML into **Supabase Dashboard > Authentication > Email Templates**.
 
 ## Native Supabase templates
 

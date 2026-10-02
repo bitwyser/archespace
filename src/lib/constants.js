@@ -1,15 +1,8 @@
 /**
- * constants.js - Shared constants for ArcheSpace.
- *
- * Centralises magic numbers and configuration values so they
- * can be tuned from a single location.
+ * constants.js - Shared limits and settings, tuned in one place.
  */
 
-// ── Encryption ─────────────────────────────────────────────
-/** PBKDF2 iterations for vault key derivation (OWASP 2023 aligned) */
-export const PBKDF2_ITERATIONS = 310_000
-
-// ── Auth & Session ─────────────────────────────────────────
+// Auth & Session
 /** Max failed login attempts before cooldown */
 export const MAX_LOGIN_ATTEMPTS = 5
 
@@ -28,13 +21,10 @@ export const VAULT_PIN_LOCKOUT_MS = 5 * 60 * 1000
 /** Absolute maximum session lifetime (ms) - 1 week; no inactivity logout */
 export const SESSION_ABSOLUTE_MAX_MS = 7 * 24 * 60 * 60 * 1000
 
-// ── Vault PIN ──────────────────────────────────────────────
+// Vault PIN
 export const VAULT_PIN_MIN_LENGTH = 4
-// Raised to accommodate passphrases (letters, numbers, symbols), not just PINs.
+// Long enough for passphrases, not just PINs.
 export const VAULT_PIN_MAX_LENGTH = 64
-
-/** Default vault auto-lock duration (ms) - 24 hours of inactivity */
-export const VAULT_AUTO_LOCK_MS = 24 * 60 * 60 * 1000
 
 /** User-selectable vault auto-lock durations. `ms: null` means "Never". */
 export const VAULT_AUTO_LOCK_OPTIONS = [
@@ -46,10 +36,10 @@ export const VAULT_AUTO_LOCK_OPTIONS = [
   { id: 'never', label: 'Never', ms: null },
 ]
 
-/** Default auto-lock option id (preserves the previous fixed behaviour). */
+/** Default auto-lock option id. */
 export const VAULT_AUTO_LOCK_DEFAULT_ID = '24h'
 
-// ── Import / Export ────────────────────────────────────────
+// Import / Export
 /** Maximum import file size in bytes (10 MB) */
 export const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024
 
@@ -59,11 +49,11 @@ export const MAX_IMPORT_SPACES = 500
 /** Maximum number of items per space in an import */
 export const MAX_IMPORT_ITEMS_PER_SPACE = 1000
 
-// ── Item Types ─────────────────────────────────────────────
+// Item Types
 /** Allowed item type values (must match DB CHECK constraint) */
-export const ITEM_TYPES = ['textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'markdown', 'code', 'draw', 'table', 'authenticator']
+export const ITEM_TYPES = ['textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'code', 'draw', 'table', 'authenticator']
 
-// ── UI ─────────────────────────────────────────────────────
+// UI
 /** Auto-save debounce delay (ms) */
 export const AUTO_SAVE_DELAY_MS = 5000
 
@@ -79,7 +69,7 @@ export const TOAST_ERROR_DISMISS_MS = 7000
 /** Maximum visible toasts */
 export const MAX_TOASTS = 5
 
-// ── Field Limits (match DB constraints) ────────────────────
+// Field Limits (match DB constraints)
 export const MAX_NAME_LENGTH = 255
 export const MAX_DESCRIPTION_LENGTH = 2000
 export const MAX_TITLE_LENGTH = 255

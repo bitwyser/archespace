@@ -1,6 +1,5 @@
 /**
- * View and manage the items within a single space. Data flows through the
- * useSpaces / useSpaceItems hooks; this page only triggers their mutations.
+ * SpacePage.jsx - One space: its sub-spaces and items.
  */
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
@@ -77,7 +76,7 @@ export default function SpacePage() {
 
   const { registerCommands, closePalette } = useCommandPalette()
 
-  // ── Local UI state ──
+  // Local UI state
   const [selectMode, setSelectMode]       = useState(false)
   const [selectedIds, setSelectedIds]     = useState(() => new Set())
   const [itemSort, setItemSort] = usePersistedSort('arche-sort-items')
@@ -148,7 +147,7 @@ export default function SpacePage() {
     })
   }
 
-  // ── Tag filter (within this space) ──
+  // Tag filter (within this space)
   const [selectedTags, setSelectedTags] = useState([])
   const allTags = useMemo(() => {
     const set = new Set()
@@ -170,7 +169,7 @@ export default function SpacePage() {
       return current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag]
     })
   }, [allTags])
-  // ── In-space search (item title + tags) ──
+  // In-space search (item title + tags)
   const [query, setQuery] = useState('')
   const trimmedQuery = query.trim().toLowerCase()
 
@@ -306,7 +305,7 @@ export default function SpacePage() {
     }
   }
 
-  // ── Not found state ──
+  // Not found state
   if (!space && !isLoading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
@@ -318,7 +317,7 @@ export default function SpacePage() {
     )
   }
 
-  // ── Protected state: the name only, until the vault PIN opens it ──
+  // Protected state: the name only, until the vault PIN opens it
   if (space && hidden) {
     return (
       <div className="min-h-screen bg-bg-base flex flex-col">
@@ -439,7 +438,7 @@ export default function SpacePage() {
   return (
     <div className="min-h-screen bg-bg-base flex flex-col">
 
-      {/* ── Sticky header ──────────────────────────────── */}
+      {/* Sticky header */}
       <header className="sticky top-0 z-20 glass">
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
           {/* Back button - to the parent space for a sub-space, else the dashboard */}
@@ -497,8 +496,8 @@ export default function SpacePage() {
                 onClick={() => exportSpaceToPdf(space, items)}
               />
             )}
-            {/* New: a menu of New item / New sub-space where both apply (like
-                the mobile + button); inside a sub-space, Add item directly. */}
+            {/* New: a menu of New item / New sub-space where both apply;
+                inside a sub-space, Add item directly. */}
             {!readOnly && !selectMode && (isTopLevel ? (
               <ActionMenu
                 label={online ? 'New' : 'Unavailable offline'}
@@ -528,7 +527,7 @@ export default function SpacePage() {
         </div>
       </header>
 
-      {/* ── Main content ─────────────────────────────── */}
+      {/* Main content */}
       <main className={`flex-1 flex flex-col px-2 sm:px-4 pt-6 ${selectMode ? 'pb-32' : 'pb-6'}`}>
         {readOnly && (
           <p className="mb-3 px-1 flex items-center gap-2 text-sm text-text-muted">
@@ -781,7 +780,7 @@ export default function SpacePage() {
         )}
       </main>
 
-      {/* ── Sub-space create / edit modal ────────────── */}
+      {/* Sub-space create / edit modal */}
       {spaceModal?.type === 'create' && (
         <SpaceModal
           onSave={({ name, description, color, tags }) => {
@@ -822,7 +821,7 @@ export default function SpacePage() {
         />
       )}
 
-      {/* ── Item dialogs: add, move to bin, move, unsaved-edit guard ── */}
+      {/* Item dialogs: add, move to bin, move, unsaved-edit guard */}
       <ItemBoardModals board={board} spaces={spaces} />
     </div>
   )

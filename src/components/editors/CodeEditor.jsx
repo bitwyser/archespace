@@ -76,7 +76,7 @@ export function CodeEditor({ content, onChange, readOnly = false }) {
         readOnly={readOnly}
         rows={3}
         spellCheck={false}
-        placeholder={readOnly ? 'Empty' : 'Paste or write code…'}
+        placeholder={readOnly ? 'Empty' : 'Paste or write code...'}
         className="relative z-10 block w-full resize-none overflow-hidden bg-transparent caret-text-primary placeholder-text-muted focus:outline-none"
         style={{
           ...METRICS,

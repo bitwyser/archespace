@@ -1,9 +1,6 @@
 /**
- * ErrorBoundary.jsx - Catch-all error boundary for ArcheSpace.
- *
- * Wraps the entire app so that a runtime crash in any child
- * component shows a friendly recovery screen instead of a blank
- * white page. The user can reload or navigate home.
+ * ErrorBoundary.jsx - Shows a recovery screen instead of a blank page when a
+ * component crashes.
  */
 
 import { Component } from 'react'
@@ -15,12 +12,10 @@ export default class ErrorBoundary extends Component {
     this.state = { hasError: false, error: null }
   }
 
-  /** React lifecycle - capture the thrown error */
   static getDerivedStateFromError(error) {
     return { hasError: true, error }
   }
 
-  /** Log to console so developers can debug */
   componentDidCatch(error, errorInfo) {
     console.error('[ErrorBoundary]', error, errorInfo)
   }

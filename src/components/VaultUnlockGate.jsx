@@ -37,7 +37,6 @@ export default function VaultUnlockGate({ children }) {
   const [confirmPin, setConfirmPin] = useState('')
   const [recoveryCodeInput, setRecoveryCodeInput] = useState('')
   const [oneTimeRecoveryCode, setOneTimeRecoveryCode] = useState('')
-  const [recoverySetupWarning, setRecoverySetupWarning] = useState('')
   const [forgotPin, setForgotPin] = useState(false)
   // "Lost recovery code too" destructive reset: wipe data and start fresh.
   const [resetMode, setResetMode] = useState(false)
@@ -52,15 +51,13 @@ export default function VaultUnlockGate({ children }) {
   const [pendingEnrollPin, setPendingEnrollPin] = useState('')
   const [enrollError, setEnrollError] = useState('')
   // Master key held between vault setup/recover and the user acknowledging the
-  // one-time recovery code. The vault is only unlocked (commitVaultKey) once the
-  // code is saved, so the recovery screen can never be skipped by an early
-  // "unlocked" render. Mirrors the mobile flow.
+  // one-time recovery code. The vault only unlocks (commitVaultKey) once the
+  // code is saved, so an early "unlocked" render can't skip the recovery screen.
   const [pendingUnlockKey, setPendingUnlockKey] = useState(null)
-  // Held true while an unlock/setup/recover call is in flight and until we've
-  // decided which post-action screen to show. unlock() flips isUnlocked to true
-  // mid-call (before we can set the recovery-code or biometric prompt), so
-  // without this the gate would briefly leak `children` and the recovery code
-  // shown after setup could be skipped. See the pass-through guard below.
+  // True while an unlock/setup/recover call runs and until the next screen is
+  // chosen: unlock() sets isUnlocked mid-call, before the recovery-code or
+  // biometric prompt is set, so without it the gate would briefly show
+  // `children`.
   const [awaitingVaultResult, setAwaitingVaultResult] = useState(false)
 
   if (!user) return children
@@ -68,14 +65,14 @@ export default function VaultUnlockGate({ children }) {
     return (
       <div className="min-h-[100svh] bg-bg-base flex flex-col items-center justify-center gap-3">
         <Spinner size={22} />
-        <p className="text-text-muted text-sm">Loading vault…</p>
+        <p className="text-text-muted text-sm">Loading vault...</p>
       </div>
     )
   }
-  if (isUnlocked && !oneTimeRecoveryCode && !recoverySetupWarning && !pendingEnrollPin && !awaitingVaultResult) return children
+  if (isUnlocked && !oneTimeRecoveryCode && !pendingEnrollPin && !awaitingVaultResult) return children
 
-  // Offer biometric enrollment only when the device supports it and the user
-  // has none enrolled yet (matches the mobile "enable biometric unlock?" prompt).
+  // Offer biometric enrollment only when the device supports it and none is
+  // enrolled yet.
   const canOfferBiometric = passkeySupported && passkeys.length === 0
 
   const needsSetup = !vaultStatus.hasVault
@@ -93,10 +90,6 @@ export default function VaultUnlockGate({ children }) {
     setResetMode(false)
     resetFields()
     clearUnlockError()
-  }
-
-  const showRecoveryCode = (recoveryCode) => {
-    setOneTimeRecoveryCode(recoveryCode)
   }
 
   const handleUnlock = async (e) => {
@@ -153,22 +146,12 @@ export default function VaultUnlockGate({ children }) {
       setPendingAction('pin')
       setAwaitingVaultResult(true)
       const enteredPin = pin
-      const { masterKey, recoveryCode, recoveryUnavailable } = await setup(enteredPin)
+      const { masterKey, recoveryCode } = await setup(enteredPin)
       // Offer biometric enrollment after the recovery screen (render priority).
       if (canOfferBiometric) setPendingEnrollPin(enteredPin)
-      if (recoveryCode) {
-        // Hold the key and show the code; unlock happens on "I saved this code".
-        setPendingUnlockKey(masterKey)
-        showRecoveryCode(recoveryCode)
-      } else {
-        // No recovery code to show - unlock straight away.
-        await commitVaultKey(masterKey)
-        if (recoveryUnavailable) {
-          setRecoverySetupWarning(
-            'Your vault PIN was created, but recovery codes are not enabled in the database yet. Ask the app owner to run the recovery columns migration before relying on forgot-PIN recovery.'
-          )
-        }
-      }
+      // Hold the key and show the code; unlock happens on "I saved this code".
+      setPendingUnlockKey(masterKey)
+      setOneTimeRecoveryCode(recoveryCode)
       resetFields()
     } catch {
       // unlockError set in context
@@ -201,7 +184,7 @@ export default function VaultUnlockGate({ children }) {
       const { masterKey, recoveryCode } = await recoverPinWithCode(recoveryCodeInput, pin)
       // Hold the key; unlock on "I saved this code" so the new code always shows.
       setPendingUnlockKey(masterKey)
-      showRecoveryCode(recoveryCode)
+      setOneTimeRecoveryCode(recoveryCode)
       setForgotPin(false)
       resetFields()
     } catch {
@@ -247,7 +230,7 @@ export default function VaultUnlockGate({ children }) {
       const { masterKey, recoveryCode } = await resetVault(pin)
       // Hold the key; unlock on "I saved this code" so the new code always shows.
       setPendingUnlockKey(masterKey)
-      showRecoveryCode(recoveryCode)
+      setOneTimeRecoveryCode(recoveryCode)
       setResetMode(false)
       setForgotPin(false)
       resetFields()
@@ -290,8 +273,7 @@ export default function VaultUnlockGate({ children }) {
   const weakPinWarning = isNewPinMode && !validateVaultPin(pin) ? getWeakPinWarning(pin) : null
   const showPasskeyUnlock = !needsSetup && !forgotPin && passkeySupported && passkeys.length > 0
 
-  // Keep the submit button disabled until the required fields are filled
-  // (Postel's Law: disable actions that cannot yet succeed).
+  // The submit button stays disabled until the required fields are filled.
   const pinsMatch = confirmPin.length > 0 && pin === confirmPin
   const canSubmit = needsSetup
     ? Boolean(pin && confirmPin)
@@ -307,31 +289,6 @@ export default function VaultUnlockGate({ children }) {
           busy={unlocking}
           onAcknowledge={handleAcknowledgeRecoveryCode}
         />
-      </div>
-    )
-  }
-
-  if (recoverySetupWarning) {
-    return (
-      <div className="min-h-[100svh] bg-bg-base flex items-start sm:items-center justify-center px-4 pt-16 pb-6 sm:p-4 overflow-y-auto">
-        <div className="w-full max-w-sm">
-          <div className="bg-bg-surface border border-bg-border rounded-2xl p-6 space-y-4">
-            <div>
-              <h1 className="text-xl font-semibold text-text-primary">Vault PIN created</h1>
-              <p className="text-text-muted text-sm mt-1.5 leading-relaxed">
-                {recoverySetupWarning}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setRecoverySetupWarning('')}
-              className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
-            >
-              Continue
-            </button>
-          </div>
-        </div>
       </div>
     )
   }
@@ -364,7 +321,7 @@ export default function VaultUnlockGate({ children }) {
               className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
             >
               <Fingerprint size={14} />
-              {unlocking ? 'Waiting for device…' : 'Enable biometric unlock'}
+              {unlocking ? 'Waiting for device...' : 'Enable biometric unlock'}
             </button>
             <button
               type="button"
@@ -474,7 +431,7 @@ export default function VaultUnlockGate({ children }) {
               className={buttonClass({ variant: 'dangerSolid', size: 'lg', className: 'w-full' })}
             >
               <AlertTriangle size={14} />
-              {pendingAction === 'pin' ? 'Resetting…' : 'Delete data & reset vault'}
+              {pendingAction === 'pin' ? 'Resetting...' : 'Delete data & reset vault'}
             </button>
 
             <button
@@ -542,7 +499,7 @@ export default function VaultUnlockGate({ children }) {
                 className={buttonClass({ variant: 'primary', size: 'lg', className: 'w-full' })}
               >
                 <Fingerprint size={16} />
-                {pendingAction === 'passkey' ? 'Waiting…' : 'Unlock with passkey'}
+                {pendingAction === 'passkey' ? 'Waiting...' : 'Unlock with passkey'}
               </button>
               <div className="flex items-center gap-3 py-1">
                 <div className="h-px flex-1 bg-bg-border" />
@@ -625,7 +582,7 @@ export default function VaultUnlockGate({ children }) {
           >
             <Lock size={14} />
             {pendingAction === 'pin'
-              ? 'Working…'
+              ? 'Working...'
               : needsSetup
                 ? 'Create PIN'
                 : forgotPin

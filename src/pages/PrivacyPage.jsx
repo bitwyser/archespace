@@ -73,7 +73,7 @@ export default function PrivacyPage() {
       <h2>Data retention and deletion</h2>
       <p>
         Your data is kept while your account is active. You can permanently delete your account and all
-        associated data at any time from <strong>Settings &rarr; Account</strong>. Because your content is
+        associated data at any time from <strong>Settings &gt; Account</strong>. Because your content is
         encrypted, deleting it removes any way to recover it.
       </p>
 
@@ -85,7 +85,7 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Access</strong> a copy of the personal data we hold about you.</li>
         <li><strong>Rectify</strong> inaccurate data - you can edit your account details in the app.</li>
-        <li><strong>Erase</strong> your data - delete your account and everything associated with it from <strong>Settings &rarr; Account</strong>.</li>
+        <li><strong>Erase</strong> your data - delete your account and everything associated with it from <strong>Settings &gt; Account</strong>.</li>
         <li><strong>Export</strong> your content - your spaces and items can be exported to PDF in the app; because your content is end-to-end encrypted, only you can produce a readable copy.</li>
         <li><strong>Restrict or object</strong> to certain processing.</li>
         <li><strong>Withdraw consent</strong> where processing is based on consent.</li>

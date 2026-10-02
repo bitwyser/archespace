@@ -30,10 +30,8 @@ import OfflineBanner from './components/OfflineBanner'
 import { Spinner } from './components/ui/UI'
 
 /**
- * Wrap React.lazy() so that a failed dynamic import (e.g. after a
- * redeployment that changed chunk hashes) triggers one automatic
- * page reload instead of crashing.  A sessionStorage flag prevents
- * infinite reload loops.
+ * React.lazy() that reloads the page once when a dynamic import fails (a
+ * redeploy changed the chunk hashes). A sessionStorage flag stops reload loops.
  */
 function lazyWithRetry(importFn) {
   return lazy(() =>

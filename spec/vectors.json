@@ -8,10 +8,6 @@
       "p": 1,
       "dkLen": 32
     },
-    "pbkdf2": {
-      "hash": "SHA-256",
-      "iterations": 310000
-    },
     "aes": "AES-256-GCM",
     "ivBytes": 12,
     "base64": "standard+padding"
@@ -34,56 +30,44 @@
       "secret": "PΛSSwörd🔐",
       "descriptor": "argon2id$19456$2$1$AQIDBAUGBwgJCgsMDQ4PEA==",
       "expectedKeyB64": "x6lmwHAMe9hxjmg9GxnF2xI0Sjlskue03StMDJxUzNk="
-    },
-    {
-      "algo": "pbkdf2",
-      "secret": "123456",
-      "descriptor": "ZGVmZ2hpamtsbW5vcHFycw==",
-      "expectedKeyB64": "70gcR7d2w7rDNLt0Sfd2EVksvRxQivhiI4vv8q9UZDo="
-    },
-    {
-      "algo": "pbkdf2",
-      "secret": "legacy passphrase",
-      "descriptor": "ZGVmZ2hpamtsbW5vcHFycw==",
-      "expectedKeyB64": "0gyf688U9A1iJppgiDmR2l8oR75cjSh2KKPxG5nmnJ4="
     }
   ],
   "decrypt": [
     {
       "keyB64": "BwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSY=",
-      "arc1": "arc1:kAaPypZS756fMbdT.DJad7SoG8csIEY55Hom8ZmpkB11z9WBeslVCvg==",
+      "arc1": "arc1:kxmgZT+X/TgU2IsR.sYk9emKbhsluY7rPcGGfD+w8b7v27ILUtYaHiQ==",
       "expectedPlaintext": "Hello, Arche"
     },
     {
       "keyB64": "BwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSY=",
-      "arc1": "arc1:mv/qZkWF0rP3qUz0.xuVvaqOamLY1b082mhlCaySrBAKHO31Koj7XVWd/WaaPgV04Pt6AntL8GGHxHkrGK7vlVoXtisHdfCUKPtA=",
+      "arc1": "arc1:PN+IaDp51sGsweVy.gN5bTO0eaH+3yKGH/LdrRUt2AsYVPqZZwE66wzcjFObOctcU4CN1nXctWGeAhUDALC4JjollOF5Xtdmss5s=",
       "expectedPlaintext": "{\"text\":\"a note\",\"items\":[1,2,3],\"done\":false}"
     },
     {
       "keyB64": "BwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSY=",
-      "arc1": "arc1:04FFnMUiKG9LjGTS.YABTpFacI6906ID1y3PF0Sdl/CtapOKebWI0phwGwfTSEGwbYyh8lPpohhwx5ZGCxw==",
+      "arc1": "arc1:wobueoxs9ZOv6pqA.6zsuEwpTeT+NRbUKocJG7DDaX8oaXuSxEX2LB147WB7GhPSygn/4iKw2vVviZzMDNw==",
       "expectedPlaintext": "unicode: héllo 🔐 你好 - end"
     },
     {
       "keyB64": "BwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSY=",
-      "arc1": "arc1:MIL+11deKhQQTOEg.GMacyyFtplPs/VkeHfybdP8=",
+      "arc1": "arc1:7wRSslIQ1ldE6OLD.3v0CH8pf+Et+T4Ut4Wtg2Dg=",
       "expectedPlaintext": " "
     }
   ],
   "vaultUnlock": {
     "pin": "135790",
     "salt": "argon2id$19456$2$1$yMnKy8zNzs/Q0dLT1NXW1w==",
-    "wrappedKey": "arc1:f9IgMunYcmTaDmQu.wgBKprBkIcvOINK4VSHUPhb9VPHP60w1OFAZsU9nr32at1BHg0xoTPPq4InnYtyaXbmyo/vu09qyU7lM",
-    "keyCheck": "arc1:5pFIybeKNpDKZQeZ.TJCjrC8ZT/AR+5goSg4qYEPJPhn2YTZfS8BAowUE5RmQ",
+    "wrappedKey": "arc1:EmAPJwP75pJB2J8M.CzZU+9DwySQdKDGo8xeM2y2TrynX/0eJcqFCJdwnEVAODRHYVUSsYeeUx465Y8BgniR+hbRUOC6owu0k",
+    "keyCheck": "arc1:yzbcgQZiXmX9VIlc.j+X6dmJ8Vt5p8JUthmucOc6LbyzjFz8UqlL5MMir2X8L",
     "checkPlaintext": "ARCHE_VAULT_V1_OK",
     "masterKeyB64": "MjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFE=",
     "samples": [
       {
-        "arc1": "arc1:N9Q6t6PzVXDOSys9.Veyxw1sTtnYVN2TiDkMvErhDZjWulkP63BOmlGnU",
+        "arc1": "arc1:djGY2qLgw/aqp/0j.+MeIhbp1bkISZjLenNVKKhuhNpLQqkCv1aaWg1nW",
         "plaintext": "My first space"
       },
       {
-        "arc1": "arc1:2HC6mWwhj1cwDkng.jU7Jv1aNJkwd8d9PA+GodbmZeXQeTAnjWrpb8TtGle11X9GaWxc=",
+        "arc1": "arc1:LNipvNK7A+utk2//.UhiRiXp161xbJMbs1DWHzfuelxdtCgjI7tbpc9n/BM6wqLyB7fM=",
         "plaintext": "{\"text\":\"secret note\"}"
       }
     ]

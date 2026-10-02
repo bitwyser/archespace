@@ -8,8 +8,8 @@
  */
 import { getStroke } from 'perfect-freehand'
 
-export const DRAW_VIEW_W = 1000
-export const DRAW_VIEW_H = 600
+const DRAW_VIEW_W = 1000
+const DRAW_VIEW_H = 600
 
 /** Logical canvas size for the saved orientation ('portrait' swaps W/H). */
 export function drawDims(orientation) {

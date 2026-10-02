@@ -1,5 +1,5 @@
 /**
- * useSpaces.js - Hook for managing spaces.
+ * useSpaces.js - The spaces list and every change to a space.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useId } from 'react'
@@ -112,21 +112,17 @@ export function useSpaces() {
         tags: parseTags(tags),
       }, cryptoKey)
 
-      const insert = {
-        name: encrypted.name,
-        description: encrypted.description,
-        user_id: userId,
-        position,
-        color: color || null,
-        tags: encrypted.tags,
-      }
-      // Only send parent_id when nesting, so top-level creation still works on
-      // databases that have not run the parent_id migration yet.
-      if (parentId) insert.parent_id = parentId
-
       const { data, error } = await supabase
         .from('spaces')
-        .insert(insert)
+        .insert({
+          name: encrypted.name,
+          description: encrypted.description,
+          user_id: userId,
+          parent_id: parentId,
+          position,
+          color: color || null,
+          tags: encrypted.tags,
+        })
         .select()
         .single()
       if (error) throw error
@@ -183,8 +179,9 @@ export function useSpaces() {
     invalidate: () => qc.invalidateQueries({ queryKey: queryKeys.spaces() }),
   }))
 
-  // Lock / remove lock (a flag only; nothing is re-encrypted). The lock store
-  // is told at once, so locking hides the space before the list reloads.
+  // Protect / remove protection (a flag only; nothing is re-encrypted). The
+  // lock store is told at once, so protecting hides the space before the list
+  // reloads.
   const lockFlag = makeToggleFlag({
     table: 'spaces',
     field: 'locked',
@@ -211,9 +208,7 @@ export function useSpaces() {
     invalidate: () => qc.invalidateQueries({ queryKey: queryKeys.spaces() }),
   }))
 
-  // Child space ids derived from the loaded list (empty pre-migration), so
-  // cascades never reference parent_id in a query that could fail before the
-  // column exists.
+  // Sub-space ids of `ids`, from the loaded list (spaces nest one level).
   const childIdsOf = (ids) => {
     const set = new Set(ids)
     return (query.data || []).filter(s => set.has(s.parent_id)).map(s => s.id)

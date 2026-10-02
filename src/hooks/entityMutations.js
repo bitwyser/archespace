@@ -54,32 +54,6 @@ export function makeBulkSetPinned({ table, invalidate }) {
   }
 }
 
-/** Optimistic single-row pin toggle. */
-export function makeTogglePin({ table, qc, queryKey, invalidate }) {
-  return {
-    mutationFn: async ({ id, pinned }) => {
-      assertOnline()
-      const { error } = await supabase
-        .from(table)
-        .update({ pinned: !pinned })
-        .eq('id', id)
-      if (error) throw error
-    },
-    onMutate: async ({ id, pinned }) => {
-      await qc.cancelQueries({ queryKey })
-      const previous = qc.getQueryData(queryKey)
-      qc.setQueryData(queryKey, (old) =>
-        old?.map(row => (row.id === id ? { ...row, pinned: !pinned } : row))
-      )
-      return { previous }
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) qc.setQueryData(queryKey, context.previous)
-    },
-    onSettled: invalidate,
-  }
-}
-
 /**
  * Optimistic single-row toggle of a boolean `field`. The mutation takes
  * `{ id, [field]: current }` and writes the opposite value.
@@ -107,6 +81,11 @@ export function makeToggleFlag({ table, field, qc, queryKey, invalidate }) {
     },
     onSettled: invalidate,
   }
+}
+
+/** Optimistic single-row pin toggle. */
+export function makeTogglePin(options) {
+  return makeToggleFlag({ ...options, field: 'pinned' })
 }
 
 /**

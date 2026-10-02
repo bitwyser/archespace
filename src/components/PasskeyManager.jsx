@@ -1,7 +1,7 @@
 /**
  * PasskeyManager.jsx - Enable or remove biometric (WebAuthn PRF) unlock for the
  * vault. One passkey per browser (stored locally in IndexedDB). A row in
- * Settings → Vault; the PIN form opens from "Set up".
+ * Settings > Vault; the PIN form opens from "Set up".
  */
 import { useState } from 'react'
 import { Fingerprint } from 'lucide-react'
@@ -122,7 +122,7 @@ export default function PasskeyManager() {
             onCancel={closeForm}
             submitLabel="Turn on"
             busy={adding}
-            busyLabel="Waiting for device…"
+            busyLabel="Waiting for device..."
             disabled={unlocking || pin.length < VAULT_PIN_MIN_LENGTH}
           />
         </form>

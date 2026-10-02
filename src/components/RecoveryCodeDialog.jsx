@@ -2,10 +2,6 @@
  * RecoveryCodeDialog.jsx - One-time recovery code shown in a popup, with copy
  * and an explicit "I've saved it" confirmation. Used after vault setup / PIN
  * reset and from Settings.
- *
- * The code is shown only once and losing it makes a forgotten PIN unrecoverable,
- * so dismissal (button, close, backdrop, or Escape) only finalizes once the user
- * has ticked the confirmation - an accidental Escape/backdrop can't skip it.
  */
 import { useState } from 'react'
 import { Copy, Check, AlertTriangle } from 'lucide-react'
@@ -33,9 +29,8 @@ export default function RecoveryCodeDialog({
     }
   }
 
-  // Only finalize once the user has confirmed they saved the code, so an
-  // accidental backdrop click or Escape can't dismiss this one-time code (and
-  // silently unlock the vault) before it is written down.
+  // Only finish once the user has confirmed they saved the code, so a stray
+  // backdrop click or Escape can't dismiss it (and unlock the vault) unseen.
   const finish = () => {
     if (confirmed && !busy) onAcknowledge()
   }

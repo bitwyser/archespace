@@ -1,10 +1,8 @@
 /**
  * vaultPin.js - Vault secret validation.
  *
- * The vault secret can be a numeric PIN or an alphanumeric passphrase
- * (letters, numbers, symbols). Only length is enforced (min stays low for
- * backwards compatibility); weak choices are surfaced via a warning, not
- * blocked, so existing short PINs keep working.
+ * The vault secret can be a numeric PIN or a passphrase (letters, numbers,
+ * symbols). Only length is enforced; weak choices get a warning, not a block.
  */
 import { VAULT_PIN_MAX_LENGTH, VAULT_PIN_MIN_LENGTH } from '../constants'
 

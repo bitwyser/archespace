@@ -16,7 +16,7 @@ export default function PasswordResetPage() {
   const navigate = useNavigate()
   useRouteMeta({ title: 'Reset password' })
   const { user, loading, passwordRecovery, updatePasswordAndSignOut } = useAuth()
-  const { theme, themes, toggle } = useTheme()
+  const { themeMode, themeModes, toggleThemeMode } = useTheme()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -24,17 +24,15 @@ export default function PasswordResetPage() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  // Warn if Caps Lock is on while typing (Postel's Law: prevent a mismatch the
-  // masked field would otherwise hide).
+  // Warn if Caps Lock is on while typing (the masked field would hide it).
   const onPasswordKey = e => {
     if (typeof e.getModifierState === 'function') {
       setCapsLock(e.getModifierState('CapsLock'))
     }
   }
-  const currentThemeName = themes.find(option => option.id === theme)?.name || 'Theme'
+  const currentThemeName = themeModes.find(option => option.id === themeMode)?.name || 'Theme'
 
-  // Live requirements + match, shown as the user types (Postel's Law: explain
-  // requirements before submission; Doherty: immediate feedback).
+  // Requirements and the match, checked as the user types.
   const passwordChecks = [
     { label: `At least ${PASSWORD_RULES.minLength} characters`, ok: password.length >= PASSWORD_RULES.minLength },
     { label: 'An uppercase letter', ok: /[A-Z]/.test(password) },
@@ -76,7 +74,7 @@ export default function PasswordResetPage() {
     <div className="min-h-[100svh] bg-bg-base flex items-start sm:items-center justify-center px-4 pt-16 pb-6 sm:p-4 relative overflow-y-auto overflow-x-hidden">
       <button
         type="button"
-        onClick={toggle}
+        onClick={toggleThemeMode}
         className="absolute top-4 right-4 z-50 flex h-9 w-9 items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
         title={`Current theme: ${currentThemeName}`}
         aria-label="Switch app theme"

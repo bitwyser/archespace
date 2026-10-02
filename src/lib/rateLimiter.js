@@ -19,37 +19,7 @@ function writeStore(store) {
 }
 
 /**
- * @param {string} action - Unique action key (e.g. `login:user@example.com`)
- * @param {number} maxAttempts
- * @param {number} windowMs
- * @returns {{ allowed: boolean, remaining: number, retryAfter?: number }}
- */
-export function checkClientRateLimit(action, maxAttempts, windowMs) {
-  const store = readStore()
-  const entry = store[action]
-  const now = Date.now()
-
-  if (!entry || now > entry.resetAt) {
-    store[action] = { count: 1, resetAt: now + windowMs }
-    writeStore(store)
-    return { allowed: true, remaining: maxAttempts - 1 }
-  }
-
-  if (entry.count >= maxAttempts) {
-    return {
-      allowed: false,
-      remaining: 0,
-      retryAfter: Math.ceil((entry.resetAt - now) / 1000),
-    }
-  }
-
-  entry.count += 1
-  writeStore(store)
-  return { allowed: true, remaining: maxAttempts - entry.count }
-}
-
-/**
- * Record a failed attempt without performing an allowed check first.
+ * Record a failed attempt for `action` (e.g. `login:user@example.com`).
  * `windowMs` is how long failures accumulate; `lockoutMs` (defaults to
  * `windowMs`) is how long the block lasts once maxAttempts is reached.
  */

@@ -32,7 +32,7 @@ export default function ReauthCode({ email, onConfirm, onCancel, onResend, busy 
           onClick={() => onConfirm(code)}
           className={buttonClass({ variant: 'primary', size: 'lg', className: 'flex-1' })}
         >
-          {busy ? 'Confirming…' : 'Confirm'}
+          {busy ? 'Confirming...' : 'Confirm'}
         </button>
         <button
           type="button"

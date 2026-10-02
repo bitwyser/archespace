@@ -17,7 +17,6 @@ import {
 
 const STORAGE_THEME_MODE = 'arche-theme-mode'
 const STORAGE_ACCENT_COLOR = 'arche-accent-color'
-const LEGACY_THEME_STORAGE = 'arche-theme'
 
 const VALID_THEME_MODES = new Set(THEME_MODES.map(mode => mode.id))
 const VALID_ACCENT_COLORS = new Set(ACCENT_COLORS.map(color => color.id))
@@ -31,10 +30,9 @@ function normalizeAccentColor(value) {
 }
 
 function getStoredAppearance() {
-  const legacyTheme = localStorage.getItem(LEGACY_THEME_STORAGE)
   return {
-    themeMode: normalizeThemeMode(localStorage.getItem(STORAGE_THEME_MODE) || legacyTheme),
-    accentColor: normalizeAccentColor(localStorage.getItem(STORAGE_ACCENT_COLOR) || legacyTheme),
+    themeMode: normalizeThemeMode(localStorage.getItem(STORAGE_THEME_MODE)),
+    accentColor: normalizeAccentColor(localStorage.getItem(STORAGE_ACCENT_COLOR)),
   }
 }
 
@@ -161,11 +159,6 @@ export function ThemeProvider({ children }) {
     accentColors: ACCENT_COLORS,
     setAccentColor,
     toggleThemeMode,
-    // Backward-compatible aliases for older call sites.
-    theme: appearance.themeMode,
-    themes: THEME_MODES,
-    setTheme: setThemeMode,
-    toggle: toggleThemeMode,
   }), [appearance, resolvedThemeMode, setAccentColor, setThemeMode, toggleThemeMode])
 
   return (

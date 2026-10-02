@@ -5,7 +5,7 @@
  * and the file carries that key wrapped with the vault PIN, as the server
  * stores it. So the file opens with no prompt in the same vault, and anywhere
  * else (a new account, a reset vault, the other app) with the vault PIN the
- * user had when exporting. Readable (older) backups still import.
+ * user had when exporting.
  *
  *   { app, version: 3, encrypted: true, exportedAt,
  *     vault: { salt, wrapped_key, key_check },  // PIN-wrapped vault key
@@ -14,7 +14,7 @@
 import { decryptJson, encryptJson } from './crypto/cipher'
 import { unwrapVaultKey } from './crypto/vault'
 
-export const ENCRYPTED_BACKUP_VERSION = 3
+const ENCRYPTED_BACKUP_VERSION = 3
 
 /** Whether a parsed backup file is an encrypted one. */
 export function isEncryptedBackup(parsed) {

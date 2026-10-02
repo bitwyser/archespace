@@ -1,16 +1,7 @@
 /**
- * AuthContext.jsx - Authentication provider for ArcheSpace.
- *
- * Wraps the app in a React context that exposes:
- *   - `user`    - the current Supabase User object (or null)
- *   - `loading` - true while the initial session check is in flight
- *   - `signIn`  - sign in with email + password
- *   - `signOut` - end the session
- *
- * On mount the provider:
- *   1. Fetches the existing session (e.g. from a stored refresh token).
- *   2. Subscribes to auth state changes so the UI stays in sync
- *      when tokens refresh or the user signs out in another tab.
+ * AuthContext.jsx - The signed-in user (`user`, `loading` while the stored
+ * session loads) and the account actions: sign in/up/out, password reset,
+ * email and password change, and account deletion.
  */
 
 import { useEffect, useState } from 'react'
@@ -26,13 +17,11 @@ export function AuthProvider({ children }) {
   const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   useEffect(() => {
-    // 1. Hydrate from the persisted session (cookie / localStorage)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // 2. Listen for future auth changes (sign-in, sign-out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null)
@@ -41,15 +30,13 @@ export function AuthProvider({ children }) {
       }
     )
 
-    // Cleanup: unsubscribe on unmount
     return () => subscription.unsubscribe()
   }, [])
 
-  /** Sign in with email/password credentials */
   const signIn = (email, password) =>
     supabase.auth.signInWithPassword({ email, password })
 
-  /** Register a new account (multi-user mode) */
+  /** Register a new account (when sign-up is enabled). */
   const signUp = (email, password, metadata = {}) =>
     supabase.auth.signUp({
       email,
@@ -110,11 +97,8 @@ export function AuthProvider({ children }) {
   }
 
   /**
-   * End the current session. Defaults to `local` scope so signing out on one
-   * device does NOT revoke the user's sessions on their other devices - only
-   * this browser is signed out. Callers can still pass an explicit scope.
-   * (Global, all-device revocation is intentional only for password changes,
-   * handled separately in updatePasswordAndSignOut.)
+   * End the session on this device only (`local` scope); other devices stay
+   * signed in. Only a password change signs out everywhere.
    */
   const signOut = async (options = { scope: 'local' }) => {
     // Record the logout while the session (and auth.uid()) is still valid.

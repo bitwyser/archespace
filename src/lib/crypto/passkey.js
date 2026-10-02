@@ -3,10 +3,9 @@
  *
  * A platform passkey with the PRF extension yields a stable 32-byte secret that
  * is released only after user verification (Touch ID / Windows Hello / Face ID).
- * That secret never leaves the device; we HKDF it into an AES-GCM wrapping key
- * and use it to wrap the vault master key. This adds a biometric unlock path
- * alongside the PIN without weakening the zero-knowledge model: the server only
- * ever stores ciphertext, the credential id, and a (non-secret) PRF salt.
+ * That secret never leaves the device; it's HKDF'd into an AES-GCM key that
+ * wraps the vault master key, so biometric unlock sits alongside the PIN
+ * without weakening the zero-knowledge model.
  *
  * This module is pure WebAuthn + Web Crypto (no Supabase). Persistence and
  * orchestration live in passkeyVault.js.
@@ -18,7 +17,7 @@ const RP_NAME = 'ArcheSpace'
 // Domain-separation label for the HKDF that turns the PRF secret into a key.
 const PRF_INFO = 'arche-passkey-vault-wrap-v1'
 
-// ── base64url <-> bytes (WebAuthn credential ids) ──────────────
+// base64url <-> bytes (WebAuthn credential ids)
 function bytesToB64url(bytes) {
   return bytesToBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
@@ -85,9 +84,8 @@ async function wrapKeyFromPrf(prfBytes) {
  * allowCredentials entry for an enrolled passkey. Listing its transports tells
  * the browser the passkey is on this device, so it goes straight to the local
  * authenticator instead of offering a phone or security key when the lookup is
- * slow (e.g. right after the computer starts). Enrollment always uses a
- * platform authenticator, so records saved before transports were stored
- * default to 'internal'.
+ * slow (e.g. right after the computer starts). With none recorded it's
+ * 'internal', since enrollment always uses a platform authenticator.
  */
 function credentialDescriptor(credentialId, transports) {
   return {
@@ -140,26 +138,26 @@ export async function enrollPasskeyCredential({ userId, userName, masterKey }) {
   let credential
   try {
     credential = await navigator.credentials.create({
-    publicKey: {
-      challenge,
-      rp: { name: RP_NAME }, // rp.id defaults to the current domain (works on localhost + prod)
-      user: {
-        id: new TextEncoder().encode(userId),
-        name,
-        displayName: name,
+      publicKey: {
+        challenge,
+        rp: { name: RP_NAME }, // rp.id defaults to the current domain
+        user: {
+          id: new TextEncoder().encode(userId),
+          name,
+          displayName: name,
+        },
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 }, // ES256
+          { type: 'public-key', alg: -257 }, // RS256
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          residentKey: 'required',
+          userVerification: 'required',
+        },
+        timeout: 60000,
+        extensions: { prf: { eval: { first: prfSalt } } },
       },
-      pubKeyCredParams: [
-        { type: 'public-key', alg: -7 }, // ES256
-        { type: 'public-key', alg: -257 }, // RS256
-      ],
-      authenticatorSelection: {
-        authenticatorAttachment: 'platform',
-        residentKey: 'required',
-        userVerification: 'required',
-      },
-      timeout: 60000,
-      extensions: { prf: { eval: { first: prfSalt } } },
-    },
     })
   } catch (err) {
     throw new Error(webAuthnErrorMessage(err, "Couldn't set up biometric unlock. Try again, or use your PIN."), { cause: err })

@@ -1,5 +1,5 @@
 /**
- * CommandPalette.jsx - Cmd+K quick actions (⌘K / Ctrl+K).
+ * CommandPalette.jsx - Quick actions, opened with Cmd+K / Ctrl+K.
  */
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -20,7 +20,7 @@ export default function CommandPalette({ onNewSpace, onOpenSearch }) {
   const [active, setActive] = useState(0)
   const activeRef = useRef(null)
   const navigate = useNavigate()
-  const { toggle } = useTheme()
+  const { toggleThemeMode } = useTheme()
   const { lock, isUnlocked } = useEncryption()
   const { toast } = useToast()
 
@@ -36,12 +36,12 @@ export default function CommandPalette({ onNewSpace, onOpenSearch }) {
       id: 'theme',
       label: 'Switch app theme',
       icon: Sparkles,
-      run: () => { toggle(); closePalette() },
+      run: () => { toggleThemeMode(); closePalette() },
     },
     ...(isUnlocked
       ? [{ id: 'lock', label: 'Lock vault', hint: LOCK_HINT, icon: Lock, run: () => { closePalette(); lock(); toast.info('Vault locked') } }]
       : []),
-  ], [closePalette, navigate, onNewSpace, onOpenSearch, toggle, isUnlocked, lock, toast])
+  ], [closePalette, navigate, onNewSpace, onOpenSearch, toggleThemeMode, isUnlocked, lock, toast])
 
   // Slot page commands (e.g. "New item") right after "New space" so creation
   // actions stay grouped at the top rather than trailing the list.
@@ -96,7 +96,7 @@ export default function CommandPalette({ onNewSpace, onOpenSearch }) {
           autoFocus
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Type a command…"
+          placeholder="Type a command..."
           className="w-full px-4 py-3.5 bg-transparent border-b border-bg-border text-text-primary placeholder-text-muted focus:outline-none text-sm"
         />
         <ul className="max-h-72 overflow-y-auto py-2">

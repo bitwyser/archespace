@@ -5,8 +5,6 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom'
 import { MoreHorizontal } from 'lucide-react'
 import { buttonClass } from './buttonStyles'
-// The trigger icon is configurable (defaults to horizontal dots); pass a
-// different lucide icon via the `icon` prop (e.g. MoreVertical).
 
 const MENU_WIDTH = 176
 const VIEWPORT_PADDING = 8
@@ -14,8 +12,8 @@ const MENU_GAP = 8
 
 /**
  * `triggerLabel` turns the trigger into a primary button with that text (the
- * "+ New" menu); otherwise it's a round icon button. `openOnHover` (default
- * true) opens it on pointer hover as well as click.
+ * "+ New" menu); otherwise it's a round icon button (`icon`, dots by default).
+ * `openOnHover` (default true) opens it on pointer hover as well as click.
  */
 export function ActionMenu({
   actions,

@@ -1,7 +1,7 @@
 /**
  * Toast notifications via a `useToast()` hook (toast.success/error/info).
- * Toasts auto-dismiss after 3s and stack in the bottom-right, max 5 at once
- * (oldest removed first).
+ * They stack in the bottom-right and auto-dismiss (errors stay longer); the
+ * oldest goes first past MAX_TOASTS.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'
@@ -18,10 +18,9 @@ const TYPE_CONFIG = {
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
-  // Track timer IDs to clean up on unmount (prevents memory leaks)
+  // Auto-dismiss timers by toast id, cleared on unmount.
   const timerMap = useRef(new Map())
 
-  // ── Cleanup all timers on unmount ──
   useEffect(() => {
     const map = timerMap.current
     return () => {
@@ -32,11 +31,10 @@ export function ToastProvider({ children }) {
     }
   }, [])
 
-  /** Remove a single toast by id */
   const dismiss = useCallback((id) => {
     setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t))
 
-    // Remove from DOM after exit animation completes
+    // Remove after the exit animation.
     const removeTimer = setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id))
       timerMap.current.delete(id)
@@ -45,7 +43,6 @@ export function ToastProvider({ children }) {
 
     timerMap.current.set(`${id}-remove`, removeTimer)
 
-    // Clear the auto-dismiss timer
     const existingTimer = timerMap.current.get(id)
     if (existingTimer) {
       clearTimeout(existingTimer)
@@ -63,12 +60,10 @@ export function ToastProvider({ children }) {
     const duration = type === 'error' ? TOAST_ERROR_DISMISS_MS : TOAST_DISMISS_MS
 
     setToasts(prev => {
-      // Trim oldest if we're at the limit
       const trimmed = prev.length >= MAX_TOASTS ? prev.slice(1) : prev
       return [...trimmed, { id, type, message, exiting: false, duration }]
     })
 
-    // Auto-dismiss after delay
     const timerId = setTimeout(() => dismiss(id), duration)
     timerMap.current.set(id, timerId)
   }, [dismiss])
@@ -89,7 +84,6 @@ export function ToastProvider({ children }) {
     timerMap.current.set(id, timerId)
   }, [dismiss])
 
-  /** Convenience methods */
   const toast = {
     success: (msg) => show('success', msg),
     error:   (msg) => show('error', msg),
@@ -100,7 +94,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={{ toast }}>
       {children}
 
-      {/* ── Toast stack (bottom-right, fixed) ── */}
+      {/* Toast stack (bottom-right, fixed) */}
       <div className="toast-stack fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none max-w-sm w-full">
         {toasts.map(({ id, type, message, exiting, duration }) => {
           const { Icon, color, bg, border } = TYPE_CONFIG[type] || TYPE_CONFIG.info

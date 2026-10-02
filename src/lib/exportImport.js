@@ -1,19 +1,16 @@
 /**
  * exportImport.js - JSON backup export and import for ArcheSpace.
  *
- * Export produces an encrypted snapshot of the active spaces and items (only
- * the fields that define the content - no internal ids, user ids, or
- * timestamps); see backupCrypto.js. Import opens it (with the vault PIN when
- * it's from another vault), re-encrypts everything with the current vault key
- * and recreates the spaces and items. It also accepts the older readable
- * formats (versioned and bare-array), validates every item type, and skips any
- * it can't recognize rather than failing the whole import.
+ * Export writes an encrypted snapshot of the active spaces and items (only
+ * the fields that define the content, no ids or timestamps); see
+ * backupCrypto.js. Import opens it (with the vault PIN when it's from another
+ * vault), re-encrypts everything with the current vault key and recreates the
+ * spaces and items, skipping any item it can't recognise.
  */
 
 import { supabase } from './supabase'
 import { logAudit } from './auditLog'
 import { encryptSpace, encryptItem, decryptItems } from './dataProtection'
-import { secretToNoteContent } from './secretMigration'
 import { isRichDoc } from './richText/doc'
 import { parseTags } from './spaceColors'
 import { isEncryptedBackup, openBackupWithKey, openBackupWithPin, sealBackup } from './backupCrypto'
@@ -58,7 +55,6 @@ export async function exportSpaces(spaces, cryptoKey) {
       title: it.title ?? '',
       content: it.content ?? {},
       pinned: !!it.pinned,
-      // Only written when set, so older app versions read the file unchanged.
       ...(it.locked ? { locked: true } : {}),
     }))
   }
@@ -106,10 +102,9 @@ function validateItemContent(type, content) {
 
   switch (type) {
     case 'textbox':
-    case 'markdown':
       return typeof content.text === 'string'
     case 'richtext':
-      // Tiptap JSON, or the older HTML (converted after import).
+      // Tiptap JSON, or the older HTML (converted after unlock).
       return isRichDoc(content) || typeof content.html === 'string'
     case 'code':
       return typeof content.code === 'string'
@@ -127,6 +122,8 @@ function validateItemContent(type, content) {
       )
     case 'draw':
       return Array.isArray(content.strokes) && content.strokes.length <= 10000
+    case 'authenticator':
+      return Array.isArray(content.entries) && content.entries.length <= 1000
     default:
       return false
   }
@@ -141,18 +138,7 @@ function validateItemContent(type, content) {
 async function insertImportedItems(items, spaceId, userId, cryptoKey) {
   let skipped = 0
   const rows = []
-  for (const raw of items) {
-    // Secrets (a removed type) come in as Notes when they're from this vault;
-    // one sealed to another vault can't be opened, so it's skipped.
-    let item = raw
-    if (raw?.type === 'secret') {
-      try {
-        item = { ...raw, type: 'textbox', content: await secretToNoteContent(raw.content, cryptoKey) }
-      } catch {
-        skipped++
-        continue
-      }
-    }
+  for (const item of items) {
     if (
       !item ||
       typeof item !== 'object' ||
@@ -161,18 +147,6 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
     ) {
       skipped++
       continue
-    }
-
-    // Markdown (a removed type) comes in as Rich text. The converter pulls in
-    // the editor, so it only loads for a backup that has Markdown notes.
-    if (item.type === 'markdown') {
-      try {
-        const { toRichDoc } = await import('./richText/convert')
-        item = { ...item, type: 'richtext', content: { doc: toRichDoc('markdown', item.content) } }
-      } catch {
-        skipped++
-        continue
-      }
     }
 
     const title = (typeof item.title === 'string' ? item.title.trim() : '')
@@ -199,9 +173,8 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
 }
 
 /**
- * Import spaces from a JSON backup file. Accepts the current `{ version, spaces }`
- * format (plus an optional top-level `items` list of dashboard items) and the
- * older bare-array format.
+ * Import an encrypted backup file: its spaces, and the dashboard items in
+ * `items`.
  *
  * @param {File} file - The .json File object from an <input>
  * @param {string} userId - The authenticated user's UUID
@@ -211,7 +184,7 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
  *   `check` tries a PIN. Resolving false cancels the import.
  * @returns {Promise<{ spaces: number, items: number, skipped: number } | null>}
  *   Null when the import was cancelled at the PIN prompt.
- * @throws {Error} If the file is malformed or exceeds the import limits
+ * @throws {Error} If the file is malformed, not encrypted, or over the limits
  */
 export async function importSpaces(file, userId, cryptoKey, { askBackupPin } = {}) {
   if (!cryptoKey) throw new Error('Vault must be unlocked to import')
@@ -226,37 +199,29 @@ export async function importSpaces(file, userId, cryptoKey, { askBackupPin } = {
     throw new Error('Invalid backup: the file is not valid JSON.', { cause: error })
   }
 
-  // An encrypted backup opens with this vault's key when it's from this
-  // vault; otherwise with the vault PIN it was made with.
-  if (isEncryptedBackup(parsed)) {
-    let contents = await openBackupWithKey(parsed, cryptoKey)
-    if (!contents) {
-      if (!askBackupPin) throw new Error('This backup is from another vault.')
-      const ok = await askBackupPin(async (pin) => {
-        try {
-          contents = await openBackupWithPin(parsed, pin)
-          return true
-        } catch (err) {
-          if ((err?.message || '').includes('Incorrect PIN')) return false
-          throw err
-        }
-      })
-      if (!ok) return null
-    }
-    if (!contents || typeof contents !== 'object') {
-      throw new Error('Invalid backup: the encrypted contents are damaged.')
-    }
-    parsed = contents
+  if (!isEncryptedBackup(parsed)) {
+    throw new Error('Invalid backup: only encrypted ArcheSpace backups can be imported.')
   }
 
-  // Current format is { version, spaces: [...] }; older backups are a bare array.
-  const spacesList = Array.isArray(parsed)
-    ? parsed
-    : Array.isArray(parsed?.spaces)
-      ? parsed.spaces
-      : null
+  // Opens with this vault's key when it's from this vault; otherwise with the
+  // vault PIN it was made with.
+  let contents = await openBackupWithKey(parsed, cryptoKey)
+  if (!contents) {
+    if (!askBackupPin) throw new Error('This backup is from another vault.')
+    const ok = await askBackupPin(async (pin) => {
+      try {
+        contents = await openBackupWithPin(parsed, pin)
+        return true
+      } catch (err) {
+        if ((err?.message || '').includes('Incorrect PIN')) return false
+        throw err
+      }
+    })
+    if (!ok) return null
+  }
+  const spacesList = Array.isArray(contents?.spaces) ? contents.spaces : null
   if (!spacesList) {
-    throw new Error('Invalid backup: expected a list of spaces.')
+    throw new Error('Invalid backup: the encrypted contents are damaged.')
   }
   if (spacesList.length > MAX_IMPORT_SPACES) {
     throw new Error(`Too many spaces. The maximum allowed is ${MAX_IMPORT_SPACES}.`)
@@ -306,12 +271,12 @@ export async function importSpaces(file, userId, cryptoKey, { askBackupPin } = {
     itemsSkipped += result.skipped
   }
 
-  // Dashboard items (outside any space), present in newer backups only.
-  if (!Array.isArray(parsed) && Array.isArray(parsed?.items)) {
-    if (parsed.items.length > MAX_IMPORT_ITEMS_PER_SPACE) {
+  // Dashboard items (outside any space).
+  if (Array.isArray(contents.items)) {
+    if (contents.items.length > MAX_IMPORT_ITEMS_PER_SPACE) {
       throw new Error(`Too many dashboard items. The maximum allowed is ${MAX_IMPORT_ITEMS_PER_SPACE}.`)
     }
-    const result = await insertImportedItems(parsed.items, null, userId, cryptoKey)
+    const result = await insertImportedItems(contents.items, null, userId, cryptoKey)
     itemsImported += result.imported
     itemsSkipped += result.skipped
   }

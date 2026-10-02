@@ -68,7 +68,7 @@ export default function TermsPage() {
 
       <h2>Termination</h2>
       <p>
-        You may stop using the Service and delete your account at any time from Settings &rarr; Account. We
+        You may stop using the Service and delete your account at any time from Settings &gt; Account. We
         may suspend or terminate accounts that violate these terms or the law.
       </p>
 

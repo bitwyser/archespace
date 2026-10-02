@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs'
 import process from 'node:process'
 import { defineConfig } from 'vite'
 
-const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { cloudflare } from '@cloudflare/vite-plugin'
 
-import { cloudflare } from "@cloudflare/vite-plugin";
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
 
 // Commit hash for the running build, so the deployed code can be checked
 // against the public source. Prefers CI-provided env vars, falls back to git.
@@ -24,23 +24,9 @@ function resolveCommit() {
   }
 }
 
-// Build timestamp derived from the commit (or SOURCE_DATE_EPOCH), never the wall
-// clock, so a given commit always builds byte-for-byte identically (reproducible
-// builds). Falls back to empty in a non-git checkout.
-function resolveBuildTime() {
-  const epoch = process.env.SOURCE_DATE_EPOCH
-  if (epoch) return new Date(Number(epoch) * 1000).toISOString()
-  try {
-    return execSync('git log -1 --format=%cI').toString().trim()
-  } catch {
-    return ''
-  }
-}
-
-// App version, sourced from the git tag so releases are driven purely by tagging
-// (no manual package.json bump). Prefers the CI tag, then the nearest tag in
-// history, and finally package.json for dev / no-tag builds. The leading "v" is
-// stripped (the UI adds its own).
+// App version from the git tag: the CI tag, then the nearest tag in history,
+// then package.json for untagged builds. The leading "v" is stripped (the UI
+// adds its own).
 function resolveVersion() {
   if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME) {
     return process.env.GITHUB_REF_NAME.replace(/^v/, '')
@@ -113,7 +99,6 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(resolveVersion()),
     __BUILD_HASH__: JSON.stringify(resolveCommit()),
-    __BUILD_TIME__: JSON.stringify(resolveBuildTime()),
   },
   build: {
     rollupOptions: {
@@ -133,7 +118,6 @@ export default defineConfig({
           if (id.includes('@tanstack/react-query')) return 'query'
           if (id.includes('@supabase')) return 'supabase'
           if (id.includes('lucide-react')) return 'icons'
-          if (id.includes('jszip')) return 'zip'
           // Keep pdfmake in its own chunk so it loads only when exporting a PDF.
           if (id.includes('pdfmake')) return 'pdfmake'
           return 'vendor'

@@ -31,21 +31,16 @@ arc1:<base64(iv)>.<base64(ciphertext)>
 - No additional authenticated data (AAD).
 - The two base64 chunks are separated by a single `.` (split on the **first**
   dot; base64 itself never contains a dot).
-- A value that does not start with `arc1:` is treated as plaintext (legacy /
-  not-yet-encrypted), never decrypted.
-- Encrypting `null`/empty yields an empty string `""` (not an `arc1:` value).
+- A non-empty value that does not start with `arc1:` is rejected.
+- Encrypting `null` yields an empty string `""`, and `""` decrypts to `""`.
 
 JSON values are encrypted as `arc1(JSON.stringify(value))` and decrypted by
 parsing the recovered UTF-8 string as JSON.
 
 ## 3. Key derivation (vault secret -> 32-byte AES key)
 
-The stored `salt` (and `recovery_salt`) is **self-describing**, so the client
-picks the KDF from its shape.
-
-### Argon2id (all new vaults)
-
-Descriptor string:
+The stored `salt` (and `recovery_salt`) is a **self-describing** Argon2id
+descriptor:
 
 ```
 argon2id$<m>$<t>$<p>$<base64(salt)>
@@ -55,19 +50,9 @@ argon2id$<m>$<t>$<p>$<base64(salt)>
 - Salt is 16 bytes; output length `dkLen = 32`.
 - Input is the UTF-8 bytes of the secret (PIN, passphrase, or normalized
   recovery code). The 32-byte output is imported directly as the AES-256-GCM key.
-- Params are read **from the descriptor**, not hardcoded, so older vaults with
-  different params keep working.
-
-### PBKDF2 (legacy vaults only)
-
-If the descriptor is a **plain base64 string** (no `argon2id$` prefix), it is a
-legacy PBKDF2 salt:
-
-- PBKDF2 with **HMAC-SHA-256**, **310000** iterations, 256-bit output.
-- Salt is the base64-decoded bytes. Output is the AES-256-GCM key.
-
-Legacy vaults are upgraded to Argon2id the next time the PIN/passphrase changes;
-a client must still be able to unlock them.
+- Params are read **from the descriptor**, not hardcoded, so a later change of
+  params keeps existing vaults working.
+- Any other descriptor is rejected.
 
 ## 4. Vault wrapping (how the master key is protected)
 
@@ -83,7 +68,6 @@ holds:
 | `key_check` | `arc1( "ARCHE_VAULT_V1_OK" )` encrypted with the **master** key |
 | `recovery_salt` | recovery-code KDF descriptor (optional) |
 | `recovery_wrapped_key` | `arc1( base64(rawMasterKeyBytes) )` encrypted with the **recovery-derived** key (optional) |
-| `vault_format` | `pin_wrapped` |
 
 ### Unlock flow (PIN)
 

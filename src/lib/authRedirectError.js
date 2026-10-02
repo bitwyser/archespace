@@ -4,7 +4,7 @@
  * When an email link (sign-up confirmation, magic link, invite, email change,
  * password reset) is expired, already used or denied, Supabase redirects back
  * with `error`, `error_code` and `error_description` in the query string and/or
- * the URL hash. Nothing else in the app reads those, so the failure was silent.
+ * the URL hash.
  *
  * This module runs once at startup - imported first in main.jsx, before the
  * router and the Supabase client read the URL - to capture the error, remove it

@@ -17,7 +17,7 @@ const CHROME_COLOR = '#8a8a8a'
 // A4 content width (595.28pt) minus the 40pt side margins, for full-width rules.
 const CONTENT_WIDTH = 515
 
-// ── pdfmake (lazy-loaded: keeps its font bundle out of the initial page load) ──
+// pdfmake (lazy-loaded: keeps its font bundle out of the initial page load)
 let pdfMakePromise = null
 function getPdfMake() {
   if (!pdfMakePromise) {
@@ -120,7 +120,7 @@ const tableLayout = {
   vLineColor: () => '#cccccc',
 }
 
-// ── Rich text (Tiptap JSON) ──────────────────────────────────
+// Rich text (Tiptap JSON)
 const HEADING_SIZES = { 1: 16, 2: 14, 3: 12.5 }
 
 /** pdfmake text runs for a node's inline content (text + marks). */

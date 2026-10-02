@@ -1,8 +1,7 @@
 /**
- * VaultPinPromptContext.jsx - Asks for the vault PIN before showing or
- * releasing protected content (a locked item, or a backup that includes
- * locked items). The PIN is checked like an unlock: wrong entries count
- * towards the same lockout.
+ * VaultPinPromptContext.jsx - Asks for the vault PIN before showing protected
+ * content, or for the PIN of a backup made in another vault. This vault's PIN
+ * is checked like an unlock: wrong entries count towards the same lockout.
  */
 import { useCallback, useRef, useState } from 'react'
 import { Lock } from 'lucide-react'
@@ -90,7 +89,7 @@ function VaultPinDialog({
             disabled={busy || !pin}
             className={buttonClass({ variant: 'primary' })}
           >
-            {busy ? 'Checking…' : confirmLabel}
+            {busy ? 'Checking...' : confirmLabel}
           </button>
         </div>
       }

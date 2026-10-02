@@ -15,7 +15,7 @@ import { generateRecoveryCode, normalizeRecoveryCode } from './crypto/recoveryCo
 
 // One code is enough: redeeming it disables 2FA, so extra codes would be dead
 // the moment the first is used.
-export const BACKUP_CODE_COUNT = 1
+const BACKUP_CODE_COUNT = 1
 
 // Authenticator codes are the standard 6 digits.
 export const TOTP_CODE_LENGTH = 6

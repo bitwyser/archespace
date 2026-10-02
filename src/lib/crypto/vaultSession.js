@@ -7,13 +7,12 @@
  * (non-sensitive, and cleared synchronously so a lock/sign-out invalidates
  * the session immediately even before the async IndexedDB delete finishes).
  *
- * Cleared on manual lock, sign-out, or 24-hour vault auto-lock.
+ * Cleared on manual lock, sign-out, or auto-lock.
  */
 import { autoLockMs } from './vaultAutoLock'
 
 export const VAULT_UNLOCKED_AT_KEY = 'arche:vault-unlocked-at'
 const VAULT_SESSION_USER = 'arche:vault-session-user'
-const LEGACY_KEY = 'arche:vault-session-key' // old raw-bytes storage; purge it
 
 const DB_NAME = 'arche-vault'
 const STORE = 'session'
@@ -77,7 +76,6 @@ async function idbDelete() {
 export function clearVaultSession() {
   sessionStorage.removeItem(VAULT_UNLOCKED_AT_KEY)
   sessionStorage.removeItem(VAULT_SESSION_USER)
-  sessionStorage.removeItem(LEGACY_KEY)
   idbDelete() // fire-and-forget; the sync markers above already invalidate it
 }
 

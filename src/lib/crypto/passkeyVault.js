@@ -87,7 +87,6 @@ export async function unlockVaultWithPasskey(userId) {
   return masterKey
 }
 
-// userId kept for a stable signature; local records are removed by id alone.
-export async function removePasskey(userId, id) {
+export async function removePasskey(id) {
   await deletePasskeyRecord(id)
 }

@@ -1,10 +1,10 @@
 /**
  * AppSidebar.jsx - Persistent desktop left navigation (app-wide).
  *
- * Collapsible (icon-only ↔ icon+label). In icon-only mode the logo shows the
+ * Collapsible (icon-only or icon+label). In icon-only mode the logo shows the
  * brand mark and the account shows just the avatar letter. Shown on sm+ screens
  * only; the mobile top bars remain the navigation on phones. `active` marks the
- * current section ('spaces' | 'archive' | 'bin' | 'settings').
+ * current section ('spaces' | 'starred' | 'archive' | 'bin' | 'settings').
  */
 import {
   LayoutGrid, Star, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
@@ -22,7 +22,7 @@ function SectionLabel({ children, collapsed }) {
   )
 }
 
-function NavItem({ icon: Icon, label, active, count, badge, badgeColor = 'bg-accent', trailing, collapsed, onClick }) {
+function NavItem({ icon: Icon, label, active, count, collapsed, onClick }) {
   return (
     <button
       type="button"
@@ -43,14 +43,6 @@ function NavItem({ icon: Icon, label, active, count, badge, badgeColor = 'bg-acc
       {!collapsed && <span className="flex-1 text-left truncate">{label}</span>}
       {!collapsed && count != null && (
         <span className={`text-xs tabular-nums ${active ? 'text-accent' : 'text-text-muted'}`}>{count}</span>
-      )}
-      {!collapsed && badge > 0 && (
-        <span className={`min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${badgeColor} text-accent-fg text-[10px] font-bold px-1 leading-none`}>
-          {badge > 99 ? '99+' : badge}
-        </span>
-      )}
-      {!collapsed && trailing && (
-        <kbd className="text-[10px] font-mono text-text-muted border border-bg-border rounded px-1.5 py-0.5">{trailing}</kbd>
       )}
     </button>
   )
@@ -74,9 +66,7 @@ export default function AppSidebar({
         aria-label="ArcheSpace"
         className="flex items-center justify-center h-16 shrink-0 px-3"
       >
-        {/* The bare "A" mark when collapsed, the full wordmark when expanded,
-            centered in the sidebar. No badge - only the mobile app icon keeps
-            the box. */}
+        {/* The bare "A" mark when collapsed, the full wordmark when expanded. */}
         {collapsed ? (
           <BrandGlyph className="h-8 w-8 shrink-0 text-accent" />
         ) : (

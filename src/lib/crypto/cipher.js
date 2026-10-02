@@ -3,9 +3,9 @@
  */
 import { bytesFromBase64, bytesToBase64 } from './encoding'
 
-export const CIPHER_PREFIX = 'arc1:'
+const CIPHER_PREFIX = 'arc1:'
 
-export function isEncrypted(value) {
+function isEncrypted(value) {
   return typeof value === 'string' && value.startsWith(CIPHER_PREFIX)
 }
 
@@ -34,7 +34,7 @@ export async function encryptString(plaintext, key) {
  */
 export async function decryptString(value, key) {
   if (value == null || value === '') return ''
-  if (!isEncrypted(value)) return String(value)
+  if (!isEncrypted(value)) throw new Error('Not an encrypted value')
   const body = value.slice(CIPHER_PREFIX.length)
   const dot = body.indexOf('.')
   if (dot < 0) throw new Error('Invalid encrypted payload')

@@ -205,7 +205,7 @@ export default function MfaSettings() {
 
       {/* Enrolment modal: scan QR, enter a code */}
       {enroll && (
-        <Modal title="Set up two-factor authentication" onClose={cancelEnroll} size="sm">
+        <Modal title="Set up two-factor authentication" onClose={cancelEnroll}>
           <div className="space-y-4">
             <p className="text-sm text-text-secondary">Scan this with your authenticator app, then enter the 6-digit code it shows.</p>
             {/* Supabase returns the QR as a data:image/svg+xml URI. */}
@@ -231,7 +231,7 @@ export default function MfaSettings() {
             {error && <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{error}</p>}
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={cancelEnroll} disabled={busy} className={buttonClass({ variant: 'secondary' })}>Cancel</button>
-              <button type="button" onClick={confirmEnroll} disabled={busy || !code.trim()} className={buttonClass({ variant: 'primary' })}>{busy ? 'Verifying…' : 'Verify & enable'}</button>
+              <button type="button" onClick={confirmEnroll} disabled={busy || !code.trim()} className={buttonClass({ variant: 'primary' })}>{busy ? 'Verifying...' : 'Verify & enable'}</button>
             </div>
           </div>
         </Modal>
@@ -239,7 +239,7 @@ export default function MfaSettings() {
 
       {/* One-time backup code */}
       {backupCodes && (
-        <Modal title="Save your backup code" onClose={() => setBackupCodes(null)} size="sm">
+        <Modal title="Save your backup code" onClose={() => setBackupCodes(null)}>
           <div className="space-y-4">
             <p className="text-sm text-text-secondary">
               Keep this somewhere safe. It works once to sign in if you lose your authenticator, which turns off two-factor authentication so you can set it up again.
@@ -258,7 +258,7 @@ export default function MfaSettings() {
       )}
 
       {confirmDisable && (
-        <Modal title="Turn off two-factor authentication?" onClose={closeDisable} size="sm">
+        <Modal title="Turn off two-factor authentication?" onClose={closeDisable}>
           <div className="space-y-4">
             <p className="text-sm text-text-secondary">
               Enter your login password to confirm. Your account will then be protected by your password alone.
@@ -274,7 +274,7 @@ export default function MfaSettings() {
             {disableError && <p className="text-danger text-xs bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{disableError}</p>}
             <div className="flex gap-2 justify-end">
               <button type="button" onClick={closeDisable} disabled={busy} className={buttonClass({ variant: 'secondary' })}>Cancel</button>
-              <button type="button" onClick={disable} disabled={busy || !disablePassword.trim()} className={buttonClass({ variant: 'dangerSolid' })}>{busy ? 'Turning off…' : 'Turn off'}</button>
+              <button type="button" onClick={disable} disabled={busy || !disablePassword.trim()} className={buttonClass({ variant: 'dangerSolid' })}>{busy ? 'Turning off...' : 'Turn off'}</button>
             </div>
           </div>
         </Modal>

@@ -31,7 +31,7 @@ export default function ItemBoardModals({ board, spaces }) {
 
   return (
     <>
-      {/* ── Add item type picker modal ───────────────── */}
+      {/* Add item type picker modal */}
       {addModal && (
         <Modal title="Add item" onClose={() => setAddModal(false)} size="lg">
           <p className="text-text-muted text-xs mb-3">Choose the type of content to add</p>
@@ -56,7 +56,7 @@ export default function ItemBoardModals({ board, spaces }) {
         </Modal>
       )}
 
-      {/* ── Unsaved changes navigation guard ─────────── */}
+      {/* Unsaved changes navigation guard */}
       {navBlocker.state === 'blocked' && (
         <Modal
           title="Leave without saving?"
@@ -176,7 +176,7 @@ export default function ItemBoardModals({ board, spaces }) {
         </Modal>
       )}
 
-      {/* ── Delete item confirmation modal ───────────── */}
+      {/* Delete item confirmation modal */}
       {deleteConfirm && (
         <Modal
           title="Move to recycle bin?"

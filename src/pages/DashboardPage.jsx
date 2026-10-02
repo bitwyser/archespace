@@ -1,8 +1,7 @@
 /**
- * The signed-in home: a searchable, sortable grid or list of the user's spaces
- * followed by their dashboard items (items that belong to no space), laid out
- * like the inside of a space. Create/edit/delete, pinning, bulk actions, and
- * links to archive, bin, and settings.
+ * DashboardPage.jsx - The signed-in home: a searchable, sortable grid or list
+ * of the user's spaces followed by their dashboard items (items that belong to
+ * no space), laid out like the inside of a space.
  */
 
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
@@ -68,7 +67,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { accentColor, accentColors, setAccentColor, resolvedThemeMode, setThemeMode } = useTheme()
   // Shuffle the look: a random accent (never the current one) and flip the
-  // theme between light and dark (matches the mobile app's drawer shuffle).
+  // theme between light and dark.
   const shuffleAppearance = useCallback(() => {
     const others = accentColors.filter(a => a.id !== accentColor)
     if (others.length) setAccentColor(others[Math.floor(Math.random() * others.length)].id)
@@ -78,7 +77,7 @@ export default function DashboardPage() {
   const searchInputRef = useRef(null)
   const mobileSearchInputRef = useRef(null)
 
-  // ── Local state ──
+  // Local state
   const [modal, setModal] = useState(null) // { type: 'create' } | { type: 'edit', col } | null
   const [search, setSearch] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -156,7 +155,7 @@ export default function DashboardPage() {
     return () => document.removeEventListener('pointerdown', handlePointerDown)
   }, [mobileMenuOpen])
 
-  // ── Derived state ──
+  // Derived state
   const globalMatches = useMemo(() => (
     filterGlobalSearch({
       spaces: globalSearchData?.spaces || [],
@@ -188,7 +187,7 @@ export default function DashboardPage() {
   }, [dashboardItems, search])
   const hasEntries = filtered.length + searchedItems.length > 0
 
-  // ── Tag filter (spaces and dashboard items) ──
+  // Tag filter (spaces and dashboard items)
   const [selectedTags, setSelectedTags] = useState([])
   const allTags = useMemo(() => {
     const set = new Set()
@@ -226,7 +225,7 @@ export default function DashboardPage() {
     [tagFilteredItems, spaceSort]
   )
 
-  // ── Selection: spaces and dashboard items together ──
+  // Selection: spaces and dashboard items together
   const {
     selectMode, setSelectMode, selectedSpaceIds, selectedItemIds,
     selectedCount, exitSelectMode, selectAll, toggleSpace, toggleItem,
@@ -465,11 +464,11 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-bg-base">
-      {/* ── Header (mobile only) ──────────────────────── */}
+      {/* Header (mobile only) */}
       <header ref={headerRef} className="sm:hidden sticky top-0 z-20 glass">
         <div className="w-full px-4 h-14 flex items-center justify-between gap-3">
-          {/* Logo - the app wordmark, matching the desktop sidebar; tapping it
-              returns to the spaces home (Jakob's Law). */}
+          {/* The wordmark, as in the desktop sidebar; tapping it returns to
+              the spaces home. */}
           <button
             type="button"
             onClick={() => navigate('/app')}
@@ -506,7 +505,7 @@ export default function DashboardPage() {
 
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-bg-border bg-bg-surface px-3 py-2 flex flex-col gap-0.5">
-            {/* Navigation first (Serial Position: most-used destinations lead). */}
+            {/* Navigation first, then tools, then sign out. */}
             <button
               type="button"
               onClick={() => { navigate('/starred'); setMobileMenuOpen(false) }}
@@ -553,7 +552,6 @@ export default function DashboardPage() {
               Settings
             </button>
 
-            {/* Tools (Proximity: related utilities grouped together). */}
             <button
               type="button"
               onClick={() => { openPalette(); setMobileMenuOpen(false) }}
@@ -571,8 +569,7 @@ export default function DashboardPage() {
               Keyboard shortcuts
             </button>
 
-            {/* Sign out isolated at the bottom so the destructive action isn't
-                mis-tapped next to a benign one (Error Prevention). */}
+            {/* Sign out sits apart, so it isn't tapped by mistake. */}
             <div className="border-t border-bg-border mt-1 pt-2">
               <button
                 type="button"
@@ -598,7 +595,7 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* ── Main content ──────────────────────────────── */}
+      {/* Main content */}
       <main className="px-4 sm:px-6 py-6">
         {/* Search - desktop (stays fixed at the top; the header, tag filter and
             grid scroll beneath it). */}
@@ -608,7 +605,7 @@ export default function DashboardPage() {
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             <input
               ref={searchInputRef}
-              placeholder="Search…"
+              placeholder="Search..."
               value={search}
               onChange={e => { setSearch(e.target.value); setSearchActive(-1) }}
               onFocus={() => setSearchFocused(true)}
@@ -652,7 +649,7 @@ export default function DashboardPage() {
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
             <input
               ref={mobileSearchInputRef}
-              placeholder="Search…"
+              placeholder="Search..."
               value={search}
               onChange={e => { setSearch(e.target.value); setSearchActive(-1) }}
               onFocus={() => setSearchFocused(true)}
@@ -688,7 +685,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             {/* View, sort and select are quiet tools; the one main action is
-                New, a menu of New item / New space (like the mobile + button). */}
+                New, a menu of New item / New space. */}
             {hasEntries && !selectMode && (
               <ViewToggle value={viewMode} onChange={changeViewMode} />
             )}
@@ -948,7 +945,7 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {/* ── Modals ────────────────────────────────────── */}
+      {/* Modals */}
       {modal?.type === 'create' && (
         <SpaceModal
           onSave={({ name, description, color, tags }) => {
@@ -1016,7 +1013,7 @@ export default function DashboardPage() {
         </Modal>
       )}
 
-      {/* ── Dashboard item dialogs: add, move to bin, move, unsaved guard ── */}
+      {/* Dashboard item dialogs: add, move to bin, move, unsaved guard */}
       <ItemBoardModals board={board} spaces={spaces} />
 
       {deleteConfirm && (

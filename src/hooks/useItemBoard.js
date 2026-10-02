@@ -27,7 +27,7 @@ export function useItemBoard(spaceId) {
   const { update, togglePin, toggleStar, toggleLock, setTags, setListNumbered, duplicate, archive, create, move } = itemsApi
   const askVaultPin = useVaultPinPrompt()
 
-  // ── Dialog + card state ──
+  // Dialog + card state
   const [addModal, setAddModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null)
@@ -63,7 +63,7 @@ export function useItemBoard(spaceId) {
     })
   }, [])
 
-  // ── Track dirty state per item for beforeunload ──
+  // Track dirty state per item for beforeunload
   const handleDirtyChange = useCallback((itemId, dirty) => {
     setDirtyItems(prev => {
       const next = new Set(prev)
@@ -72,7 +72,7 @@ export function useItemBoard(spaceId) {
     })
   }, [])
 
-  // ── Stable, memo-friendly per-item callbacks ──
+  // Stable, memo-friendly per-item callbacks
   // Refs hold the latest values so these handlers keep a stable identity; that
   // lets the memoized SpaceItem skip re-rendering the whole list on each edit.
   const dirtyItemsRef = useRef(dirtyItems)
@@ -184,7 +184,7 @@ export function useItemBoard(spaceId) {
     handleToggleLock, handleDuplicateItem, handleMoveOne, handleArchiveItem, handleDirtyChange,
   ])
 
-  // ── Warn on page close / in-app navigation if unsaved edits exist ──
+  // Warn on page close / in-app navigation if unsaved edits exist
   const hasUnsaved = dirtyItems.size > 0
 
   useEffect(() => {
@@ -200,7 +200,7 @@ export function useItemBoard(spaceId) {
 
   const navBlocker = useBlocker(hasUnsaved)
 
-  // ── Scroll to and briefly highlight an item opened from global search ──
+  // Scroll to and briefly highlight an item opened from global search
   useEffect(() => {
     const target = location.state?.focusItemId
     if (!target || isLoading) return
@@ -212,7 +212,7 @@ export function useItemBoard(spaceId) {
     return () => { cancelAnimationFrame(raf); clearTimeout(timer) }
   }, [location.state, isLoading])
 
-  // ── Add item ──
+  // Add item
   const handleAddItem = useCallback(async (type) => {
     setAddModal(false)
     try {

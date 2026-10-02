@@ -85,7 +85,7 @@ export function useArchive() {
     onSuccess: () => invalidateArchive(qc),
   })
 
-  // ── Move to bin (archive → recycle bin) ──
+  // Move to bin (archive -> recycle bin)
   // Sets deleted_at and clears archived_at so the row leaves the archive and
   // appears in the bin (which requires archived_at to be null).
   const moveSpaceToBin = useMutation({

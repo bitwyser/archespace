@@ -1,6 +1,6 @@
 /**
  * Grid editor for the "table" item type. Content is a header row plus data rows
- * of plain-text cells: { columns: ["Name","Qty"], rows: [["Apples","3"], …] };
+ * of plain-text cells: { columns: ["Name","Qty"], rows: [["Apples","3"], ...] };
  * every row stays the width of the header, and the grid scrolls horizontally on
  * narrow screens.
  */

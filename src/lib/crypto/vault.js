@@ -8,10 +8,7 @@ import { supabase } from '../supabase'
 import { isOnline } from '../offlineQueue'
 import { isNetworkError, setReachable } from '../connectivity'
 import { encryptString, decryptString } from './cipher'
-import {
-  deriveVaultKey,
-  newSaltDescriptor,
-} from './keyDerivation'
+import { deriveVaultKey, newSaltDescriptor } from './keyDerivation'
 import { validateVaultPin } from './vaultPin'
 import { bytesFromBase64, bytesToBase64 } from './encoding'
 import {
@@ -21,9 +18,6 @@ import {
 } from './recoveryCode'
 
 const VAULT_CHECK_PLAINTEXT = 'ARCHE_VAULT_V1_OK'
-export const VAULT_FORMAT_PIN_WRAPPED = 'pin_wrapped'
-const RECOVERY_COLUMNS_MISSING_MESSAGE =
-  'Vault recovery is not enabled in the database yet. Run the recovery_salt and recovery_wrapped_key migration, then reload the Supabase schema cache.'
 
 function assertValidPin(pin) {
   const err = validateVaultPin(pin)
@@ -121,13 +115,10 @@ async function fetchVaultMeta(userId) {
   try {
     const { data, error } = await supabase
       .from('user_encryption')
-      .select('user_id, salt, key_check, wrapped_key, vault_format, pin_locked_until, recovery_salt, recovery_wrapped_key')
+      .select('user_id, salt, key_check, wrapped_key, recovery_salt, recovery_wrapped_key')
       .eq('user_id', userId)
       .maybeSingle()
-    if (error) {
-      if (isOptionalVaultColumnError(error)) return fetchVaultMetaWithoutOptionalColumns(userId)
-      throw error
-    }
+    if (error) throw error
     setReachable(true)
     cacheVaultMeta(userId, data) // enable offline PIN unlock next time
     return data
@@ -144,44 +135,7 @@ async function fetchVaultMeta(userId) {
   }
 }
 
-async function fetchVaultMetaWithoutOptionalColumns(userId) {
-  const { data, error } = await supabase
-    .from('user_encryption')
-    .select('user_id, salt, key_check, wrapped_key, vault_format')
-    .eq('user_id', userId)
-    .maybeSingle()
-  if (error) throw error
-  if (!data) return data
-  cacheVaultMeta(userId, data)
-  return {
-    ...data,
-    pin_locked_until: null,
-    recovery_salt: null,
-    recovery_wrapped_key: null,
-    optionalColumnsMissing: true,
-    recoveryColumnsMissing: true,
-  }
-}
-
-function isOptionalVaultColumnError(error) {
-  const message = error?.message || ''
-  return (
-    message.includes('schema cache') &&
-    (message.includes('pin_locked_until') ||
-      message.includes('recovery_salt') ||
-      message.includes('recovery_wrapped_key'))
-  )
-}
-
-function isRecoverySchemaCacheError(error) {
-  const message = error?.message || ''
-  return (
-    message.includes('schema cache') &&
-    (message.includes('recovery_salt') || message.includes('recovery_wrapped_key'))
-  )
-}
-
-async function assertVaultUnlockAllowed(userId) {
+async function assertVaultUnlockAllowed() {
   // Offline / unreachable: the server lockout check can't run; the client-side
   // rate limiter in EncryptionContext still guards against brute force.
   if (!isOnline()) return
@@ -193,18 +147,7 @@ async function assertVaultUnlockAllowed(userId) {
     throw err
   }
   if (error) {
-    // Fallback for projects that have not run the migration yet.
-    try {
-      const meta = await fetchVaultMeta(userId)
-      if (meta?.pin_locked_until && new Date(meta.pin_locked_until) > new Date()) {
-        const retryAfter = Math.ceil((new Date(meta.pin_locked_until) - Date.now()) / 1000)
-        throw new Error(formatPinLockoutMessage(retryAfter))
-      }
-    } catch (fallbackError) {
-      if (fallbackError?.message?.startsWith('Too many failed PIN attempts.')) {
-        throw fallbackError
-      }
-    }
+    console.warn('Failed to check the vault PIN lockout:', error.message)
     return
   }
   if (data?.locked) {
@@ -245,7 +188,6 @@ function isIncorrectPinError(err) {
   return msg.includes('Incorrect PIN') || msg.includes('cannot unlock')
 }
 
-
 /**
  * Create a new PIN-protected vault for a new user.
  * @param {string} userId
@@ -263,12 +205,8 @@ export async function setupUserVault(userId, pin) {
   }
   const masterKey = await generateMasterKey()
   const recoveryCode = generateRecoveryCode()
-  const { recoverySaved } = await persistPinWrappedVault(userId, pin, masterKey, { recoveryCode })
-  return {
-    masterKey,
-    recoveryCode: recoverySaved ? recoveryCode : null,
-    recoveryUnavailable: !recoverySaved,
-  }
+  await persistPinWrappedVault(userId, pin, masterKey, { recoveryCode })
+  return { masterKey, recoveryCode }
 }
 
 /**
@@ -303,7 +241,7 @@ export async function resetUserVault(userId, pin) {
  */
 export async function unlockUserVault(userId, pin) {
   assertValidPin(pin)
-  await assertVaultUnlockAllowed(userId)
+  await assertVaultUnlockAllowed()
   const meta = await fetchVaultMeta(userId)
   if (!meta) {
     throw new Error('No vault PIN configured. Create a PIN to continue.')
@@ -320,13 +258,12 @@ export async function unlockUserVault(userId, pin) {
   }
 }
 
-
 /**
  * Change vault PIN (verifies current PIN first).
  */
 export async function changeVaultPinWithVerification(userId, currentPin, newPin) {
   assertValidPin(newPin)
-  await assertVaultUnlockAllowed(userId)
+  await assertVaultUnlockAllowed()
   try {
     const meta = await fetchVaultMeta(userId)
     if (!meta) throw new Error('No vault PIN configured.')
@@ -347,14 +284,10 @@ export async function changeVaultPinWithVerification(userId, currentPin, newPin)
  */
 export async function createVaultRecoveryCode(userId, currentPin) {
   assertValidPin(currentPin)
-  await assertVaultUnlockAllowed(userId)
+  await assertVaultUnlockAllowed()
   try {
     const meta = await fetchVaultMeta(userId)
     if (!meta) throw new Error('No vault PIN configured.')
-    if (meta.recoveryColumnsMissing) {
-      throw new Error(RECOVERY_COLUMNS_MISSING_MESSAGE)
-    }
-
     const masterKey = await unlockPinWrappedVault(meta, currentPin)
     const recoveryCode = generateRecoveryCode()
     await persistRecoveryWrappedVault(userId, masterKey, recoveryCode)
@@ -378,9 +311,6 @@ export async function recoverVaultWithRecoveryCode(userId, recoveryCode, newPin)
 
   const meta = await fetchVaultMeta(userId)
   if (!meta) throw new Error('No vault PIN configured.')
-  if (meta.recoveryColumnsMissing) {
-    throw new Error(RECOVERY_COLUMNS_MISSING_MESSAGE)
-  }
   if (!meta.recovery_salt || !meta.recovery_wrapped_key) {
     throw new Error('No recovery code is configured for this vault.')
   }
@@ -388,10 +318,7 @@ export async function recoverVaultWithRecoveryCode(userId, recoveryCode, newPin)
   try {
     const masterKey = await unlockRecoveryWrappedVault(meta, recoveryCode)
     const nextRecoveryCode = generateRecoveryCode()
-    const { recoverySaved } = await persistPinWrappedVault(userId, newPin, masterKey, { recoveryCode: nextRecoveryCode })
-    if (!recoverySaved) {
-      throw new Error(RECOVERY_COLUMNS_MISSING_MESSAGE)
-    }
+    await persistPinWrappedVault(userId, newPin, masterKey, { recoveryCode: nextRecoveryCode })
     await recordVaultUnlockSuccess()
     return { masterKey, recoveryCode: nextRecoveryCode }
   } catch (err) {
@@ -400,13 +327,6 @@ export async function recoverVaultWithRecoveryCode(userId, recoveryCode, newPin)
       { cause: err }
     )
   }
-}
-
-/**
- * Verify the recovery code against the current master key, then set a new PIN.
- */
-export async function changeVaultPinWithRecoveryCode(userId, recoveryCode, newPin) {
-  return recoverVaultWithRecoveryCode(userId, recoveryCode, newPin)
 }
 
 async function persistPinWrappedVault(userId, pin, masterKey, { recoveryCode = '' } = {}) {
@@ -421,7 +341,6 @@ async function persistPinWrappedVault(userId, pin, masterKey, { recoveryCode = '
     salt: pinSalt,
     key_check: keyCheck,
     wrapped_key: wrappedKey,
-    vault_format: VAULT_FORMAT_PIN_WRAPPED,
   }
 
   if (recoveryCode) {
@@ -433,21 +352,8 @@ async function persistPinWrappedVault(userId, pin, masterKey, { recoveryCode = '
   }
 
   const { error } = await supabase.from('user_encryption').upsert(payload)
-  if (error) {
-    if (recoveryCode && isRecoverySchemaCacheError(error)) {
-      const pinOnlyPayload = { ...payload }
-      delete pinOnlyPayload.recovery_salt
-      delete pinOnlyPayload.recovery_wrapped_key
-
-      const { error: pinOnlyError } = await supabase.from('user_encryption').upsert(pinOnlyPayload)
-      if (pinOnlyError) throw pinOnlyError
-      cacheVaultMeta(userId, pinOnlyPayload)
-      return { recoverySaved: false }
-    }
-    throw error
-  }
+  if (error) throw error
   cacheVaultMeta(userId, payload) // so a freshly set PIN can unlock offline
-  return { recoverySaved: true }
 }
 
 async function persistRecoveryWrappedVault(userId, masterKey, recoveryCode) {
@@ -464,12 +370,7 @@ async function persistRecoveryWrappedVault(userId, masterKey, recoveryCode) {
     .from('user_encryption')
     .update(payload)
     .eq('user_id', userId)
-  if (error) {
-    if (isRecoverySchemaCacheError(error)) {
-      throw new Error(RECOVERY_COLUMNS_MISSING_MESSAGE, { cause: error })
-    }
-    throw error
-  }
+  if (error) throw error
 }
 
 async function unlockRecoveryWrappedVault(meta, recoveryCode) {

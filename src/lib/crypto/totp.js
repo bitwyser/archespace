@@ -10,7 +10,7 @@ const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 const HASH_ALGORITHMS = { SHA1: 'SHA-1', SHA256: 'SHA-256', SHA512: 'SHA-512' }
 
 /** Decode a Base32 (RFC 4648) secret to bytes, ignoring spaces/padding/case. */
-export function base32Decode(input) {
+function base32Decode(input) {
   const clean = (input || '').toUpperCase().replace(/=+$/, '').replace(/\s+/g, '')
   let bits = 0
   let value = 0

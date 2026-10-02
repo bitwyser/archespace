@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect } from 'react'
 
 export const ShortcutsContext = createContext(null)
 
-export function useShortcuts() {
+function useShortcuts() {
   const ctx = useContext(ShortcutsContext)
   if (!ctx) throw new Error('useShortcuts must be used within ShortcutsProvider')
   return ctx

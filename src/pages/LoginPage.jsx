@@ -89,7 +89,7 @@ export default function LoginPage() {
   }
 
   // Warn if Caps Lock is on while typing a password (a common cause of a
-  // rejected sign-in that the masked field hides). Postel's Law: prevent errors.
+  // rejected sign-in that the masked field hides).
   const onPasswordKey = e => {
     if (typeof e.getModifierState === 'function') {
       setCapsLock(e.getModifierState('CapsLock'))
@@ -121,8 +121,7 @@ export default function LoginPage() {
   const isSignUp = pathMode === 'signup' && MULTI_USER_ENABLED
   const isForgot = forgot && pathMode === 'signin'
 
-  // Live password requirements + match, shown on sign-up so the rules are
-  // visible before submitting (Postel's Law) with immediate feedback (Doherty).
+  // Password requirements and the match, checked as the user types on sign-up.
   const passwordChecks = [
     { label: `At least ${PASSWORD_RULES.minLength} characters`, ok: password.length >= PASSWORD_RULES.minLength },
     { label: 'An uppercase letter', ok: /[A-Z]/.test(password) },
@@ -147,11 +146,9 @@ export default function LoginPage() {
     }
   }, [pathMode, navigate])
 
-  // Reset the form when switching between sign in and create account, so fields
-  // and messages don't carry over. Only on an actual mode change, so any initial
-  // message (e.g. after a password reset redirect, or a failed email link) is
-  // kept - a "skip the first run" flag isn't enough, since StrictMode runs
-  // effects twice in development and the second run would wipe it.
+  // Reset the form when switching between sign in and create account. Only on
+  // an actual mode change, so an initial message (after a password reset, or a
+  // failed email link) is kept even when StrictMode runs effects twice.
   const lastMode = useRef(pathMode)
   useEffect(() => {
     if (lastMode.current === pathMode) return
@@ -508,7 +505,7 @@ export default function LoginPage() {
             >
               {isForgot ? <Mail size={14} /> : isSignUp ? <UserPlus size={14} /> : <Lock size={14} />}
               {loading
-                ? (isForgot ? 'Sending link…' : isSignUp ? 'Creating account…' : 'Signing in…')
+                ? (isForgot ? 'Sending link...' : isSignUp ? 'Creating account...' : 'Signing in...')
                 : isCoolingDown && !isSignUp && !isForgot
                   ? 'Locked'
                   : isForgot

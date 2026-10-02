@@ -5,7 +5,7 @@
  * edits to a read-only space's details and to its items' content, raising this
  * SQLSTATE (see schema.sql, "Read-only spaces").
  */
-export const READ_ONLY_SQLSTATE = 'P0R01'
+const READ_ONLY_SQLSTATE = 'P0R01'
 
 /** True when a write failed because its space is read-only. */
 export function isReadOnlyError(err) {

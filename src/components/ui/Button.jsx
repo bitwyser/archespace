@@ -9,7 +9,7 @@ import { BUTTON_BASE, buttonClass } from './buttonStyles'
 const ICON_SIZES = { sm: 14, md: 15 }
 
 /**
- * @param {{ variant?: keyof VARIANTS, size?: 'sm'|'md', icon?: Function, iconOnlyOnMobile?: boolean }} props
+ * @param {{ variant?: string, size?: 'xs'|'sm'|'md'|'lg', icon?: Function, iconOnlyOnMobile?: boolean }} props
  *   `iconOnlyOnMobile` hides the label below the sm breakpoint (the button
  *   keeps its accessible name from `aria-label` or `title`).
  */
