@@ -2,8 +2,7 @@
  * pdfExport.js - Export a space or a single item to PDF, fully client-side,
  * using pdfmake. The PDF is generated directly (no browser print dialog), so we
  * fully control every page: a header with the export time (top-left) and the
- * ArcheSpace logo (top-right), and a footer with the site URL (bottom-left) and
- * the page number (bottom-right). Content rendering mirrors the mobile export.
+ * site URL (top-right), and the page number at the bottom right. Content rendering mirrors the mobile export.
  */
 import { markdownToHtml } from '../components/editors/MarkdownPreview'
 import { sanitizeRichHtml } from './sanitizeHtml'
@@ -49,23 +48,6 @@ function getPdfMake() {
     })
   }
   return pdfMakePromise
-}
-
-/** The inked wordmark (dark "Space") as a data URL, or '' if it can't load. */
-async function loadLogoDataUrl() {
-  try {
-    const res = await fetch('/archespace-wordmark-print.png')
-    if (!res.ok) return ''
-    const blob = await res.blob()
-    return await new Promise(resolve => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result)
-      reader.onerror = () => resolve('')
-      reader.readAsDataURL(blob)
-    })
-  } catch {
-    return ''
-  }
 }
 
 /** The export time, e.g. "9/19/26, 8:36 PM". */
@@ -351,7 +333,7 @@ function itemSectionNodes(item) {
 
 /** Build the doc and hand the user the file. */
 async function generate(filename, content) {
-  const [pdfMake, logo] = await Promise.all([getPdfMake(), loadLogoDataUrl()])
+  const pdfMake = await getPdfMake()
   const stamp = timestamp()
   const docDefinition = {
     pageSize: 'A4',
@@ -362,13 +344,12 @@ async function generate(filename, content) {
       margin: [40, 22, 40, 0],
       columns: [
         { text: stamp, fontSize: 8, color: CHROME_COLOR, margin: [0, 3, 0, 0] },
-        logo ? { image: logo, width: 88, alignment: 'right' } : { text: '' },
+        { text: SITE_URL, fontSize: 8, color: CHROME_COLOR, alignment: 'right' },
       ],
     }),
     footer: (currentPage, pageCount) => ({
       margin: [40, 0, 40, 16],
       columns: [
-        { text: SITE_URL, fontSize: 8, color: CHROME_COLOR },
         { text: `${currentPage}/${pageCount}`, fontSize: 8, color: CHROME_COLOR, alignment: 'right' },
       ],
     }),

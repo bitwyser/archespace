@@ -29,8 +29,6 @@ import {
   X,
 } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
-import { BrandGlyph } from '../components/BrandGlyph'
-import { WordmarkLogo } from '../components/WordmarkLogo'
 import { APP_VERSION, COMMIT_URL, MOBILE_REPO_URL, REPO_URL } from '../lib/buildInfo'
 
 function GithubMark({ size = 16, className = '' }) {
@@ -673,13 +671,9 @@ export default function HomePage() {
               </span>
               <h3 className="mt-4 text-base font-semibold text-white">Talk to a human</h3>
               <p className="mt-2 text-sm leading-6 text-white/62">
-                Trouble with setup, sign-in, or recovery? Email{' '}
-                <a className="font-semibold text-emerald-200 hover:underline" href="mailto:help@archespace.app">
-                  help@archespace.app
-                </a>
-                . Feature ideas and bug reports go to{' '}
-                <a className="font-semibold text-emerald-200 hover:underline" href="mailto:bitwyser@archespace.app">
-                  bitwyser@archespace.app
+                Trouble with setup, sign-in or recovery, a feature idea or a bug? Email{' '}
+                <a className="font-semibold text-emerald-200 hover:underline" href="mailto:support@archespace.app">
+                  support@archespace.app
                 </a>
                 .
               </p>
@@ -717,9 +711,7 @@ export default function HomePage() {
               <div className="w-full max-w-[248px] rounded-[2rem] border border-white/12 bg-[#141824] p-3 shadow-2xl">
                 <div className="rounded-[1.5rem] border border-white/8 bg-[#0f1117] p-4">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-300 to-cyan-300 text-[#10201c]">
-                      <BrandGlyph className="h-[72%] w-[72%]" />
-                    </span>
+                    <img src="/icon-192.png" alt="" width="32" height="32" className="h-8 w-8 rounded-lg" />
                     <span className="text-sm font-semibold text-white">ArcheSpace</span>
                     <LockKeyhole size={13} className="ml-auto text-emerald-200/70" />
                   </div>
@@ -773,7 +765,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             <div>
-              <WordmarkLogo className="h-7 w-auto text-emerald-400" />
+              <p className="text-base font-semibold text-white">ArcheSpace</p>
               <p className="mt-3 max-w-xs text-sm leading-6 text-white/60">
                 Everything in One Encrypted Space.
               </p>
@@ -807,13 +799,8 @@ export default function HomePage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-white/65">Contact</p>
               <ul className="mt-4 space-y-2.5 text-sm">
                 <li>
-                  <a href="mailto:help@archespace.app" className="text-white/60 hover:text-white transition-colors">
-                    help@archespace.app
-                  </a>
-                </li>
-                <li>
-                  <a href="mailto:bitwyser@archespace.app" className="text-white/60 hover:text-white transition-colors">
-                    bitwyser@archespace.app
+                  <a href="mailto:support@archespace.app" className="text-white/60 hover:text-white transition-colors">
+                    support@archespace.app
                   </a>
                 </li>
               </ul>

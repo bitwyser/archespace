@@ -16,7 +16,7 @@ export default function PrivacyPage() {
       <h2>Who we are</h2>
       <p>
         ArcheSpace ("we", "us") is the controller of the personal data described in this policy. You can
-        reach us about any privacy matter at <a href="mailto:help@archespace.app">help@archespace.app</a>.
+        reach us about any privacy matter at <a href="mailto:support@archespace.app">support@archespace.app</a>.
       </p>
 
       <h2>What we cannot see</h2>
@@ -92,7 +92,7 @@ export default function PrivacyPage() {
         <li><strong>Complain</strong> to your data protection authority - such as an EU/EEA supervisory authority or the Data Protection Board of India.</li>
       </ul>
       <p>
-        To exercise any of these, contact us at <a href="mailto:help@archespace.app">help@archespace.app</a>.
+        To exercise any of these, contact us at <a href="mailto:support@archespace.app">support@archespace.app</a>.
         We respond within the timeframes required by applicable law.
       </p>
 
@@ -133,11 +133,11 @@ export default function PrivacyPage() {
       <p>
         <strong>ArcheSpace Support</strong>
         <br />
-        <a href="mailto:help@archespace.app">help@archespace.app</a>
+        <a href="mailto:support@archespace.app">support@archespace.app</a>
       </p>
 
       <h2>Contact</h2>
-      <p>Questions about privacy? Contact us at <a href="mailto:help@archespace.app">help@archespace.app</a>.</p>
+      <p>Questions about privacy? Contact us at <a href="mailto:support@archespace.app">support@archespace.app</a>.</p>
     </LegalLayout>
   )
 }

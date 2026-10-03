@@ -1,9 +1,4 @@
-<p>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="public/archespace-logo.svg">
-    <img alt="ArcheSpace" src="public/archespace-logo-light.svg" width="320">
-  </picture>
-</p>
+# ArcheSpace
 
 [![CI](https://github.com/bitwyser/archespace/actions/workflows/ci.yml/badge.svg)](https://github.com/bitwyser/archespace/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/release/bitwyser/archespace)](https://github.com/bitwyser/archespace/releases)
@@ -238,11 +233,11 @@ Contributions are welcome: bug fixes, features, docs, and translations.
 - Run `npm run lint`, `npm test`, and `npm run build` before submitting.
 - For larger changes, schema changes, or security-relevant work, open an issue first.
 
-Development questions: **[bitwyser@archespace.app](mailto:bitwyser@archespace.app)**.
+Development questions: **[support@archespace.app](mailto:support@archespace.app)**.
 
 ## Support
 
-Need help with setup, self-hosting, or account/vault recovery? Email **[help@archespace.app](mailto:help@archespace.app)** (include what you were doing, your deployment type, host, browser/OS, and any redacted errors), or open an issue for bugs and feature requests.
+Need help with setup, self-hosting, or account/vault recovery? Email **[support@archespace.app](mailto:support@archespace.app)** (include what you were doing, your deployment type, host, browser/OS, and any redacted errors), or open an issue for bugs and feature requests.
 
 ## Credits
 

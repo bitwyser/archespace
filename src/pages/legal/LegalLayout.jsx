@@ -29,7 +29,7 @@ export function LegalLayout({ title, updated, children }) {
         <div className="mt-12 flex flex-wrap gap-x-4 gap-y-2 border-t border-bg-border pt-6 text-xs text-text-muted">
           <Link to="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link>
           <Link to="/terms" className="hover:text-accent transition-colors">Terms of Service</Link>
-          <a href="mailto:help@archespace.app" className="hover:text-accent transition-colors">help@archespace.app</a>
+          <a href="mailto:support@archespace.app" className="hover:text-accent transition-colors">support@archespace.app</a>
         </div>
       </main>
     </div>

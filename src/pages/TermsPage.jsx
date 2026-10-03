@@ -94,7 +94,7 @@ export default function TermsPage() {
       </p>
 
       <h2>Contact</h2>
-      <p>Questions about these terms? Contact us at <a href="mailto:help@archespace.app">help@archespace.app</a>.</p>
+      <p>Questions about these terms? Contact us at <a href="mailto:support@archespace.app">support@archespace.app</a>.</p>
     </LegalLayout>
   )
 }
