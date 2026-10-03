@@ -5,11 +5,11 @@
 [![Live](https://img.shields.io/badge/live-archespace.app-32d3aa)](https://archespace.app)
 [![License](https://img.shields.io/github/license/bitwyser/archespace)](LICENSE)
 
-ArcheSpace is an open source, encrypted workspace for organising everything you're working on. Group your information, knowledge, projects, notes, secrets, code, checklists, and ideas into spaces, and fill each space with the content type that fits: plain notes, rich text documents, checklists and lists, tables, code snippets, and drawings. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable, and kept in one place across your devices.
+ArcheSpace is an open-source, encrypted space for capturing and organising your information, notes, projects, secrets, code, checklists and ideas. Group them into spaces, and fill each space with the content type that fits: plain notes, rich text documents, lists and checklists, tables, code snippets and drawings. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable and kept in one place, synced across your devices.
 
 Privacy is built in, not bolted on. ArcheSpace is a self-hostable web app with Supabase sync and a client-side encrypted vault, so your content stays private even from the app's owner and developers. It follows a zero-knowledge architecture: everything is encrypted in your browser and the backend only ever stores ciphertext, so the server, its operators, and the developers never see your data in readable form.
 
-A companion Android/Flutter app lives in a [separate repository](https://github.com/bitwyser/archespace-mobile).
+A companion Mobile/Flutter app lives in a [separate repository](https://github.com/bitwyser/archespace-mobile).
 
 ## Table of contents
 
@@ -127,7 +127,7 @@ Deploys are automatic on Cloudflare's Git-connected builds: pushing to `main` ru
 | Icons | Lucide React |
 | Drawing | `perfect-freehand` for vector ink strokes |
 | Syntax highlighting | `highlight.js` (automatic language detection for the Code item type) |
-| PDF export | `pdfmake` (branded header, footer URL, and page numbers) |
+| PDF export | `pdfmake` (export time and site URL in the header, page numbers in the footer) |
 | Asset generation | `sharp` (dev-only script that renders the app icons and social image) |
 | Hosting / deploy | Cloudflare (Git-connected builds), or any static host |
 | CI / tooling | GitHub Actions (lint, test, build, audit), Vitest, Dependabot, ESLint 10 |
