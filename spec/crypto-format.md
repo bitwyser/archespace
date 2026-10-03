@@ -52,7 +52,12 @@ argon2id$<m>$<t>$<p>$<base64(salt)>
   recovery code). The 32-byte output is imported directly as the AES-256-GCM key.
 - Params are read **from the descriptor**, not hardcoded, so a later change of
   params keeps existing vaults working.
-- Any other descriptor is rejected.
+- A vault made before Argon2id stores a plain base64 salt (no prefix). It is
+  derived with PBKDF2-HMAC-SHA-256, 310,000 iterations, 32-byte output. On a
+  successful PIN unlock, the client re-wraps the master key under a fresh
+  Argon2id descriptor, so such a vault moves to Argon2id the first time it
+  opens. (A legacy `recovery_salt` moves when the recovery code is next used
+  or replaced.)
 
 ## 4. Vault wrapping (how the master key is protected)
 

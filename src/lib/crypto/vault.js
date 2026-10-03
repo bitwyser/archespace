@@ -8,7 +8,7 @@ import { supabase } from '../supabase'
 import { isOnline } from '../offlineQueue'
 import { isNetworkError, setReachable } from '../connectivity'
 import { encryptString, decryptString } from './cipher'
-import { deriveVaultKey, newSaltDescriptor } from './keyDerivation'
+import { deriveVaultKey, isLegacySaltDescriptor, newSaltDescriptor } from './keyDerivation'
 import { validateVaultPin } from './vaultPin'
 import { bytesFromBase64, bytesToBase64 } from './encoding'
 import {
@@ -249,6 +249,7 @@ export async function unlockUserVault(userId, pin) {
   try {
     const key = await unlockPinWrappedVault(meta, pin)
     await recordVaultUnlockSuccess()
+    await upgradeLegacyPinSalt(userId, pin, key, meta)
     return key
   } catch (err) {
     if (isIncorrectPinError(err)) {
@@ -326,6 +327,21 @@ export async function recoverVaultWithRecoveryCode(userId, recoveryCode, newPin)
       err?.message || 'Recovery code could not unlock your vault.',
       { cause: err }
     )
+  }
+}
+
+/**
+ * A vault made before Argon2id (PBKDF2 salt) is re-wrapped with Argon2id the
+ * first time its PIN opens it. Only the wrapped key changes, so the content is
+ * untouched. Best effort: if it can't be saved now (offline), the next unlock
+ * tries again.
+ */
+async function upgradeLegacyPinSalt(userId, pin, masterKey, meta) {
+  if (!isLegacySaltDescriptor(meta.salt)) return
+  try {
+    await persistPinWrappedVault(userId, pin, masterKey)
+  } catch (err) {
+    console.warn('Could not move the vault to Argon2id yet:', err?.message)
   }
 }
 

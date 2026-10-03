@@ -8,6 +8,10 @@
       "p": 1,
       "dkLen": 32
     },
+    "pbkdf2": {
+      "hash": "SHA-256",
+      "iterations": 310000
+    },
     "aes": "AES-256-GCM",
     "ivBytes": 12,
     "base64": "standard+padding"
@@ -30,6 +34,18 @@
       "secret": "PΛSSwörd🔐",
       "descriptor": "argon2id$19456$2$1$AQIDBAUGBwgJCgsMDQ4PEA==",
       "expectedKeyB64": "x6lmwHAMe9hxjmg9GxnF2xI0Sjlskue03StMDJxUzNk="
+    },
+    {
+      "algo": "pbkdf2",
+      "secret": "123456",
+      "descriptor": "ZGVmZ2hpamtsbW5vcHFycw==",
+      "expectedKeyB64": "70gcR7d2w7rDNLt0Sfd2EVksvRxQivhiI4vv8q9UZDo="
+    },
+    {
+      "algo": "pbkdf2",
+      "secret": "legacy passphrase",
+      "descriptor": "ZGVmZ2hpamtsbW5vcHFycw==",
+      "expectedKeyB64": "0gyf688U9A1iJppgiDmR2l8oR75cjSh2KKPxG5nmnJ4="
     }
   ],
   "decrypt": [
