@@ -36,21 +36,23 @@ export default function ItemBoardModals({ board, spaces }) {
       {addModal && (
         <Modal title="Add item" onClose={() => setAddModal(false)} size="lg">
           <p className="text-text-muted text-xs mb-3">Choose the type of content to add</p>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+          {/* Equal tiles (every row the same height): icon and name on one
+              line, a short hint below. */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 auto-rows-fr gap-2">
             {ITEM_TYPE_OPTIONS.map(({ type, label, desc, icon: Icon, color, bg }) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => handleAddItem(type)}
-                className="flex items-start gap-2 p-2 bg-bg-elevated hover:bg-bg-hover rounded-md text-left transition-colors"
+                className="flex flex-col gap-1.5 p-2 bg-bg-elevated hover:bg-bg-hover rounded-md text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
               >
-                <div className={`w-6 h-6 shrink-0 rounded-md ${bg} flex items-center justify-center`}>
-                  <Icon size={14} className={color} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-text-primary leading-tight">{label}</p>
-                  <p className="text-[11px] text-text-muted mt-0.5 leading-snug">{desc}</p>
-                </div>
+                <span className="flex items-center gap-2">
+                  <span className={`w-6 h-6 shrink-0 rounded-md ${bg} flex items-center justify-center`}>
+                    <Icon size={14} className={color} />
+                  </span>
+                  <span className="text-xs font-semibold text-text-primary leading-tight">{label}</span>
+                </span>
+                <span className="text-[11px] text-text-muted leading-snug line-clamp-2">{desc}</span>
               </button>
             ))}
           </div>
