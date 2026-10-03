@@ -732,9 +732,10 @@ function SpaceItem({
         style={clamped ? { maxHeight: COLLAPSED_MAX_PX } : undefined}
         className={`${
           isFullscreen
-            // Same padding for every type; a Whiteboard's canvas fills the
-            // space inside it and scrolls (pans) itself.
-            ? `flex-1 px-4 py-5 sm:px-6 lg:px-8 ${item.type === 'whiteboard' ? 'min-h-0' : 'overflow-y-auto'}`
+            // Same padding for every type, its sides lined up with the header
+            // and tags; a Whiteboard's canvas fills the space inside it and
+            // scrolls (pans) itself.
+            ? `flex-1 px-4 py-5 ${item.type === 'whiteboard' ? 'min-h-0' : 'overflow-y-auto'}`
             : denseView
               ? `px-2.5 ${showTags && !showRichToolbar ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
               : `px-4 ${showRichToolbar ? 'pt-3' : showTags ? 'pt-0' : 'pt-4'} pb-4`
