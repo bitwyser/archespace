@@ -14,6 +14,7 @@ import {
   ChevronsLeft, ChevronsRight, ChevronRight,
 } from 'lucide-react'
 import { softColorValue } from '../../lib/spaceColors'
+import { MENU_PANEL, MENU_DIVIDER, MENU_HINT, menuItemClass } from '../ui/menuStyles'
 
 const IS_MAC = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform || '')
 const MOD = IS_MAC ? '⌘' : 'Ctrl '
@@ -64,15 +65,11 @@ function MenuItem({ icon: Icon, label, hint, danger, onClick }) {
       type="button"
       role="menuitem"
       onClick={onClick}
-      className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
-        danger
-          ? 'text-danger hover:bg-danger-muted'
-          : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-      }`}
+      className={menuItemClass({ danger })}
     >
-      <Icon size={15} className="shrink-0" />
-      <span className="flex-1 truncate">{label}</span>
-      {hint && <kbd className="text-[11px] font-sans text-text-muted">{hint}</kbd>}
+      <Icon size={14} className="shrink-0" />
+      <span className="truncate">{label}</span>
+      {hint && <kbd className={MENU_HINT}>{hint}</kbd>}
     </button>
   )
 }
@@ -121,13 +118,13 @@ function SettingsMenu({ collapsed, settingsActive, onSettings, onShortcuts, onCo
       {open && (
         <div
           role="menu"
-          className={`absolute z-50 w-56 rounded-xl border border-bg-border bg-bg-surface p-1.5 shadow-2xl shadow-black/30 animate-fade-in ${
+          className={`absolute z-50 w-44 ${MENU_PANEL} animate-fade-in ${
             collapsed ? 'left-full bottom-0 ml-2' : 'left-0 bottom-full mb-2'
           }`}
         >
           <MenuItem icon={Command} label="Commands" hint={`${MOD}K`} onClick={run(onCommands)} />
           <MenuItem icon={Keyboard} label="Keyboard shortcuts" hint="?" onClick={run(onShortcuts)} />
-          <div className="my-1.5 h-px bg-bg-border" />
+          <div className={MENU_DIVIDER} />
           <MenuItem icon={Settings} label="Open settings" onClick={run(onSettings)} />
           {onSignOut && <MenuItem icon={LogOut} label="Sign out" danger onClick={run(onSignOut)} />}
         </div>

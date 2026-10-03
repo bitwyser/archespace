@@ -44,6 +44,7 @@ import { usePersistedSort } from '../hooks/usePersistedSort'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { sortEntities } from '../lib/sortEntities'
 import { buttonClass } from '../components/ui/buttonStyles'
+import { MENU_PANEL } from '../components/ui/menuStyles'
 
 export default function DashboardPage() {
   const { signOut } = useAuth()
@@ -617,7 +618,7 @@ export default function DashboardPage() {
                 onSelectItem={goItemFromSearch}
                 activeOptionId={activeOptionId}
                 listboxId="global-search-listbox"
-                className="absolute top-full mt-2 left-0 right-0 z-40 max-h-[60vh] overflow-y-auto rounded-2xl border border-bg-border bg-bg-surface shadow-2xl p-3 space-y-3"
+                className={`absolute top-full mt-2 left-0 right-0 z-40 max-h-[60vh] overflow-y-auto ${MENU_PANEL}`}
               />
             )}
           </div>
@@ -660,7 +661,7 @@ export default function DashboardPage() {
                 onSelectItem={goItemFromSearch}
                 activeOptionId={activeOptionId}
                 listboxId="global-search-listbox-mobile"
-                className="mt-2 z-30 max-h-[50vh] overflow-y-auto rounded-2xl border border-bg-border bg-bg-surface shadow-2xl p-3 space-y-3"
+                className={`mt-2 z-30 max-h-[50vh] overflow-y-auto ${MENU_PANEL}`}
               />
             )}
           </div>
@@ -718,7 +719,7 @@ export default function DashboardPage() {
           <div className="mb-4 flex flex-wrap items-center gap-2">
             {(() => {
               const pill = (active) =>
-                `text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                `text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
                   active
                     ? 'bg-accent-muted border-accent-border text-accent'
                     : 'bg-bg-elevated border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-hover'

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Folder } from 'lucide-react'
 import { TypeBadge } from './ui/TypeBadge'
+import { MENU_HEADING, menuItemClass } from './ui/menuStyles'
 import { GLOBAL_SEARCH_RESULT_LIMIT } from '../lib/constants'
 import { SEARCH_ITEM_DISPLAY_LIMIT, searchOptionId } from '../lib/search'
 
@@ -26,23 +27,20 @@ export default function GlobalSearchResults({
     listRef.current?.querySelector(`[id="${activeOptionId}"]`)?.scrollIntoView({ block: 'nearest' })
   }, [activeOptionId])
 
-  const optionClass = (active) =>
-    `w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-sm ${
-      active ? 'bg-accent-muted text-text-primary' : 'hover:bg-bg-elevated'
-    }`
+  const optionClass = (active) => menuItemClass({ highlighted: active })
 
   return (
     // Keep the search input focused when clicking anywhere in the dropdown
     // (buttons or padding), so its onBlur can hide results immediately.
     <div className={className} onMouseDown={(e) => e.preventDefault()}>
       {!hasResults ? (
-        <p className="text-sm text-text-muted py-2 px-1">No results for &ldquo;{search}&rdquo;</p>
+        <p className="px-2 py-1.5 text-xs text-text-muted">No results for &ldquo;{search}&rdquo;</p>
       ) : (
         <div ref={listRef} role="listbox" id={listboxId} aria-label="Search results">
           {spaces.length > 0 && (
             <section>
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2 px-1">Spaces</p>
-              <div className="space-y-1">
+              <p className={MENU_HEADING}>Spaces</p>
+              <div>
                 {spaces.map(c => {
                   const optId = searchOptionId('space', c.id)
                   return (
@@ -56,7 +54,7 @@ export default function GlobalSearchResults({
                       className={optionClass(optId === activeOptionId)}
                     >
                       <Folder size={14} className="text-accent shrink-0" />
-                      <span className="font-medium text-text-primary truncate">{c.name}</span>
+                      <span className="text-text-primary truncate">{c.name}</span>
                     </button>
                   )
                 })}
@@ -64,9 +62,9 @@ export default function GlobalSearchResults({
             </section>
           )}
           {items.length > 0 && (
-            <section className={spaces.length > 0 ? 'mt-3' : ''}>
-              <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2 px-1">Items</p>
-              <div className="space-y-1">
+            <section className={spaces.length > 0 ? 'mt-1' : ''}>
+              <p className={MENU_HEADING}>Items</p>
+              <div>
                 {items.map(item => {
                   const optId = searchOptionId('item', item.id)
                   return (
@@ -79,10 +77,10 @@ export default function GlobalSearchResults({
                       onClick={() => onSelectItem(item)}
                       className={optionClass(optId === activeOptionId)}
                     >
-                      <TypeBadge type={item.type} size={13} />
+                      <TypeBadge type={item.type} size={12} />
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-text-primary truncate">{item.title || 'Untitled'}</p>
-                        <p className="text-xs text-text-muted truncate">
+                        <p className="text-text-primary truncate">{item.title || 'Untitled'}</p>
+                        <p className="text-[11px] font-normal text-text-muted truncate">
                           {itemMeta?.[item.id]?.spaceName}
                         </p>
                       </div>
@@ -91,14 +89,14 @@ export default function GlobalSearchResults({
                 })}
               </div>
               {globalMatches.items.length > SEARCH_ITEM_DISPLAY_LIMIT && (
-                <p className="text-xs text-text-muted mt-2 px-3">+{globalMatches.items.length - SEARCH_ITEM_DISPLAY_LIMIT} more items</p>
+                <p className="px-2 pt-1 pb-1.5 text-[11px] text-text-muted">+{globalMatches.items.length - SEARCH_ITEM_DISPLAY_LIMIT} more items</p>
               )}
             </section>
           )}
         </div>
       )}
       {truncated && (
-        <p className="text-[11px] text-text-muted mt-3 px-1 pt-2 border-t border-bg-border">
+        <p className="mt-1 border-t border-bg-border px-2 pt-1.5 pb-1 text-[11px] text-text-muted">
           Only your {GLOBAL_SEARCH_RESULT_LIMIT} most recent spaces and items are searched. Refine your search if something's missing.
         </p>
       )}

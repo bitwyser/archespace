@@ -26,6 +26,7 @@ import { toRichDoc } from '../../lib/richText/convert'
 import { registerSearchOpener } from '../../lib/richText/searchReplace'
 import { LINE_HEIGHTS } from '../../lib/richText/lineHeight'
 import { buttonClass } from '../ui/buttonStyles'
+import { MENU_PANEL, menuItemClass } from '../ui/menuStyles'
 
 // Plain text that reads like markdown is pasted as formatting.
 const MARKDOWN_HINT = /(^|\n)\s{0,3}(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|- \[[ xX]\]\s)|\*\*[^*\n]+\*\*|\[[^\]\n]+\]\([^)\n]+\)/
@@ -400,7 +401,7 @@ function ToolbarMenu({ icon: Icon, label, active = false, items }) {
           role="menu"
           aria-label={label}
           style={{ top: pos.top, left: pos.left }}
-          className="fixed z-[90] min-w-[11rem] rounded-xl border border-bg-border bg-bg-elevated p-1 shadow-lg"
+          className={`fixed z-[90] min-w-[10rem] ${MENU_PANEL}`}
         >
           {items.filter(Boolean).map(item => (
             <button
@@ -409,11 +410,9 @@ function ToolbarMenu({ icon: Icon, label, active = false, items }) {
               role="menuitemcheckbox"
               aria-checked={!!item.active}
               onMouseDown={(e) => { e.preventDefault(); item.onClick(); setPos(null) }}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors ${
-                item.danger ? 'text-danger hover:bg-danger-muted' : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
-              }`}
+              className={menuItemClass({ danger: item.danger })}
             >
-              <item.icon size={15} className={item.active ? 'text-accent' : ''} />
+              <item.icon size={14} className={`shrink-0 ${item.active ? 'text-accent' : ''}`} />
               <span className="flex-1">{item.label}</span>
               {item.active && <Check size={14} className="text-accent" />}
             </button>

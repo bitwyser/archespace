@@ -645,7 +645,7 @@ export default function SpacePage() {
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 {(() => {
                   const pill = (active) =>
-                    `text-[13px] font-medium px-3.5 py-1.5 rounded-full border transition-colors ${
+                    `text-xs font-medium px-2.5 py-1 rounded-full border transition-colors ${
                       active
                         ? 'bg-accent-muted border-accent-border text-accent'
                         : 'bg-bg-elevated border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-hover'

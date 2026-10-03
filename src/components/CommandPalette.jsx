@@ -10,6 +10,7 @@ import { useCommandPalette } from '../context/CommandPaletteCore'
 import { useTheme } from '../context/ThemeCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { useToast } from '../context/ToastCore'
+import { MENU_HINT, menuItemClass } from './ui/menuStyles'
 
 const IS_MAC = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform || '')
 const LOCK_HINT = IS_MAC ? '⌘L' : 'Ctrl L'
@@ -99,9 +100,9 @@ export default function CommandPalette({ onNewSpace, onOpenSearch }) {
           placeholder="Type a command..."
           className="w-full px-4 py-3.5 bg-transparent border-b border-bg-border text-text-primary placeholder-text-muted focus:outline-none text-sm"
         />
-        <ul className="max-h-72 overflow-y-auto py-2">
+        <ul className="max-h-72 overflow-y-auto p-1">
           {filtered.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-text-muted">No commands found</li>
+            <li className="px-2 py-1.5 text-xs text-text-muted">No commands found</li>
           ) : filtered.map((cmd, i) => {
             const Icon = cmd.icon
             return (
@@ -111,13 +112,11 @@ export default function CommandPalette({ onNewSpace, onOpenSearch }) {
                   ref={i === activeIndex ? activeRef : null}
                   onClick={() => cmd.run()}
                   onMouseEnter={() => setActive(i)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
-                    i === activeIndex ? 'bg-accent-muted text-text-primary' : 'text-text-secondary hover:bg-bg-elevated'
-                  }`}
+                  className={menuItemClass({ highlighted: i === activeIndex })}
                 >
-                  {Icon && <Icon size={16} className="shrink-0 text-text-muted" />}
-                  <span className="flex-1">{cmd.label}</span>
-                  {cmd.hint && <kbd className="text-xs text-text-muted font-mono">{cmd.hint}</kbd>}
+                  {Icon && <Icon size={14} className="shrink-0 text-text-muted" />}
+                  <span className="truncate">{cmd.label}</span>
+                  {cmd.hint && <kbd className={MENU_HINT}>{cmd.hint}</kbd>}
                 </button>
               </li>
             )

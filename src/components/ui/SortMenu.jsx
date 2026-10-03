@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowUpDown, Check } from 'lucide-react'
 import { SORT_OPTIONS } from '../../lib/sortEntities'
 import { buttonClass } from './buttonStyles'
+import { MENU_PANEL, MENU_HEADING, menuItemClass } from './menuStyles'
 
 export function SortMenu({ value, onChange }) {
   const [open, setOpen] = useState(false)
@@ -52,9 +53,9 @@ export function SortMenu({ value, onChange }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-1.5 z-30 min-w-[10rem] rounded-xl border border-bg-border bg-bg-surface p-1.5 shadow-2xl shadow-black/30 animate-fade-in"
+          className={`absolute right-0 top-full mt-1.5 z-30 w-40 ${MENU_PANEL} animate-fade-in`}
         >
-          <p className="px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-text-muted">Sort by</p>
+          <p className={MENU_HEADING}>Sort by</p>
           {SORT_OPTIONS.map(opt => (
             <button
               key={opt.id}
@@ -62,11 +63,7 @@ export function SortMenu({ value, onChange }) {
               role="menuitemradio"
               aria-checked={opt.id === value}
               onClick={() => { onChange(opt.id); setOpen(false) }}
-              className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-colors ${
-                opt.id === value
-                  ? 'text-accent bg-accent-muted'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-              }`}
+              className={`${menuItemClass({ active: opt.id === value })} justify-between`}
             >
               <span className="truncate">{opt.label}</span>
               {opt.id === value && <Check size={14} className="shrink-0" />}

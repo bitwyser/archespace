@@ -6,11 +6,12 @@
  * @param {{ board: ReturnType<import('../hooks/useItemBoard').useItemBoard>, spaces: Array }} props
  *   `spaces` are the possible move destinations (the board's own space is left out).
  */
-import { LayoutDashboard } from 'lucide-react'
+import { LayoutDashboard, Folder } from 'lucide-react'
 import { ITEM_TYPE_OPTIONS } from '../lib/itemTypes'
 import { useToast } from '../context/ToastCore'
 import { Modal } from './ui/UI'
 import { buttonClass } from './ui/buttonStyles'
+import { menuItemClass } from './ui/menuStyles'
 
 export default function ItemBoardModals({ board, spaces }) {
   const { toast } = useToast()
@@ -41,14 +42,14 @@ export default function ItemBoardModals({ board, spaces }) {
                 key={type}
                 type="button"
                 onClick={() => handleAddItem(type)}
-                className="flex items-start gap-2.5 p-2.5 bg-bg-elevated hover:bg-bg-hover rounded-lg text-left transition-colors"
+                className="flex items-start gap-2 p-2 bg-bg-elevated hover:bg-bg-hover rounded-md text-left transition-colors"
               >
-                <div className={`w-7 h-7 shrink-0 rounded-lg ${bg} flex items-center justify-center`}>
-                  <Icon size={15} className={color} />
+                <div className={`w-6 h-6 shrink-0 rounded-md ${bg} flex items-center justify-center`}>
+                  <Icon size={14} className={color} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-text-primary leading-tight">{label}</p>
-                  <p className="text-xs text-text-muted mt-0.5 leading-snug">{desc}</p>
+                  <p className="text-xs font-semibold text-text-primary leading-tight">{label}</p>
+                  <p className="text-[11px] text-text-muted mt-0.5 leading-snug">{desc}</p>
                 </div>
               </button>
             ))}
@@ -142,18 +143,18 @@ export default function ItemBoardModals({ board, spaces }) {
               </button>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="-mx-2">
               {canMoveToDashboard && (
                 <button
                   type="button"
                   onClick={() => handleMoveItems(null, 'Dashboard')}
                   disabled={move.isPending}
-                  className="w-full flex items-center gap-3 rounded-xl bg-bg-elevated hover:bg-bg-hover px-4 py-3 text-left transition-colors disabled:opacity-50"
+                  className={menuItemClass()}
                 >
-                  <LayoutDashboard size={16} className="shrink-0 text-text-muted" />
+                  <LayoutDashboard size={14} className="shrink-0 text-text-muted" />
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-text-primary truncate">Dashboard</span>
-                    <span className="mt-0.5 block text-xs text-text-muted truncate">Outside any space</span>
+                    <span className="block text-text-primary truncate">Dashboard</span>
+                    <span className="block text-[11px] font-normal text-text-muted truncate">Outside any space</span>
                   </span>
                 </button>
               )}
@@ -163,12 +164,15 @@ export default function ItemBoardModals({ board, spaces }) {
                   type="button"
                   onClick={() => handleMoveItems(candidate.id, candidate.name || 'space')}
                   disabled={move.isPending}
-                  className="w-full rounded-xl bg-bg-elevated hover:bg-bg-hover px-4 py-3 text-left transition-colors disabled:opacity-50"
+                  className={menuItemClass()}
                 >
-                  <span className="block text-sm font-semibold text-text-primary truncate">{candidate.name}</span>
-                  {candidate.description && (
-                    <span className="mt-0.5 block text-xs text-text-muted truncate">{candidate.description}</span>
-                  )}
+                  <Folder size={14} className="shrink-0 text-text-muted" />
+                  <span className="min-w-0">
+                    <span className="block text-text-primary truncate">{candidate.name}</span>
+                    {candidate.description && (
+                      <span className="block text-[11px] font-normal text-text-muted truncate">{candidate.description}</span>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>

@@ -5,8 +5,9 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { createPortal } from 'react-dom'
 import { MoreHorizontal } from 'lucide-react'
 import { buttonClass } from './buttonStyles'
+import { MENU_PANEL, menuItemClass } from './menuStyles'
 
-const MENU_WIDTH = 176
+const MENU_WIDTH = 160
 const VIEWPORT_PADDING = 8
 const MENU_GAP = 8
 
@@ -65,7 +66,7 @@ export function ActionMenu({
     if (!button) return
 
     const rect = button.getBoundingClientRect()
-    const menuHeight = menuRef.current?.offsetHeight || (visibleActions.length * 36 + 12)
+    const menuHeight = menuRef.current?.offsetHeight || (visibleActions.length * 28 + 8)
     const menuWidth = menuRef.current?.offsetWidth || MENU_WIDTH
     const hasRoomBelow = rect.bottom + MENU_GAP + menuHeight <= window.innerHeight - VIEWPORT_PADDING
     const top = hasRoomBelow
@@ -206,7 +207,7 @@ export function ActionMenu({
         onKeyDown={handleMenuKeyDown}
         onMouseEnter={openMenu}
         onMouseLeave={scheduleClose}
-        className={`fixed z-[1000] w-44 rounded-xl border border-bg-border bg-bg-surface p-1.5 shadow-2xl shadow-black/30 transition-all duration-150 opacity-100 scale-100 pointer-events-auto animate-fade-in ${
+        className={`fixed z-[1000] w-40 ${MENU_PANEL} transition-all duration-150 opacity-100 scale-100 pointer-events-auto animate-fade-in ${
           position.origin === 'top' ? 'origin-top' : 'origin-bottom'
         }`}
         style={{ top: position.top, left: position.left }}
@@ -223,13 +224,7 @@ export function ActionMenu({
               closeMenu()
               buttonRef.current?.focus()
             }}
-            className={`w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              variant === 'danger'
-                ? 'text-danger hover:bg-danger-muted'
-                : active
-                  ? 'text-accent bg-accent-muted hover:bg-accent/20'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-            }`}
+            className={menuItemClass({ active, danger: variant === 'danger' })}
           >
             {Icon && <Icon size={14} className="shrink-0" />}
             <span className="truncate">{itemLabel}</span>
