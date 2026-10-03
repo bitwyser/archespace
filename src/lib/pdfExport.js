@@ -9,7 +9,7 @@ import { sanitizeRichHtml } from './sanitizeHtml'
 import { TYPE_LABELS } from './itemTypes'
 import { isRichDoc } from './richText/doc'
 import { isContentHidden } from './itemLock'
-import { strokeToSvgPath, drawDims } from './drawing'
+import { hasBoardContent } from './whiteboard/scene'
 
 const SITE_URL = 'https://archespace.app/'
 const CHROME_COLOR = '#8a8a8a'
@@ -297,16 +297,14 @@ function itemBodyNodes({ type, content }) {
         fontSize: 10,
       }]
     }
-    case 'draw': {
-      const strokes = Array.isArray(c.strokes) ? c.strokes : []
-      if (!strokes.length) return [emptyNode()]
-      const { w, h } = drawDims(c.orientation)
-      const paths = strokes
-        .map(s => `<path d="${strokeToSvgPath(s.points, s.size)}" fill="${s.color}"/>`)
-        .join('')
-      const svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg"><rect width="${w}" height="${h}" fill="#ffffff"/>${paths}</svg>`
-      const maxW = c.orientation === 'portrait' ? 240 : 400
-      return [{ svg, width: maxW, margin: [0, 2, 0, 0] }]
+    case 'whiteboard': {
+      if (!hasBoardContent(c)) return [emptyNode()]
+      // The preview saved with the board; an old drawing gets one when it
+      // first shows in the app.
+      if (typeof c.preview !== 'string' || !c.preview.startsWith('data:image/png')) {
+        return [{ text: 'Open this whiteboard in the app to include it.', style: 'empty' }]
+      }
+      return [{ image: c.preview, fit: [CONTENT_WIDTH, 360], margin: [0, 2, 0, 0] }]
     }
     default:
       return [emptyNode()]

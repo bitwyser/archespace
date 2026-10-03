@@ -13,7 +13,7 @@ import {
   Trash2, ChevronDown, ChevronUp, Pencil, Check, X, Star, StarOff,
   Pin, PinOff, Save, AlertTriangle, Copy, Archive,
   Maximize2, Minimize2, MoveRight, MoreVertical,
-  ClipboardCopy, ClipboardCheck, FileDown, PencilOff, Shield, ShieldCheck, ShieldOff, EyeOff,
+  ClipboardCopy, ClipboardCheck, FileDown, PencilOff, Shield, ShieldCheck, ShieldOff, EyeOff, Loader2,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, ListItemsEditor, CardListEditor } from './editors/ItemEditors'
 // The Rich text editor (Tiptap) loads only when a Rich text item is shown.
@@ -21,7 +21,10 @@ const RichTextEditor = lazy(() => import('./editors/RichTextEditor'))
 const RichTextToolbar = lazy(() =>
   import('./editors/RichTextEditor').then(m => ({ default: m.RichTextToolbar }))
 )
-import { DrawEditor } from './editors/DrawEditor'
+// Excalidraw loads only when a Whiteboard opens full screen; its card shows
+// the saved preview.
+const WhiteboardEditor = lazy(() => import('./editors/WhiteboardEditor'))
+import { WhiteboardPreview } from './editors/WhiteboardPreview'
 import { TableEditor } from './editors/TableEditor'
 import { CodeEditor } from './editors/CodeEditor'
 import { ItemTags } from './ItemTags'
@@ -370,7 +373,7 @@ function SpaceItem({
   // it opens full screen (how those cards edit).
   const showRichToolbar = item.type === 'richtext' && !readOnly && !headerCollapsed && !selectMode && !hidden
   // Copy and Export PDF release the content, so a hidden protected item has none.
-  const canCopy = !hidden && item.type !== 'draw'
+  const canCopy = !hidden && item.type !== 'whiteboard'
 
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
@@ -729,7 +732,9 @@ function SpaceItem({
         style={clamped ? { maxHeight: COLLAPSED_MAX_PX } : undefined}
         className={`${
           isFullscreen
-            ? 'flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8'
+            // Same padding for every type; a Whiteboard's canvas fills the
+            // space inside it and scrolls (pans) itself.
+            ? `flex-1 px-4 py-5 sm:px-6 lg:px-8 ${item.type === 'whiteboard' ? 'min-h-0' : 'overflow-y-auto'}`
             : denseView
               ? `px-2.5 ${showTags && !showRichToolbar ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
               : `px-4 ${showRichToolbar ? 'pt-3' : showTags ? 'pt-0' : 'pt-4'} pb-4`
@@ -767,7 +772,13 @@ function SpaceItem({
           />
         )}
         {item.type === 'card_list'     && <CardListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
-        {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'whiteboard' && (isFullscreen ? (
+          <Suspense fallback={<div className="flex h-full items-center justify-center"><Loader2 size={20} className="animate-spin text-text-muted" /></div>}>
+            <WhiteboardEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />
+          </Suspense>
+        ) : (
+          <WhiteboardPreview content={localContent} onOpen={handleFullscreenClick} onUpgrade={handleContentChange} readOnly={readOnly} />
+        ))}
         {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         </div>
         {/* A soft fade at the bottom cues "more below" without a label; tapping

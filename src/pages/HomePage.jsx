@@ -67,7 +67,7 @@ const navSections = [
 // Every feature worth knowing about, each in a line.
 const features = [
   { icon: FolderTree, title: 'Spaces', desc: 'Group everything into spaces and sub-spaces, with colours, tags and pins.' },
-  { icon: Layers, title: 'Item types', desc: 'Notes, rich text, lists, checklists, cards, tables, drawings and code.' },
+  { icon: Layers, title: 'Item types', desc: 'Notes, rich text, lists, checklists, cards, tables, whiteboards and code.' },
   { icon: Search, title: 'Search', desc: 'Find anything across all your spaces, and filter by tag.' },
   { icon: LockKeyhole, title: 'Zero-knowledge encryption', desc: 'Encrypted on your device before it syncs; the server cannot read it.' },
   { icon: ShieldCheck, title: 'Protected items', desc: 'Keep sensitive items and spaces hidden until your vault PIN opens them.' },

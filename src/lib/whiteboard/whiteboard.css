@@ -1,0 +1,12 @@
+/* The library sidebar isn't used: its items would live only until reload. */
+.excalidraw .default-sidebar-trigger {
+  display: none;
+}
+
+/* Web embeds (other sites' pages inside the board) are blocked, and the
+   Mermaid import is left out of the build (noMermaid.js), so their entries in
+   the extra tools menu go, with the "Generate" heading above Mermaid. */
+.excalidraw .App-toolbar__extra-tools-dropdown [data-testid='toolbar-embeddable'],
+.excalidraw .App-toolbar__extra-tools-dropdown div[style*='font-weight: 600'] {
+  display: none;
+}

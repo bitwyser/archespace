@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; connect-src data: blob:">
+<title>Whiteboard</title>
+<style>
+  html, body, #board { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
+  body { background: #ffffff; -webkit-tap-highlight-color: transparent; }
+  /* Less space above the top toolbar and below the bottom bar (Excalidraw
+     leaves 16px and 14px, the latter as an inline style); the board already
+     sits in a framed box. */
+  .excalidraw .App-top-bar.FixedSideContainer_side_top { top: 6px; }
+  .excalidraw .App-bottom-bar { margin-bottom: 6px !important; }
+/*__STYLES__*/
+</style>
+</head>
+<body>
+<div id="board"></div>
+<script>/*__BUNDLE__*/</script>
+</body>
+</html>

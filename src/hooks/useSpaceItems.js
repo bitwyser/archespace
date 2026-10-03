@@ -36,7 +36,7 @@ const defaultContent = {
   card_list: { items: [] },
   richtext: { doc: EMPTY_RICH_DOC },
   code: { code: '' },
-  draw: { strokes: [] },
+  whiteboard: { elements: [] },
   table: { columns: ['', ''], rows: [['', ''], ['', '']] },
 }
 

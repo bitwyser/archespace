@@ -1,7 +1,10 @@
 import { execSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
+import { EXCALIDRAW_FONT_DIR, rewriteExcalidrawFonts, shippedFontFiles } from './scripts/excalidraw-fonts.mjs'
 
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -94,25 +97,88 @@ function seoPlugin() {
   }
 }
 
+// Excalidraw's fonts, served by the app rather than its CDN: from node_modules
+// in dev, and copied into the build under excalidraw/fonts/. Excalidraw's code
+// is rewritten to load them from there and nowhere else
+// (scripts/excalidraw-fonts.mjs), in the build and in dev's pre-bundled copy.
+const excalidrawFontsTransform = {
+  name: 'arche-excalidraw-font-paths',
+  transform(code, id) {
+    if (!id.includes('@excalidraw') || !code.includes('./fonts/')) return null
+    const local = (family, file) => `(location.origin + "/excalidraw/fonts/${family}/${file}")`
+    return { code: rewriteExcalidrawFonts(code, local), map: null }
+  },
+}
+
+function excalidrawFontsPlugin() {
+  const served = new Set(shippedFontFiles())
+  return {
+    ...excalidrawFontsTransform,
+    name: 'arche-excalidraw-fonts',
+    configureServer(server) {
+      server.middlewares.use('/excalidraw/fonts', (req, res, next) => {
+        const path = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '')
+        if (!served.has(path)) return next()
+        res.setHeader('Content-Type', 'font/woff2')
+        res.end(readFileSync(join(EXCALIDRAW_FONT_DIR, path)))
+      })
+    },
+    generateBundle() {
+      for (const path of served) {
+        this.emitFile({
+          type: 'asset',
+          fileName: `excalidraw/fonts/${path}`,
+          source: readFileSync(join(EXCALIDRAW_FONT_DIR, path)),
+        })
+      }
+    },
+  }
+}
+
+// The Whiteboard runs in English, so Excalidraw's other translations (about
+// 1.7 MB) are left out of the build.
+function excalidrawEnglishOnlyPlugin() {
+  const stub = '\0excalidraw-unused-locale'
+  return {
+    name: 'arche-excalidraw-english',
+    enforce: 'pre',
+    resolveId(source, importer) {
+      if (importer?.includes('@excalidraw') && /^\.\/locales\/(?!en-)/.test(source)) return stub
+      return undefined
+    },
+    load(id) {
+      return id === stub ? 'export default {}' : undefined
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(resolveVersion()),
     __BUILD_HASH__: JSON.stringify(resolveCommit()),
   },
+  optimizeDeps: {
+    rolldownOptions: { plugins: [excalidrawFontsTransform] },
+  },
+  resolve: {
+    alias: {
+      // The Whiteboard leaves out Excalidraw's Mermaid import (several MB).
+      '@excalidraw/mermaid-to-excalidraw': fileURLToPath(
+        new URL('./src/lib/whiteboard/noMermaid.js', import.meta.url)
+      ),
+    },
+  },
   build: {
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
-          // The Rich text editor (Tiptap + ProseMirror + its markdown parser) is
-          // left out of the manual chunks, so it splits off with its lazy import
-          // and loads only when a Rich text item is shown. Checked first:
-          // `@tiptap/react` would otherwise match 'react' and load at startup.
-          if (/[\\/](@tiptap|prosemirror-[\w-]+|marked|linkifyjs|orderedmap|rope-sequence|w3c-keyname)[\\/]/.test(id)) {
-            return undefined
-          }
-          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+          // Only the libraries every page needs get named chunks. The rest
+          // (the Rich text editor's Tiptap and ProseMirror, the Whiteboard's
+          // Excalidraw and its React-based UI) splits off with the lazy import
+          // that uses it, so it loads only when that item shows.
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) {
             return 'react'
           }
           if (id.includes('@tanstack/react-query')) return 'query'
@@ -120,7 +186,7 @@ export default defineConfig({
           if (id.includes('lucide-react')) return 'icons'
           // Keep pdfmake in its own chunk so it loads only when exporting a PDF.
           if (id.includes('pdfmake')) return 'pdfmake'
-          return 'vendor'
+          return undefined
         },
       },
     },
@@ -142,5 +208,5 @@ export default defineConfig({
         },
       ],
     },
-  }), cloudflare(), seoPlugin()],
+  }), cloudflare(), seoPlugin(), excalidrawFontsPlugin(), excalidrawEnglishOnlyPlugin()],
 })

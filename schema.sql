@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS space_items (
   id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   space_id    uuid        REFERENCES spaces(id) ON DELETE CASCADE,
   user_id     uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'code', 'draw', 'table')),
+  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'code', 'whiteboard', 'table')),
   title       text        NOT NULL DEFAULT '',
   content     jsonb       NOT NULL DEFAULT '{}'::jsonb,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,   -- encrypted client-side
@@ -105,14 +105,23 @@ CREATE TABLE IF NOT EXISTS user_consent (
 -- removed: after unlock, the apps turn secrets into Notes and Markdown notes
 -- into Rich text (only a device can open the content). A removed type that
 -- still has items is kept, with a notice, until they're gone - re-run this file
--- later to finish.
+-- later to finish. 'draw' was renamed 'whiteboard' (the apps convert an old
+-- drawing's content when it opens).
 DO $$
 DECLARE
   allowed text[] := ARRAY['textbox', 'checkbox_list', 'menu_list', 'numbered_list',
-                          'card_list', 'richtext', 'code', 'draw', 'table'];
+                          'card_list', 'richtext', 'code', 'whiteboard', 'table'];
   old text;
   left_count int;
 BEGIN
+  ALTER TABLE space_items DROP CONSTRAINT IF EXISTS space_items_type_check;
+  IF EXISTS (SELECT 1 FROM space_items WHERE type = 'draw') THEN
+    -- A rename, not an edit: allowed in read-only spaces, and updated_at
+    -- stays as it was.
+    ALTER TABLE space_items DISABLE TRIGGER USER;
+    UPDATE space_items SET type = 'whiteboard' WHERE type = 'draw';
+    ALTER TABLE space_items ENABLE TRIGGER USER;
+  END IF;
   FOREACH old IN ARRAY ARRAY['secret', 'markdown', 'authenticator'] LOOP
     SELECT count(*) INTO left_count FROM space_items WHERE type = old;
     IF left_count > 0 THEN
@@ -120,7 +129,6 @@ BEGIN
       RAISE NOTICE '% kept: % item(s) still to convert', old, left_count;
     END IF;
   END LOOP;
-  ALTER TABLE space_items DROP CONSTRAINT IF EXISTS space_items_type_check;
   EXECUTE format(
     'ALTER TABLE space_items ADD CONSTRAINT space_items_type_check CHECK (type = ANY (%L::text[]))',
     allowed

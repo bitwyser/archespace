@@ -120,8 +120,11 @@ function validateItemContent(type, content) {
         content.columns.length <= 100 &&
         content.rows.length <= 1000
       )
-    case 'draw':
-      return Array.isArray(content.strokes) && content.strokes.length <= 10000
+    case 'whiteboard':
+      // An Excalidraw board, or an old drawing (converted when it opens).
+      return Array.isArray(content.elements)
+        ? content.elements.length <= 20000
+        : Array.isArray(content.strokes) && content.strokes.length <= 10000
     default:
       return false
   }
@@ -137,11 +140,13 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
   let skipped = 0
   const rows = []
   for (const item of items) {
+    // Backups made before the Whiteboard was renamed call it 'draw'.
+    const type = item?.type === 'draw' ? 'whiteboard' : item?.type
     if (
       !item ||
       typeof item !== 'object' ||
-      !ITEM_TYPES.includes(item.type) ||
-      !validateItemContent(item.type, item.content)
+      !ITEM_TYPES.includes(type) ||
+      !validateItemContent(type, item.content)
     ) {
       skipped++
       continue
@@ -154,7 +159,7 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
     rows.push({
       space_id: spaceId,
       user_id: userId,
-      type: item.type,
+      type,
       title: encryptedItem.title,
       content: encryptedItem.content,
       position: rows.length,

@@ -5,7 +5,7 @@
 [![Live](https://img.shields.io/badge/live-archespace.app-32d3aa)](https://archespace.app)
 [![License](https://img.shields.io/github/license/bitwyser/archespace)](LICENSE)
 
-ArcheSpace is an open-source, encrypted space for capturing and organising your information, notes, projects, secrets, code, checklists and ideas. Group them into spaces, and fill each space with the content type that fits: plain notes, rich text documents, lists and checklists, tables, code snippets and drawings. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable and kept in one place, synced across your devices.
+ArcheSpace is an open-source, encrypted space for capturing and organising your information, notes, projects, secrets, code, checklists and ideas. Group them into spaces, and fill each space with the content type that fits: plain notes, rich text documents, lists and checklists, tables, code snippets and whiteboards. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable and kept in one place, synced across your devices.
 
 Privacy is built in, not bolted on. ArcheSpace is a self-hostable web app with Supabase sync and a client-side encrypted vault, so your content stays private even from the app's owner and developers. It follows a zero-knowledge architecture: everything is encrypted in your browser and the backend only ever stores ciphertext, so the server, its operators, and the developers never see your data in readable form.
 
@@ -29,7 +29,7 @@ A companion Mobile/Flutter app lives in a [separate repository](https://github.c
 ## Features
 
 - **Spaces** for separating projects and ideas, with one level of nesting (sub-spaces), tags, pinning, and drag-and-drop or keyboard reordering.
-- **Many item types** for different kinds of content, from notes and checklists to rich text documents, tables, drawings and code (see [Item types](#item-types)).
+- **Many item types** for different kinds of content, from notes and checklists to rich text documents, tables, whiteboards and code (see [Item types](#item-types)).
 - **Protect** any item or space so its content only opens with your vault PIN; its name stays visible (see [Security](#security)).
 - **Read-only spaces**: lock a space against edits (enforced by the database) while still viewing, copying, and exporting it.
 - **Starred** view for quick access to the spaces and items you use most, wherever they live.
@@ -56,7 +56,7 @@ A companion Mobile/Flutter app lives in a [separate repository](https://github.c
 | Checklist | Checkboxes with progress tracking. |
 | Cards | Title and description pairs for planning. |
 | Table | Rows and columns; copies as tab-separated values for spreadsheets. |
-| Drawing | Freehand vector sketch with pen, colours, and sizes. |
+| Whiteboard | An Excalidraw board: shapes, arrows, text and freehand drawing on a canvas you can pan and zoom. |
 | Code | Monospace snippet with automatic syntax highlighting. |
 
 All list-style types support add, remove, and drag-and-drop or `Arrow Up` / `Arrow Down` reordering. Older item types are converted automatically after unlock: Markdown notes and older rich text become Rich text, and Secrets become Notes (protect them to keep them behind your PIN).
@@ -125,7 +125,7 @@ Deploys are automatic on Cloudflare's Git-connected builds: pushing to `main` ru
 | Encryption | Web Crypto API (AES-GCM), Argon2id key derivation via `@noble/hashes` |
 | Rich text editor | Tiptap 3 (ProseMirror), shared with the mobile app as a bundled offline editor |
 | Icons | Lucide React |
-| Drawing | `perfect-freehand` for vector ink strokes |
+| Whiteboard | Excalidraw, run offline (its fonts are served by the app) and shared with the mobile app as a bundled offline editor |
 | Syntax highlighting | `highlight.js` (automatic language detection for the Code item type) |
 | PDF export | `pdfmake` (export time and site URL in the header, page numbers in the footer) |
 | Asset generation | `sharp` (dev-only script that renders the app icons and social image) |
@@ -156,6 +156,8 @@ archespace/
       crypto/
       richText/
         webview/
+      whiteboard/
+        webview/
     pages/
     test/
     App.jsx
@@ -177,6 +179,7 @@ Key areas:
 - `src/context/` contains auth, encryption, vault PIN prompt, appearance/theme, toast, shortcuts, command palette, and page action providers.
 - `src/hooks/` contains data hooks for spaces, items, starred, archive, recycle bin, global search, offline sync, online status, drag reordering, and session timeout.
 - `src/lib/richText/` contains the Tiptap editor setup (extensions, find and replace, line spacing), conversion of older notes, and `webview/`, the source of the offline editor bundled into the mobile app (`npm run build:mobile-editor`).
+- `src/lib/whiteboard/` contains the Whiteboard's Excalidraw setup, its saved format (with a PNG preview for cards and PDFs), conversion of older drawings, and `webview/`, the source of the mobile app's offline whiteboard (built by the same command).
 - `src/lib/crypto/` contains AES-GCM encryption, Argon2id key derivation, vault setup and unlock, non-extractable session key storage, PIN recovery code, and WebAuthn PRF passkey wrapping/unlock with a local (IndexedDB) passkey store.
 - `src/lib/` contains the Supabase client, data protection helpers, item type definitions, protected-content state, clipboard serialization, encrypted backup import/export, offline queue and encrypted cache, connectivity detection, rate limiting, audit logging, two-factor (TOTP) and backup-code helpers, PDF export, password policy, and build info.
 - `schema.sql` contains tables, indexes, RLS policies, triggers (including read-only spaces), RPC functions, realtime setup, vault recovery and PIN lockout, the `mfa_backup_codes` table with AAL2 enforcement for two-factor auth, the account-deletion email trigger, and the auth audit log. (Passkey unlock stores its wrapped key on each client, so there is no passkey table.)

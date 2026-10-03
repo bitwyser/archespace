@@ -1,4 +1,4 @@
-import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, Type, Code, Brush, Table } from 'lucide-react'
+import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, Type, Code, Shapes, Table } from 'lucide-react'
 
 /** Human-readable labels for each item type */
 export const TYPE_LABELS = {
@@ -12,7 +12,7 @@ export const TYPE_LABELS = {
   checkbox_list: 'Checklist',
   card_list: 'Cards',
   table: 'Table',
-  draw: 'Drawing',
+  whiteboard: 'Whiteboard',
   code: 'Code',
 }
 
@@ -26,7 +26,7 @@ export const TYPE_ICONS = {
   checkbox_list: CheckSquare,
   card_list: LayoutList,
   table: Table,
-  draw: Brush,
+  whiteboard: Shapes,
   code: Code,
 }
 
@@ -40,7 +40,7 @@ export const TYPE_STYLES = {
   checkbox_list: { text: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/20' },
   card_list: { text: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/20' },
   table: { text: 'text-sky-400', bg: 'bg-sky-400/10', border: 'border-sky-400/20' },
-  draw: { text: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10', border: 'border-fuchsia-400/20' },
+  whiteboard: { text: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10', border: 'border-fuchsia-400/20' },
   code: { text: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/20' },
 }
 
@@ -52,6 +52,6 @@ export const ITEM_TYPE_OPTIONS = [
   { type: 'checkbox_list', label: 'Checklist', desc: 'Items with checkboxes', icon: CheckSquare, color: 'text-green-400', bg: 'bg-green-400/10' },
   { type: 'card_list', label: 'Cards', desc: 'Title + description pairs', icon: LayoutList, color: 'text-amber-400', bg: 'bg-amber-400/10' },
   { type: 'table', label: 'Table', desc: 'Rows and columns of text', icon: Table, color: 'text-sky-400', bg: 'bg-sky-400/10' },
-  { type: 'draw', label: 'Drawing', desc: 'Freehand sketch or diagram', icon: Brush, color: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10' },
+  { type: 'whiteboard', label: 'Whiteboard', desc: 'Shapes, arrows, text and sketches', icon: Shapes, color: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10' },
   { type: 'code', label: 'Code', desc: 'Code snippet with syntax highlighting', icon: Code, color: 'text-orange-400', bg: 'bg-orange-400/10' },
 ]
