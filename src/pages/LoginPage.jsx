@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContextCore'
 import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Check } from 'lucide-react'
 import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '../lib/constants'
 import { MULTI_USER_ENABLED } from '../lib/appConfig'
-import { BrandGlyph } from '../components/BrandGlyph'
 import { TERMS_VERSION } from '../lib/legal'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
@@ -272,13 +271,6 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10 animate-fade-in-up">
         <div className="text-center mb-6 sm:mb-10">
-          <Link
-            to="/"
-            aria-label="Go to home page"
-            className="mx-auto mb-5 flex w-fit items-center justify-center text-accent hover:opacity-80 transition-opacity"
-          >
-            <BrandGlyph className="h-14 w-14" />
-          </Link>
           <p className="text-text-secondary text-sm">
             {isForgot
               ? 'Reset your password'

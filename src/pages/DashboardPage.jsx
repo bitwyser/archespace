@@ -18,7 +18,6 @@ import { useDualEntitySelection } from '../hooks/useDualEntitySelection'
 import { useShortcut } from '../context/ShortcutsCore'
 import { useTheme } from '../context/ThemeCore'
 import GlobalSearchResults from '../components/GlobalSearchResults'
-import { WordmarkLogo } from '../components/WordmarkLogo'
 import { useDragReorder } from '../hooks/useDragReorder'
 import { useCommandPalette } from '../context/CommandPaletteCore'
 import BulkSelectionBar from '../components/BulkSelectionBar'
@@ -466,18 +465,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-bg-base">
       {/* Header (mobile only) */}
       <header ref={headerRef} className="sm:hidden sticky top-0 z-20 glass">
-        <div className="w-full px-4 h-14 flex items-center justify-between gap-3">
-          {/* The wordmark, as in the desktop sidebar; tapping it returns to
-              the spaces home. */}
-          <button
-            type="button"
-            onClick={() => navigate('/app')}
-            aria-label="ArcheSpace - go to spaces"
-            className="shrink-0 flex items-center -ml-1 p-1 rounded-lg"
-          >
-            <WordmarkLogo className="h-6 w-auto text-accent" />
-          </button>
-
+        <div className="w-full px-4 h-14 flex items-center justify-end gap-3">
           {/* Actions - mobile: lock + ordered menu (search is the bar below) */}
           <div className="flex sm:hidden items-center gap-2">
             {isUnlocked && (

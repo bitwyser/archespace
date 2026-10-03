@@ -13,8 +13,6 @@ import {
   LayoutGrid, Folder, Star, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
   ChevronsLeft, ChevronsRight, ChevronRight,
 } from 'lucide-react'
-import { BrandGlyph } from '../BrandGlyph'
-import { WordmarkLogo } from '../WordmarkLogo'
 import { softColorValue } from '../../lib/spaceColors'
 
 const IS_MAC = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform || '')
@@ -160,23 +158,8 @@ export default function AppSidebar({
         collapsed ? 'w-16' : 'w-44'
       }`}
     >
-      {/* Logo */}
-      <button
-        type="button"
-        onClick={() => navigate('/app')}
-        aria-label="ArcheSpace"
-        className="flex items-center justify-center h-16 shrink-0 px-3"
-      >
-        {/* The bare "A" mark when collapsed, the full wordmark when expanded. */}
-        {collapsed ? (
-          <BrandGlyph className="h-8 w-8 shrink-0 text-accent" />
-        ) : (
-          <WordmarkLogo className="h-[22px] w-auto text-accent" />
-        )}
-      </button>
-
       {/* Nav */}
-      <nav className="flex-1 min-h-0 flex flex-col gap-0.5 px-2">
+      <nav className="flex-1 min-h-0 flex flex-col gap-0.5 px-2 pt-4">
         <NavItem icon={LayoutGrid} label="All spaces" active={active === 'spaces'} count={spaces.length} collapsed={collapsed} onClick={() => navigate('/app')} />
 
         {/* The space list folds under its heading and is the only part that

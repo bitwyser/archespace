@@ -1,19 +1,16 @@
 /**
  * LegalLayout.jsx - Shared chrome for the public legal pages (privacy / terms):
- * a branded header, a titled document body, and cross-links + contact.
+ * a header with a link back home, a titled document body, and cross-links +
+ * contact.
  */
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { WordmarkLogo } from '../../components/WordmarkLogo'
 
 export function LegalLayout({ title, updated, children }) {
   return (
     <div className="min-h-[100svh] bg-bg-base text-text-secondary">
       <header className="border-b border-bg-border">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
-          <Link to="/" aria-label="ArcheSpace home" className="flex items-center">
-            <WordmarkLogo className="h-6 w-auto text-accent" />
-          </Link>
+        <div className="mx-auto flex max-w-3xl items-center px-5 py-4">
           <Link
             to="/"
             className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-accent transition-colors"
