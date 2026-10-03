@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@noble/hashes": "^2.2.0",
-    "@supabase/supabase-js": "^2.110.3",
+    "@supabase/supabase-js": "^2.110.8",
     "@tanstack/react-query": "^5.100.14",
     "@tiptap/core": "^3.31.4",
     "@tiptap/extension-highlight": "^3.31.4",
