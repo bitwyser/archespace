@@ -1,4 +1,4 @@
-import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, Type, Code, Brush, Table, ShieldCheck } from 'lucide-react'
+import { AlignLeft, CheckSquare, List, ListOrdered, LayoutList, Type, Code, Brush, Table } from 'lucide-react'
 
 /** Human-readable labels for each item type */
 export const TYPE_LABELS = {
@@ -14,7 +14,6 @@ export const TYPE_LABELS = {
   table: 'Table',
   draw: 'Drawing',
   code: 'Code',
-  authenticator: 'Authenticator',
 }
 
 /** Icon per item type (used on item cards). */
@@ -29,7 +28,6 @@ export const TYPE_ICONS = {
   table: Table,
   draw: Brush,
   code: Code,
-  authenticator: ShieldCheck,
 }
 
 /** Colour scheme per item type (text, background, border) */
@@ -44,7 +42,6 @@ export const TYPE_STYLES = {
   table: { text: 'text-sky-400', bg: 'bg-sky-400/10', border: 'border-sky-400/20' },
   draw: { text: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10', border: 'border-fuchsia-400/20' },
   code: { text: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/20' },
-  authenticator: { text: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20' },
 }
 
 /** Item type definitions for the "Add item" modal */
@@ -57,5 +54,4 @@ export const ITEM_TYPE_OPTIONS = [
   { type: 'table', label: 'Table', desc: 'Rows and columns of text', icon: Table, color: 'text-sky-400', bg: 'bg-sky-400/10' },
   { type: 'draw', label: 'Drawing', desc: 'Freehand sketch or diagram', icon: Brush, color: 'text-fuchsia-400', bg: 'bg-fuchsia-400/10' },
   { type: 'code', label: 'Code', desc: 'Code snippet with syntax highlighting', icon: Code, color: 'text-orange-400', bg: 'bg-orange-400/10' },
-  { type: 'authenticator', label: 'Authenticator', desc: 'Two-factor (TOTP) codes for your accounts', icon: ShieldCheck, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
 ]

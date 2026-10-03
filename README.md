@@ -5,7 +5,7 @@
 [![Live](https://img.shields.io/badge/live-archespace.app-32d3aa)](https://archespace.app)
 [![License](https://img.shields.io/github/license/bitwyser/archespace)](LICENSE)
 
-ArcheSpace is an open source, encrypted workspace for organising everything you're working on. Group your information, knowledge, projects, notes, secrets, code, checklists, and ideas into spaces, and fill each space with the content type that fits: plain notes, rich text documents, checklists and lists, tables, code snippets, drawings, and even two-factor (TOTP) codes. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable, and kept in one place across your devices.
+ArcheSpace is an open source, encrypted workspace for organising everything you're working on. Group your information, knowledge, projects, notes, secrets, code, checklists, and ideas into spaces, and fill each space with the content type that fits: plain notes, rich text documents, checklists and lists, tables, code snippets, and drawings. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable, and kept in one place across your devices.
 
 Privacy is built in, not bolted on. ArcheSpace is a self-hostable web app with Supabase sync and a client-side encrypted vault, so your content stays private even from the app's owner and developers. It follows a zero-knowledge architecture: everything is encrypted in your browser and the backend only ever stores ciphertext, so the server, its operators, and the developers never see your data in readable form.
 
@@ -29,7 +29,7 @@ A companion Android/Flutter app lives in a [separate repository](https://github.
 ## Features
 
 - **Spaces** for separating projects and ideas, with one level of nesting (sub-spaces), tags, pinning, and drag-and-drop or keyboard reordering.
-- **Many item types** for different kinds of content, from notes and rich text documents to a built-in authenticator (see [Item types](#item-types)).
+- **Many item types** for different kinds of content, from notes and checklists to rich text documents, tables, drawings and code (see [Item types](#item-types)).
 - **Protect** any item or space so its content only opens with your vault PIN; its name stays visible (see [Security](#security)).
 - **Read-only spaces**: lock a space against edits (enforced by the database) while still viewing, copying, and exporting it.
 - **Starred** view for quick access to the spaces and items you use most, wherever they live.
@@ -58,7 +58,6 @@ A companion Android/Flutter app lives in a [separate repository](https://github.
 | Table | Rows and columns; copies as tab-separated values for spreadsheets. |
 | Drawing | Freehand vector sketch with pen, colours, and sizes. |
 | Code | Monospace snippet with automatic syntax highlighting. |
-| Authenticator | On-device TOTP codes with live countdowns; secrets are encrypted in your vault. |
 
 All list-style types support add, remove, and drag-and-drop or `Arrow Up` / `Arrow Down` reordering. Older item types are converted automatically after unlock: Markdown notes and older rich text become Rich text, and Secrets become Notes (protect them to keep them behind your PIN).
 

@@ -24,7 +24,6 @@ const RichTextToolbar = lazy(() =>
 import { DrawEditor } from './editors/DrawEditor'
 import { TableEditor } from './editors/TableEditor'
 import { CodeEditor } from './editors/CodeEditor'
-import { AuthenticatorEditor } from './editors/AuthenticatorEditor'
 import { ItemTags } from './ItemTags'
 import { ActionMenu } from './ui/ActionMenu'
 import { buttonClass } from './ui/buttonStyles'
@@ -371,7 +370,7 @@ function SpaceItem({
   // it opens full screen (how those cards edit).
   const showRichToolbar = item.type === 'richtext' && !readOnly && !headerCollapsed && !selectMode && !hidden
   // Copy and Export PDF release the content, so a hidden protected item has none.
-  const canCopy = !hidden && item.type !== 'draw' && item.type !== 'authenticator'
+  const canCopy = !hidden && item.type !== 'draw'
 
   /** Save the title instantly to the server without marking dirty */
   const saveTitle = async () => {
@@ -770,7 +769,6 @@ function SpaceItem({
         {item.type === 'card_list'     && <CardListEditor   key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'draw'          && <DrawEditor       key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
-        {item.type === 'authenticator' && <AuthenticatorEditor key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
         </div>
         {/* A soft fade at the bottom cues "more below" without a label; tapping
             the preview expands it in full. */}

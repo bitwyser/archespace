@@ -38,7 +38,6 @@ const defaultContent = {
   code: { code: '' },
   draw: { strokes: [] },
   table: { columns: ['', ''], rows: [['', ''], ['', '']] },
-  authenticator: { entries: [] },
 }
 
 // Query/cache key for the dashboard's items (those with no space).

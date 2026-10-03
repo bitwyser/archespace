@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS space_items (
   id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   space_id    uuid        REFERENCES spaces(id) ON DELETE CASCADE,
   user_id     uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'code', 'draw', 'table', 'authenticator')),
+  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'code', 'draw', 'table')),
   title       text        NOT NULL DEFAULT '',
   content     jsonb       NOT NULL DEFAULT '{}'::jsonb,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,   -- encrypted client-side
@@ -101,18 +101,19 @@ CREATE TABLE IF NOT EXISTS user_consent (
 
 -- 1b. UPDATES FOR EXISTING DATABASES
 
--- The allowed item types. 'secret' and 'markdown' were removed: after unlock,
--- the apps turn secrets into Notes and Markdown notes into Rich text (only a
--- device can open the content). A removed type that still has items is kept,
--- with a notice, until they're converted - re-run this file later to finish.
+-- The allowed item types. 'secret', 'markdown' and 'authenticator' were
+-- removed: after unlock, the apps turn secrets into Notes and Markdown notes
+-- into Rich text (only a device can open the content). A removed type that
+-- still has items is kept, with a notice, until they're gone - re-run this file
+-- later to finish.
 DO $$
 DECLARE
   allowed text[] := ARRAY['textbox', 'checkbox_list', 'menu_list', 'numbered_list',
-                          'card_list', 'richtext', 'code', 'draw', 'table', 'authenticator'];
+                          'card_list', 'richtext', 'code', 'draw', 'table'];
   old text;
   left_count int;
 BEGIN
-  FOREACH old IN ARRAY ARRAY['secret', 'markdown'] LOOP
+  FOREACH old IN ARRAY ARRAY['secret', 'markdown', 'authenticator'] LOOP
     SELECT count(*) INTO left_count FROM space_items WHERE type = old;
     IF left_count > 0 THEN
       allowed := allowed || old;

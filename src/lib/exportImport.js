@@ -122,8 +122,6 @@ function validateItemContent(type, content) {
       )
     case 'draw':
       return Array.isArray(content.strokes) && content.strokes.length <= 10000
-    case 'authenticator':
-      return Array.isArray(content.entries) && content.entries.length <= 1000
     default:
       return false
   }
