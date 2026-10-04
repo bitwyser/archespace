@@ -1,27 +1,18 @@
 /**
  * Shared Supabase client singleton. Configured from the VITE_SUPABASE_* env
  * vars (see `.env.example`); never create a second client.
+ *
+ * In local mode (lib/localMode.js) it's a stand-in with the same calls,
+ * answered from this browser's storage, with no network at all.
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { isLocalMode } from './localMode'
+import { createLocalClient } from './local/localClient'
+import { openIndexedDbStore } from './local/localStore'
 
 const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    '[Arche] Missing Supabase configuration.\n' +
-    'Create a .env file in the project root with:\n' +
-    '  VITE_SUPABASE_URL=https://your-project-id.supabase.co\n' +
-    '  VITE_SUPABASE_ANON_KEY=your-anon-key-here\n' +
-    'See .env.example for reference.'
-  )
-}
-
-// The auth storage key is pinned to supabase-js's default
-// (`sb-<project-ref>-auth-token`) so a library upgrade that changes how it's
-// derived can't orphan saved sessions and sign everyone out.
-const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
 
 // "Remember me" preference. When true (default), the auth token lives in
 // localStorage and survives a browser restart; when false, it lives in
@@ -80,13 +71,30 @@ const authStorage = {
   },
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    // Changing this signs everyone out once.
-    storageKey: `sb-${projectRef}-auth-token`,
-    storage: authStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-})
+function createRemoteClient() {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      '[Arche] Missing Supabase configuration.\n' +
+      'Create a .env file in the project root with:\n' +
+      '  VITE_SUPABASE_URL=https://your-project-id.supabase.co\n' +
+      '  VITE_SUPABASE_ANON_KEY=your-anon-key-here\n' +
+      'See .env.example for reference.'
+    )
+  }
+  // The auth storage key is pinned to supabase-js's default
+  // (`sb-<project-ref>-auth-token`) so a library upgrade that changes how it's
+  // derived can't orphan saved sessions and sign everyone out.
+  const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      // Changing this signs everyone out once.
+      storageKey: `sb-${projectRef}-auth-token`,
+      storage: authStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  })
+}
+
+export const supabase = isLocalMode() ? createLocalClient(openIndexedDbStore) : createRemoteClient()

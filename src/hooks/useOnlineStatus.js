@@ -7,13 +7,16 @@
  */
 import { useEffect, useState } from 'react'
 import { isReachable, subscribeReachable, setReachable } from '../lib/connectivity'
+import { isLocalMode } from '../lib/localMode'
 
 export function useOnlineStatus() {
   const [online, setOnline] = useState(
-    () => (typeof navigator !== 'undefined' ? navigator.onLine : true) && isReachable()
+    // Local mode needs no network, so it's never "offline".
+    () => isLocalMode() || ((typeof navigator !== 'undefined' ? navigator.onLine : true) && isReachable())
   )
 
   useEffect(() => {
+    if (isLocalMode()) return undefined
     const compute = () => setOnline(navigator.onLine && isReachable())
     const goOnline = () => {
       // Interface came back - assume reachable until a request proves otherwise.

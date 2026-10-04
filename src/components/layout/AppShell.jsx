@@ -20,6 +20,7 @@ import { ConfirmDialog } from '../ui/UI'
 import { convertSecretsToNotes } from '../../lib/secretMigration'
 import { convertLegacyRichText } from '../../lib/richText/richTextMigration'
 import { queryKeys } from '../../lib/queryKeys'
+import { SIGN_OUT_TEXT } from '../../lib/localMode'
 import AppSidebar from './AppSidebar'
 
 function activeFromPath(pathname) {
@@ -109,14 +110,14 @@ export default function AppShell() {
 
       {confirmSignOut && (
         <ConfirmDialog
-          title="Sign out?"
-          message="You'll need your login password and vault PIN to sign back in."
-          confirmLabel="Sign out"
+          title={SIGN_OUT_TEXT.title}
+          message={SIGN_OUT_TEXT.message}
+          confirmLabel={SIGN_OUT_TEXT.label}
           destructive
           onConfirm={() => {
             setConfirmSignOut(false)
             signOut()
-            toast.info('Signed out')
+            toast.info(SIGN_OUT_TEXT.done)
           }}
           onClose={() => setConfirmSignOut(false)}
         />

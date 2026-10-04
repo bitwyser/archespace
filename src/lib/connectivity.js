@@ -7,6 +7,8 @@
  * the offline banner and cache fallback react to actual reachability, not just
  * the interface state.
  */
+import { isLocalMode } from './localMode'
+
 let reachable = true
 const listeners = new Set()
 
@@ -30,6 +32,8 @@ export function subscribeReachable(fn) {
  * server/permission error), so callers can treat it as "unreachable".
  */
 export function isNetworkError(err) {
+  // Local mode makes no requests, so nothing fails for lack of a network.
+  if (isLocalMode()) return false
   if (!navigator.onLine) return true
   if (err instanceof TypeError) return true // fetch() throws TypeError on network failure
   const text = `${err?.name || ''} ${err?.message || ''}`.toLowerCase()

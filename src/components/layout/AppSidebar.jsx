@@ -14,6 +14,7 @@ import {
   ChevronsLeft, ChevronsRight, ChevronRight,
 } from 'lucide-react'
 import { softColorValue } from '../../lib/spaceColors'
+import { SIGN_OUT_TEXT } from '../../lib/localMode'
 import { MENU_PANEL, MENU_DIVIDER, MENU_HINT, menuItemClass } from '../ui/menuStyles'
 
 const IS_MAC = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform || '')
@@ -126,7 +127,7 @@ function SettingsMenu({ collapsed, settingsActive, onSettings, onShortcuts, onCo
           <MenuItem icon={Keyboard} label="Keyboard shortcuts" hint="?" onClick={run(onShortcuts)} />
           <div className={MENU_DIVIDER} />
           <MenuItem icon={Settings} label="Open settings" onClick={run(onSettings)} />
-          {onSignOut && <MenuItem icon={LogOut} label="Sign out" danger onClick={run(onSignOut)} />}
+          {onSignOut && <MenuItem icon={LogOut} label={SIGN_OUT_TEXT.label} danger onClick={run(onSignOut)} />}
         </div>
       )}
     </div>

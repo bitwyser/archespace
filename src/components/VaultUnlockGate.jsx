@@ -12,6 +12,10 @@ import WeakPinWarning from './WeakPinWarning'
 import { ConfirmDialog, Spinner } from './ui/UI'
 import RecoveryCodeDialog from './RecoveryCodeDialog'
 import { buttonClass } from './ui/buttonStyles'
+import { isLocalMode, SIGN_OUT_TEXT } from '../lib/localMode'
+
+// Local mode has no account, so no account password to re-check.
+const LOCAL = isLocalMode()
 
 export default function VaultUnlockGate({ children }) {
   const { user, signIn, signOut, loading: authLoading } = useAuth()
@@ -201,7 +205,7 @@ export default function VaultUnlockGate({ children }) {
     e.preventDefault()
     clearUnlockError()
     setFormError('')
-    if (!accountPassword) {
+    if (!LOCAL && !accountPassword) {
       setFormError('Enter your account password.')
       return
     }
@@ -221,11 +225,14 @@ export default function VaultUnlockGate({ children }) {
     try {
       setPendingAction('pin')
       setAwaitingVaultResult(true)
-      // Re-verify the account password before destroying anything.
-      const { error: authError } = await signIn(user.email, accountPassword)
-      if (authError) {
-        setFormError('Incorrect account password.')
-        return
+      // Re-verify the account password before destroying anything (local
+      // mode has none; the confirmation box stands in for it).
+      if (!LOCAL) {
+        const { error: authError } = await signIn(user.email, accountPassword)
+        if (authError) {
+          setFormError('Incorrect account password.')
+          return
+        }
       }
       const { masterKey, recoveryCode } = await resetVault(pin)
       // Hold the key; unlock on "I saved this code" so the new code always shows.
@@ -339,7 +346,7 @@ export default function VaultUnlockGate({ children }) {
 
   if (resetMode) {
     const resetPinsMatch = confirmPin.length > 0 && pin === confirmPin
-    const canReset = Boolean(accountPassword && pin && confirmPin && resetConfirmed)
+    const canReset = Boolean((LOCAL || accountPassword) && pin && confirmPin && resetConfirmed)
     return (
       <div className="min-h-[100svh] bg-bg-base flex items-start sm:items-center justify-center px-4 pt-16 pb-6 sm:p-4 overflow-y-auto">
         <div className="w-full max-w-sm">
@@ -364,22 +371,24 @@ export default function VaultUnlockGate({ children }) {
               code. This cannot be undone.
             </div>
 
-            <div>
-              <label htmlFor="reset-account-password" className="block text-xs font-medium text-text-secondary mb-1.5">
-                Account password
-              </label>
-              <input
-                id="reset-account-password"
-                type="password"
-                value={accountPassword}
-                onChange={e => { setAccountPassword(e.target.value); setFormError('') }}
-                required
-                autoFocus
-                autoComplete="current-password"
-                disabled={unlocking}
-                className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm disabled:opacity-50"
-              />
-            </div>
+            {!LOCAL && (
+              <div>
+                <label htmlFor="reset-account-password" className="block text-xs font-medium text-text-secondary mb-1.5">
+                  Account password
+                </label>
+                <input
+                  id="reset-account-password"
+                  type="password"
+                  value={accountPassword}
+                  onChange={e => { setAccountPassword(e.target.value); setFormError('') }}
+                  required
+                  autoFocus
+                  autoComplete="current-password"
+                  disabled={unlocking}
+                  className="password-field w-full bg-bg-elevated border border-bg-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors text-sm disabled:opacity-50"
+                />
+              </div>
+            )}
 
             <PinInput
               id="reset-pin"
@@ -449,15 +458,15 @@ export default function VaultUnlockGate({ children }) {
             onClick={() => setConfirmSignOut(true)}
             className="w-full text-center text-xs text-text-muted hover:text-danger transition-colors mt-4"
           >
-            Sign out
+            {SIGN_OUT_TEXT.label}
           </button>
         </div>
 
         {confirmSignOut && (
           <ConfirmDialog
-            title="Sign out?"
-            message="You'll need your login password and vault PIN to sign back in."
-            confirmLabel="Sign out"
+            title={SIGN_OUT_TEXT.title}
+            message={SIGN_OUT_TEXT.message}
+            confirmLabel={SIGN_OUT_TEXT.label}
             destructive
             onConfirm={() => { setConfirmSignOut(false); signOut() }}
             onClose={() => setConfirmSignOut(false)}
@@ -626,19 +635,21 @@ export default function VaultUnlockGate({ children }) {
           onClick={() => setConfirmSignOut(true)}
           className="w-full text-center text-xs text-text-muted hover:text-danger transition-colors mt-4"
         >
-          Sign out
+          {SIGN_OUT_TEXT.label}
         </button>
 
-        <p className="text-center text-text-muted text-[10px] mt-4 sm:mt-6 leading-relaxed">
-          Vault PIN is separate from your login password.
-        </p>
+        {!LOCAL && (
+          <p className="text-center text-text-muted text-[10px] mt-4 sm:mt-6 leading-relaxed">
+            Vault PIN is separate from your login password.
+          </p>
+        )}
       </div>
 
       {confirmSignOut && (
         <ConfirmDialog
-          title="Sign out?"
-          message="You'll need your login password and vault PIN to sign back in."
-          confirmLabel="Sign out"
+          title={SIGN_OUT_TEXT.title}
+          message={SIGN_OUT_TEXT.message}
+          confirmLabel={SIGN_OUT_TEXT.label}
           destructive
           onConfirm={() => { setConfirmSignOut(false); signOut() }}
           onClose={() => setConfirmSignOut(false)}

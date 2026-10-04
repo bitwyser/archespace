@@ -8,6 +8,7 @@
 
 import { useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { isLocalMode } from '../lib/localMode'
 import { SESSION_ABSOLUTE_MAX_MS } from '../lib/constants'
 
 const STARTED_AT_KEY = 'arche:session-started-at'
@@ -17,6 +18,8 @@ export function useSessionTimeout() {
   const timer = useRef(null)
 
   useEffect(() => {
+    // Local mode has no account session to expire (the vault still locks).
+    if (isLocalMode()) return undefined
     const expire = () => {
       window.dispatchEvent(new CustomEvent('arche:session-expired', { detail: { reason: 'absolute' } }))
       // Local scope: this device's own absolute timeout must not revoke the

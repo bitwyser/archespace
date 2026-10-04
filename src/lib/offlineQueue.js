@@ -1,6 +1,8 @@
 /**
  * offlineQueue.js - Persist failed writes while offline; flush on reconnect.
  */
+import { isLocalMode } from './localMode'
+
 const STORAGE_KEY = 'arche-offline-queue'
 
 function readQueue() {
@@ -54,6 +56,8 @@ export async function flushOfflineQueue(processor) {
 }
 
 export function isOnline() {
+  // Local mode needs no network, so it's never "offline".
+  if (isLocalMode()) return true
   return typeof navigator !== 'undefined' ? navigator.onLine : true
 }
 

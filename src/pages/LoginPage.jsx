@@ -5,7 +5,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams, useLocation, useNavigate } from 'react-router-dom'
 import { buttonClass } from '../components/ui/buttonStyles'
 import { useAuth } from '../context/AuthContextCore'
-import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Check } from 'lucide-react'
+import { Lock, Eye, EyeOff, UserPlus, Mail, ArrowLeft, Check, HardDrive } from 'lucide-react'
+import { enterLocalMode } from '../lib/localMode'
 import { MAX_LOGIN_ATTEMPTS, LOGIN_ATTEMPT_WINDOW_MS, LOGIN_COOLDOWN_MS } from '../lib/constants'
 import { MULTI_USER_ENABLED } from '../lib/appConfig'
 import { TERMS_VERSION } from '../lib/legal'
@@ -530,6 +531,26 @@ export default function LoginPage() {
               </>
             )}
           </p>
+        )}
+
+        {!isForgot && (
+          <div className="mt-6">
+            <div className="flex items-center gap-3 text-xs text-text-muted">
+              <span className="h-px flex-1 bg-bg-border" />
+              or
+              <span className="h-px flex-1 bg-bg-border" />
+            </div>
+            <button
+              type="button"
+              onClick={enterLocalMode}
+              className={buttonClass({ variant: 'secondary', size: 'lg', className: 'w-full mt-4' })}
+            >
+              <HardDrive size={14} /> Use without an account
+            </button>
+            <p className="mt-2 text-center text-xs leading-5 text-text-muted">
+              Your data stays encrypted in this browser only; nothing is sent to a server.
+            </p>
+          </div>
         )}
 
         <p className="text-center mt-4">

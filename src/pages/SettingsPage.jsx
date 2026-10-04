@@ -8,7 +8,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, KeyRound, Lock, LogOut, Trash2 } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Eye, EyeOff, Check, AlertTriangle, User, Palette, KeyRound, Lock, LogOut, Trash2, HardDrive } from 'lucide-react'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { useVaultPinPrompt } from '../context/VaultPinPromptCore'
@@ -28,6 +28,9 @@ import { VAULT_PIN_MIN_LENGTH, VAULT_AUTO_LOCK_OPTIONS } from '../lib/constants'
 import { PASSWORD_RULES, validatePassword } from '../lib/passwordPolicy'
 import { logAudit } from '../lib/auditLog'
 import { APP_VERSION, COMMIT_URL } from '../lib/buildInfo'
+import { isLocalMode, leaveLocalMode, LOCAL_USER } from '../lib/localMode'
+import { eraseLocalData } from '../lib/local/localStore'
+import { listPasskeys, removePasskey } from '../lib/crypto/passkeyVault'
 import ReauthCode from '../components/ReauthCode'
 import { Modal, ConfirmDialog } from '../components/ui/UI'
 import RecoveryCodeDialog from '../components/RecoveryCodeDialog'
@@ -37,10 +40,22 @@ import {
   rowButtonClass, rowDangerButtonClass, primaryButtonClass, inputClass, labelClass,
 } from '../components/settings/settingStyles'
 
+// Local mode has no account: its own section takes the Account section's place.
+const LOCAL = isLocalMode()
+
 /** Nav entries; each section's header repeats its title and description. */
 const SECTIONS = [
-  { id: 'account', title: 'Account', description: 'Your email, login password and sign-in security.', icon: User },
-  { id: 'vault', title: 'Vault', description: 'Your vault PIN encrypts everything you store. It is separate from your login password.', icon: KeyRound },
+  LOCAL
+    ? { id: 'local', title: 'Local mode', description: 'No account: everything stays in this browser.', icon: HardDrive }
+    : { id: 'account', title: 'Account', description: 'Your email, login password and sign-in security.', icon: User },
+  {
+    id: 'vault',
+    title: 'Vault',
+    description: LOCAL
+      ? 'Your vault PIN encrypts everything you store.'
+      : 'Your vault PIN encrypts everything you store. It is separate from your login password.',
+    icon: KeyRound,
+  },
   { id: 'appearance', title: 'Appearance', description: 'Theme and accent colour.', icon: Palette },
   { id: 'backup', title: 'Backup', description: 'Download a copy of your data, or restore one.', icon: Download },
 ]
@@ -113,7 +128,7 @@ export default function SettingsPage() {
   const [recoverySetupLoading, setRecoverySetupLoading] = useState(false)
   const [pinRecoveryLoading, setPinRecoveryLoading] = useState(false)
   const [rawActiveSection, setActiveSection] = useState(
-    () => (typeof navigator !== 'undefined' && !navigator.onLine ? 'appearance' : 'account')
+    () => (LOCAL ? 'local' : typeof navigator !== 'undefined' && !navigator.onLine ? 'appearance' : 'account')
   )
   const online = useOnlineStatus()
   // Offline: only Appearance is safe to use (it applies locally). Account,
@@ -123,6 +138,7 @@ export default function SettingsPage() {
     ? 'appearance'
     : rawActiveSection
   const [confirmSignOutAll, setConfirmSignOutAll] = useState(false)
+  const [confirmErase, setConfirmErase] = useState(false)
   // The one row whose form is open: 'email' | 'password' | 'pin' |
   // 'pin-recovery' | 'recovery-code' | null.
   const [openRow, setOpenRow] = useState(null)
@@ -483,6 +499,45 @@ export default function SettingsPage() {
           {/* Content pane */}
           <div className="min-w-0 flex-1 md:flex md:min-h-0 md:flex-col">
             <div className="md:min-h-0 md:flex-1 md:overflow-y-auto md:pr-1">
+              {/* Local mode */}
+              <SettingsSection id="local" active={activeSection}>
+                <SettingGroup label="Your data">
+                  <SettingRow
+                    title="Stored in this browser"
+                    description="Encrypted with your vault PIN and kept only here; nothing is sent to a server. Clearing this site's data deletes it, so export a backup now and then."
+                    action={
+                      <button type="button" onClick={() => openSection('backup')} className={rowButtonClass}>
+                        <Download size={15} /> Back up
+                      </button>
+                    }
+                  />
+                </SettingGroup>
+
+                <SettingGroup label="Account">
+                  <SettingRow
+                    title="Use an account instead"
+                    description="Export a backup, then sign in or create an account and import it there. Your local data stays here until you erase it."
+                    action={
+                      <button type="button" onClick={leaveLocalMode} className={rowButtonClass}>
+                        <LogOut size={15} /> Leave local mode
+                      </button>
+                    }
+                  />
+                </SettingGroup>
+
+                <SettingGroup label="Danger zone" danger>
+                  <SettingRow
+                    title="Erase local data"
+                    description="Permanently deletes every space, item and your vault from this browser. This can't be undone."
+                    action={
+                      <button type="button" onClick={() => setConfirmErase(true)} className={rowDangerButtonClass}>
+                        <Trash2 size={15} /> Erase
+                      </button>
+                    }
+                  />
+                </SettingGroup>
+              </SettingsSection>
+
               {/* Account */}
               <SettingsSection id="account" active={activeSection}>
                 <SettingGroup label="Sign-in">
@@ -857,7 +912,9 @@ export default function SettingsPage() {
                     }
                   />
                 </SettingGroup>
-                <p className="mt-3 px-1 text-xs text-text-muted">Synced to your account, so every device looks the same.</p>
+                <p className="mt-3 px-1 text-xs text-text-muted">
+                  {LOCAL ? 'Saved in this browser.' : 'Synced to your account, so every device looks the same.'}
+                </p>
               </SettingsSection>
 
               {/* Backup */}
@@ -1023,6 +1080,25 @@ export default function SettingsPage() {
             />
           </div>
         </Modal>
+      )}
+
+      {confirmErase && (
+        <ConfirmDialog
+          title="Erase local data?"
+          message="Every space, item and your vault in this browser will be deleted permanently. Export a backup first if you might want them later."
+          confirmLabel="Erase everything"
+          destructive
+          onConfirm={async () => {
+            setConfirmErase(false)
+            lock()
+            for (const passkey of await listPasskeys(LOCAL_USER.id).catch(() => [])) {
+              await removePasskey(passkey.id).catch(() => {})
+            }
+            await eraseLocalData().catch(() => {})
+            leaveLocalMode()
+          }}
+          onClose={() => setConfirmErase(false)}
+        />
       )}
 
       {confirmSignOutAll && (

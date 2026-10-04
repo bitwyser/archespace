@@ -10,6 +10,8 @@
  * Entries are namespaced by user id so a shared browser never mixes accounts
  * (and another account could not decrypt them anyway).
  */
+import { isLocalMode } from './localMode'
+
 const DB_NAME = 'arche-offline-cache'
 const STORE = 'rows'
 const VERSION = 1
@@ -32,8 +34,12 @@ function cacheKey(userId, key) {
   return `${userId || 'anon'}:${key}`
 }
 
-/** Store the encrypted rows for a query key. Best-effort; never throws. */
+/**
+ * Store the encrypted rows for a query key. Best-effort; never throws. Local
+ * mode skips it: its data is already in this browser.
+ */
 export async function saveRows(userId, key, rows) {
+  if (isLocalMode()) return
   try {
     const db = await openDb()
     await new Promise((resolve, reject) => {

@@ -28,6 +28,7 @@ A companion Mobile/Flutter app lives in a [separate repository](https://github.c
 
 ## Features
 
+- **Local mode** ("Use without an account" on the sign-in page): no account and no server. Everything is kept in this browser's IndexedDB, still encrypted with the vault PIN, and nothing is sent anywhere. The app talks to a local stand-in for Supabase (`src/lib/local/`) that follows the same database rules. Move to an account later with an encrypted backup.
 - **Welcome space** for new accounts: a short tour of spaces, item types and the vault, created and encrypted on the device right after the vault is set up (content shared with the mobile app in `spec/welcome-space.json`).
 - **Spaces** for separating projects and ideas, with one level of nesting (sub-spaces), tags, pinning, and drag-and-drop or keyboard reordering.
 - **Many item types** for different kinds of content, from notes and checklists to rich text documents, tables, whiteboards and code (see [Item types](#item-types)).
