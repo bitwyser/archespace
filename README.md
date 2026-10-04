@@ -28,6 +28,7 @@ A companion Mobile/Flutter app lives in a [separate repository](https://github.c
 
 ## Features
 
+- **Welcome space** for new accounts: a short tour of spaces, item types and the vault, created and encrypted on the device right after the vault is set up (content shared with the mobile app in `spec/welcome-space.json`).
 - **Spaces** for separating projects and ideas, with one level of nesting (sub-spaces), tags, pinning, and drag-and-drop or keyboard reordering.
 - **Many item types** for different kinds of content, from notes and checklists to rich text documents, tables, whiteboards and code (see [Item types](#item-types)).
 - **Protect** any item or space so its content only opens with your vault PIN; its name stays visible (see [Security](#security)).

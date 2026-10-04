@@ -32,6 +32,7 @@ import {
   removePasskey as removePasskeyVault,
 } from '../lib/crypto/passkeyVault'
 import { VAULT_PIN_LOCKOUT_MS, VAULT_PIN_MAX_ATTEMPTS } from '../lib/constants'
+import { createWelcomeSpace } from '../lib/welcomeSpace'
 import { getAutoLockId, setAutoLockId, autoLockMs } from '../lib/crypto/vaultAutoLock'
 import {
   getClientRateLimitStatus,
@@ -255,6 +256,8 @@ export function EncryptionProvider({ children }) {
     try {
       const result = await setupUserVault(userId, pin)
       logAudit({ action: 'vault_setup' })
+      // A brand-new account starts with a short tour (never after a reset).
+      await createWelcomeSpace(userId, result.masterKey)
       return result
     } catch (err) {
       const msg = err?.message || "Couldn't set up vault."

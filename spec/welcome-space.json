@@ -1,0 +1,98 @@
+{
+  "about": "The sample space a new account starts with, created and encrypted on the device right after the vault is set up. Shared by the web and mobile apps (keep both copies identical). List entries get fresh ids when created.",
+  "space": {
+    "name": "Welcome to ArcheSpace",
+    "description": "A quick tour of spaces, items and your vault. Delete it whenever you like.",
+    "color": "green",
+    "tags": ["guide"],
+    "pinned": true
+  },
+  "items": [
+    {
+      "type": "textbox",
+      "title": "Start here",
+      "pinned": true,
+      "content": {
+        "text": "ArcheSpace keeps everything in spaces. A space works like a folder: it holds items, and each item is one kind of content, such as a note, a checklist, a table or a whiteboard.\n\nEverything you write is encrypted on your device before it is saved. Only your vault PIN opens it, so nobody else can read it, not even the server.\n\nHave a look at the items below, try a few things, then delete this space when you're done."
+      }
+    },
+    {
+      "type": "checkbox_list",
+      "title": "Try these first",
+      "content": {
+        "items": [
+          { "text": "Create a space of your own", "checked": false },
+          { "text": "Add an item to it", "checked": false },
+          { "text": "Tag an item, then filter by that tag", "checked": false },
+          { "text": "Star something you open often", "checked": false },
+          { "text": "Protect an item so it needs your PIN to open", "checked": false },
+          { "text": "Keep your recovery code somewhere safe", "checked": false }
+        ]
+      }
+    },
+    {
+      "type": "richtext",
+      "title": "How your vault works",
+      "content": {
+        "doc": {
+          "type": "doc",
+          "content": [
+            { "type": "heading", "attrs": { "level": 3 }, "content": [{ "type": "text", "text": "Your PIN" }] },
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Your vault PIN unlocks your data. It never leaves your device, so nobody can reset it for you by email." }] },
+            { "type": "heading", "attrs": { "level": 3 }, "content": [{ "type": "text", "text": "Your recovery code" }] },
+            { "type": "paragraph", "content": [{ "type": "text", "text": "The recovery code you saved during setup is the way back in if you forget your PIN. Keep it offline, somewhere safe." }] },
+            { "type": "heading", "attrs": { "level": 3 }, "content": [{ "type": "text", "text": "Locking" }] },
+            {
+              "type": "bulletList",
+              "content": [
+                { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "The vault locks itself after a while without use." }] }] },
+                { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "Lock it yourself any time from the sidebar." }] }] },
+                { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "A protected item asks for your PIN again, even while the vault is open." }] }] }
+              ]
+            },
+            { "type": "paragraph", "content": [{ "type": "text", "marks": [{ "type": "bold" }], "text": "If you lose both your PIN and your recovery code, your data can't be recovered. That's the trade-off for nobody else holding a key." }] }
+          ]
+        }
+      }
+    },
+    {
+      "type": "textbox",
+      "title": "A protected note",
+      "locked": true,
+      "content": {
+        "text": "This note is protected. Its title stays visible, but its content opens only with your vault PIN, even while the vault is unlocked.\n\nProtect any item or space from its menu. It suits passwords, ID numbers and anything else you'd rather not show on screen by accident."
+      }
+    },
+    {
+      "type": "card_list",
+      "title": "Item types",
+      "content": {
+        "items": [
+          { "title": "Note", "description": "Plain text, quick to write." },
+          { "title": "Rich text", "description": "Headings, lists, tasks, tables and links." },
+          { "title": "List", "description": "Bullets or numbers." },
+          { "title": "Checklist", "description": "Things to tick off." },
+          { "title": "Cards", "description": "A title with details, like these." },
+          { "title": "Table", "description": "Rows and columns." },
+          { "title": "Whiteboard", "description": "Shapes, arrows, text and sketches." },
+          { "title": "Code", "description": "Snippets with syntax highlighting." }
+        ]
+      }
+    },
+    {
+      "type": "menu_list",
+      "title": "Tips",
+      "content": {
+        "items": [
+          { "text": "Search finds spaces and items, including what's inside them." },
+          { "text": "Pin spaces and items to keep them at the top." },
+          { "text": "Sub-spaces keep a big space tidy." },
+          { "text": "Make a space read-only so nothing in it changes by accident." },
+          { "text": "Archive keeps things out of the way; the recycle bin keeps deleted things for 30 days." },
+          { "text": "Export an encrypted backup from Settings." },
+          { "text": "On a phone, swipe from the left edge to open the sidebar." }
+        ]
+      }
+    }
+  ]
+}
