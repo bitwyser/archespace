@@ -47,7 +47,7 @@ const ogImage = () => `
     <svg x="30" y="34" width="140" height="140" viewBox="${GLYPH_VIEWBOX}"><path d="${A_PATH}" fill="${MINT}" fill-rule="evenodd"/></svg>
   </g>
   <text x="360" y="300" font-family="Arial, sans-serif" font-size="76" font-weight="700" fill="#ffffff">ArcheSpace</text>
-  <text x="362" y="360" font-family="Arial, sans-serif" font-size="30" fill="#aeb4c2">Everything in One Private Space</text>
+  <text x="362" y="360" font-family="Arial, sans-serif" font-size="30" fill="#aeb4c2">Everything in One Encrypted Space</text>
   <text x="100" y="560" font-family="Arial, sans-serif" font-size="26" font-weight="600" fill="${MINT}">archespace.app</text>
 </svg>`
 
