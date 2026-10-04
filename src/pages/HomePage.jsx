@@ -14,7 +14,7 @@ import {
   Fingerprint,
   FolderTree,
   GitCommitHorizontal,
-  KeyRound,
+  HardDrive,
   Layers,
   LockKeyhole,
   Mail,
@@ -23,11 +23,13 @@ import {
   RefreshCw,
   Search,
   Server,
+  ShieldAlert,
   ShieldCheck,
   Smartphone,
   X,
 } from 'lucide-react'
 import { APP_VERSION, COMMIT_URL, MOBILE_REPO_URL, REPO_URL } from '../lib/buildInfo'
+import { enterLocalMode } from '../lib/localMode'
 
 function GithubMark({ size = 16, className = '' }) {
   return (
@@ -67,12 +69,12 @@ const navSections = [
 // Every feature worth knowing about, each in a line.
 const features = [
   { icon: FolderTree, title: 'Spaces', desc: 'Group everything into spaces and sub-spaces, with colours, tags and pins.' },
-  { icon: Layers, title: 'Item types', desc: 'Notes, rich text, lists, checklists, cards, tables, whiteboards and code.' },
+  { icon: Layers, title: 'Item types', desc: 'Notes, rich text, lists, checklists, cards, tables, code and whiteboards.' },
   { icon: Search, title: 'Search', desc: 'Find anything across all your spaces, and filter by tag.' },
   { icon: LockKeyhole, title: 'Zero-knowledge encryption', desc: 'Encrypted on your device before it syncs; the server cannot read it.' },
+  { icon: HardDrive, title: 'No account needed', desc: 'Use it without signing up; everything stays encrypted on your device, with no server at all.' },
   { icon: ShieldCheck, title: 'Protected items', desc: 'Keep sensitive items and spaces hidden until your vault PIN opens them.' },
-  { icon: Fingerprint, title: 'Passkeys and biometrics', desc: 'Unlock with a fingerprint, your face or a passkey instead of the PIN.' },
-  { icon: KeyRound, title: 'Two-factor sign-in', desc: 'Optional authenticator-app codes at sign-in, with a backup code.' },
+  { icon: Fingerprint, title: 'Biometrics and two-factor', desc: 'Unlock with a fingerprint, face or passkey, and add authenticator codes at sign-in.' },
   { icon: RefreshCw, title: 'Sync and offline', desc: 'Syncs across your devices, and keeps working without a connection.' },
   { icon: FileDown, title: 'Backups and PDF', desc: 'Encrypted backup files, and PDF export of a space or an item.' },
   { icon: ArchiveRestore, title: 'Read-only, archive and bin', desc: 'Freeze a space against edits, archive what is done, restore what you deleted.' },
@@ -83,8 +85,8 @@ const features = [
 const steps = [
   {
     step: '01',
-    title: 'Create your account',
-    body: 'Sign up with an email and password. This only gets you into the app; it does not unlock any of your content yet.',
+    title: 'Sign up, or skip it',
+    body: 'Create an account to sync across your devices, or use ArcheSpace without one and keep everything on this device. Neither unlocks your content yet.',
   },
   {
     step: '02',
@@ -94,7 +96,7 @@ const steps = [
   {
     step: '03',
     title: 'Start capturing',
-    body: 'Add notes, lists, code, secrets, and more. Everything is encrypted on your device before it syncs, and reads back plainly on any device you unlock.',
+    body: 'Add notes, lists, code, whiteboards and more. Everything is encrypted on your device before it is saved, and reads back plainly wherever you unlock it.',
   },
 ]
 
@@ -103,6 +105,7 @@ const serverFacts = [
   'Your vault key is created on your device and never leaves it.',
   'We store only unreadable ciphertext plus plain metadata: ids, timestamps, and order.',
   'There is no reset link and no backdoor. Lose both your PIN and recovery code, and the data can never be unlocked again.',
+  'Without an account there is no server at all: everything stays on your device.',
 ]
 
 /** A section heading: a plain title and an optional one-line intro. */
@@ -281,36 +284,61 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section id="top" className="relative flex min-h-[100svh] items-center overflow-hidden px-4 py-24 sm:px-6">
+      <section id="top" className="relative flex min-h-[100svh] items-center overflow-hidden px-4 pb-24 pt-28 sm:px-6">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(50,211,170,0.14),transparent_55%),linear-gradient(180deg,#0f1117_0%,#12151d_100%)]" />
         <div className="hero-enter relative z-10 mx-auto w-full max-w-6xl">
-          <h1 className="text-[clamp(2rem,min(10vw,11vh),3.5rem)] font-semibold leading-[1.08] tracking-normal">
-            Everything in One<br />
-            Private Space
+          {/* Size carries the emphasis: a quiet lead-in, then the key words
+              large and bright (no second colour to compete with the buttons). */}
+          <h1 className="tracking-[-0.025em]">
+            <span className="block text-[clamp(1.625rem,min(7.2vw,7.5vh),3rem)] font-medium leading-tight text-white/65">
+              Everything in One{' '}
+            </span>
+            <span className="mt-1 block text-[clamp(2.25rem,min(10.5vw,13vh),5.25rem)] font-bold leading-[1.02] text-white">
+              Encrypted Space
+            </span>
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/72 sm:text-lg sm:leading-7">
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 sm:text-lg sm:leading-8">
             An open-source, zero-knowledge encrypted space to capture and organise your notes,
             projects, secrets, code, checklists and ideas, synced across all your devices.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link to="/signup" className={btnPrimary}>
+
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <Link to="/signup" className={`${btnPrimary} sm:px-6 sm:py-3`}>
               Get started
               <ArrowRight size={16} />
             </Link>
-            <Link to="/login" className={btnGhost}>
+            <Link to="/login" className={`${btnGhost} sm:px-6 sm:py-3`}>
               Sign in
             </Link>
           </div>
-          <a
-            href={ANDROID_APP_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-6 inline-flex min-h-[44px] items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors"
-          >
-            <Smartphone size={16} className="text-white/55" />
-            Get the Android app
-            <ArrowRight size={14} />
-          </a>
+
+          {/* Other ways in, set apart from the main actions by a hairline. */}
+          <div className="mt-10 max-w-md space-y-1 border-t border-white/10 pt-5">
+            <button
+              type="button"
+              onClick={enterLocalMode}
+              className="group flex min-h-[44px] w-full items-center gap-3 text-left text-sm font-medium text-emerald-200 transition-colors hover:text-emerald-100"
+            >
+              <HardDrive size={16} className="shrink-0" />
+              <span>
+                Try it without an account
+                <span className="block text-xs font-normal text-white/50">
+                  No sign-up; everything stays encrypted on your device.
+                </span>
+              </span>
+              <ArrowRight size={14} className="ml-auto shrink-0 transition-transform group-hover:translate-x-0.5" />
+            </button>
+            <a
+              href={ANDROID_APP_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="group flex min-h-[44px] w-full items-center gap-3 text-sm font-medium text-white/70 transition-colors hover:text-white"
+            >
+              <Smartphone size={16} className="shrink-0 text-white/55" />
+              Get the Android app
+              <ArrowRight size={14} className="ml-auto shrink-0 transition-transform group-hover:translate-x-0.5" />
+            </a>
+          </div>
         </div>
       </section>
 
@@ -437,12 +465,22 @@ export default function HomePage() {
       </section>
 
       {/* Contact */}
-      <section id="contact" className="scroll-mt-20 border-t border-white/5 bg-[#0b0d11] px-4 py-20 sm:px-6">
-        <div className="mx-auto max-w-6xl">
-          <SectionHeading title="Contact">
-            Stuck with setup, sign-in or recovery, or have an idea or a bug to report? Write to us.
-          </SectionHeading>
-          <a href="mailto:support@archespace.app" className={`reveal mt-6 ${btnGhost}`}>
+      <section id="contact" className="scroll-mt-20 border-t border-white/5 bg-[#0b0d11] px-4 py-14 sm:px-6">
+        <div className="reveal mx-auto flex max-w-6xl flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-12">
+          <div className="max-w-2xl">
+            <h2 className="text-2xl font-semibold text-white sm:text-3xl">Contact</h2>
+            <p className="mt-3 text-sm leading-6 text-white/62">
+              Write to us about setup or sign-in, your vault and recovery, a bug, or an idea.
+              For a bug, tell us what happened, the app version (in Settings or the footer) and
+              whether it was on web or Android.
+            </p>
+            <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-white/55">
+              <ShieldAlert size={14} className="mt-0.5 shrink-0 text-emerald-200" />
+              Never send your vault PIN, recovery code or password. We never ask for them, and
+              they couldn&apos;t help us read your data anyway.
+            </p>
+          </div>
+          <a href="mailto:support@archespace.app" className={`shrink-0 self-start md:self-auto ${btnGhost}`}>
             <Mail size={16} className="text-emerald-200" />
             support@archespace.app
           </a>
