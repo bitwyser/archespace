@@ -5,7 +5,7 @@
 [![Live](https://img.shields.io/badge/live-archespace.app-32d3aa)](https://archespace.app)
 [![License](https://img.shields.io/github/license/bitwyser/archespace)](LICENSE)
 
-ArcheSpace is an open-source, encrypted space for capturing and organising your information, notes, projects, secrets, code, checklists and ideas. Group them into spaces, and fill each space with the content type that fits: plain notes, rich text documents, lists and checklists, tables, code snippets and whiteboards. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable and kept in one place, synced across your devices.
+ArcheSpace is an open-source, encrypted space for capturing and organising your information, notes, projects, secrets, code, checklists and ideas. Group them into spaces, and fill each space with the content type that fits: plain notes, rich text documents, lists and checklists, tables, Kanban boards, code snippets and whiteboards. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable and kept in one place, synced across your devices.
 
 Privacy is built in, not bolted on. ArcheSpace is a self-hostable web app with Supabase sync and a client-side encrypted vault, so your content stays private even from the app's owner and developers. It follows a zero-knowledge architecture: everything is encrypted in your browser and the backend only ever stores ciphertext, so the server, its operators, and the developers never see your data in readable form.
 
@@ -28,25 +28,21 @@ A companion Mobile/Flutter app lives in a [separate repository](https://github.c
 
 ## Features
 
-- **Local mode** ("Use without an account" on the sign-in page): no account and no server. Everything is kept in this browser's IndexedDB, still encrypted with the vault PIN, and nothing is sent anywhere. The app talks to a local stand-in for Supabase (`src/lib/local/`) that follows the same database rules. Move to an account later with an encrypted backup.
-- **Welcome space** for new accounts: a short tour of spaces, item types and the vault, created and encrypted on the device right after the vault is set up (content shared with the mobile app in `spec/welcome-space.json`).
-- **Spaces** for separating projects and ideas, with one level of nesting (sub-spaces), tags, pinning, and drag-and-drop or keyboard reordering.
-- **Many item types** for different kinds of content, from notes and checklists to rich text documents, tables, whiteboards and code (see [Item types](#item-types)).
-- **Protect** any item or space so its content only opens with your vault PIN; its name stays visible (see [Security](#security)).
-- **Read-only spaces**: lock a space against edits (enforced by the database) while still viewing, copying, and exporting it.
-- **Starred** view for quick access to the spaces and items you use most, wherever they live.
-- **Grid or list views**, per-view sort (default / name / newest), and a unified search across spaces, tags, and item content.
-- **Command palette** (`Ctrl/Cmd+K`) and keyboard shortcuts throughout; press `?` for the in-app list.
-- **Auto-save**, one-click copy, bulk actions, and duplicate / move / archive / restore / delete workflows.
-- **Archive** and a **recycle bin** (restore or permanently delete).
-- **PDF export** of a whole space or a single item, with a branded header, footer URL, and page numbers.
-- **Encrypted backups**: export everything to a backup file that only opens with your vault, and import it on any account.
-- **Appearance**: System / Dark / Light modes and five accent colours (mint, lavender, amber, sky, rose).
-- **Encrypted vault** with configurable auto-lock and optional passkey / biometric unlock (see [Security](#security)).
-- **Optional two-factor sign-in** (TOTP) with a one-time backup code.
-- **Offline mode**: read and edit item text from an encrypted on-device cache; changes sync when you reconnect.
-- **PWA install**, full keyboard operation, and accessibility throughout.
-- Single-user self-hosting by default, with an optional multi-user mode.
+- **Zero-knowledge encryption**: the server only ever stores ciphertext ([Security](#security))
+- **Vault PIN** with a recovery code, auto-lock and passkey / biometric unlock
+- **Protected** items and spaces, and **read-only** spaces
+- **Spaces** with sub-spaces, tags and colours
+- **Item types**: notes, rich text, lists, checklists, cards, tables, Kanban boards, whiteboards and code ([Item types](#item-types))
+- **Reminders** that repeat or stay until turned off, with an **Upcoming** view
+- **Search** across spaces, tags and content
+- **Starred**, **archive** and **recycle bin**
+- **Realtime sync** with the [mobile app](https://github.com/bitwyser/archespace-mobile), and **offline mode**
+- **Encrypted backups** and **PDF export**
+- **Local mode**: no account, nothing leaves the browser
+- **Two-factor sign-in**
+- **Command palette** and keyboard shortcuts
+- **Installable PWA**
+- **Self-hostable** ([Setup](#setup))
 
 ## Item types
 
@@ -58,6 +54,7 @@ A companion Mobile/Flutter app lives in a [separate repository](https://github.c
 | Checklist | Checkboxes with progress tracking. |
 | Cards | Title and description pairs for planning. |
 | Table | Rows and columns; copies as tab-separated values for spreadsheets. |
+| Kanban | Cards in columns (To do, Doing, Done to start): drag a card between columns, or move it with the arrow keys; rename, move and delete columns. |
 | Whiteboard | An Excalidraw board: shapes, arrows, text and freehand drawing on a canvas you can pan and zoom. |
 | Code | Monospace snippet with automatic syntax highlighting. |
 
@@ -65,26 +62,19 @@ All list-style types support add, remove, and drag-and-drop or `Arrow Up` / `Arr
 
 ## Security
 
-You sign in with Supabase Auth (login password), then unlock a separate vault **PIN or passphrase** to access your data. The password proves account ownership; the PIN protects the content.
+Two separate secrets: a **login password** for the account and a **vault PIN** (or passphrase) for the content.
 
-- **Client-side encryption.** Space and item content is encrypted in the browser with AES-GCM before it reaches Supabase; only non-sensitive metadata (IDs, timestamps, positions, flags) is stored in plain form. The server, its operators, and developers never see readable content.
-- **Key derivation.** A random vault master key is wrapped with a key derived from your PIN using Argon2id (memory-hard). The PIN is never stored.
-- **Sessions.** The unlocked key is a non-extractable key in the browser, auto-locks after a configurable idle period (default 24h), and clears on sign-out. Login sessions last a week; "sign out of all devices" revokes every session. Failed login and PIN attempts are rate limited, and repeated PIN failures lock the vault server-side. Supabase Row Level Security restricts each user to their own rows.
-- **Passkey / biometric unlock.** Optionally unlock with Face ID, Touch ID, or Windows Hello via the WebAuthn PRF extension. The wrapped key stays on-device (browser IndexedDB), never on the server; the PIN and recovery code remain fallbacks.
-- **Two-factor (2FA).** Optional TOTP, off by default. When on, sign-in asks for the code after the password and before the vault, and RLS enforces AAL2 on the content tables so it can't be bypassed via the API.
-- **Protected items and spaces.** A protected item keeps its title and tags visible, and a protected space its name; the content stays hidden until you enter your vault PIN again, including in search, Starred, PDF export, and copy. Opened content hides again when the vault locks. Wrong PINs count towards the same lockout as unlocking. Protection is a PIN check inside an already unlocked vault (the content is encrypted with the same vault key as everything else), so it guards against someone using your unlocked device, not against someone who can inspect the running app.
-- **Encrypted backups.** A backup file holds your spaces and items encrypted with the vault key, plus that key wrapped with your vault PIN (as the server stores it). It opens directly in the same vault, and anywhere else (another account, or after a vault reset) with the vault PIN you had when exporting. After a PIN change, older backups still need the earlier PIN.
-- **Recovery.** A one-time recovery code is shown once at vault setup and can reset a forgotten PIN. If **both** the PIN and recovery code are lost, the vault can be reset by re-entering your account password, which wipes the (unrecoverable) encrypted data and starts a fresh vault. There is no backdoor.
-- **Audit log.** An owner-only `audit_log` records authentication and security events (never content), written only by `SECURITY DEFINER` triggers and a whitelisted RPC.
+- **Encrypted in the browser.** Content is encrypted with AES-256-GCM before it leaves the device; the server stores only ciphertext and non-sensitive metadata (IDs, timestamps, positions, flags).
+- **PIN never stored.** A random vault key is wrapped with a key derived from the PIN by Argon2id.
+- **Unlock.** The vault auto-locks when idle. Passkey / biometric unlock keeps its wrapped key on the device, never on the server.
+- **Server-side guards.** Row Level Security limits each user to their own data, repeated wrong PINs lock the vault, and optional two-factor sign-in is enforced by the database, not just the app.
+- **Protected items and spaces** need the PIN again inside an unlocked vault: a guard against someone using your unlocked device.
+- **Encrypted backups** open in the same vault, or anywhere with the PIN used when exporting.
+- **No backdoor.** A one-time recovery code resets a forgotten PIN. Lose both and the data can't be recovered.
 
-**Limits to be aware of**
+**Limits.** A short PIN can be guessed offline if a backup file leaks, so prefer a longer one. Client-side encryption is only as safe as the code running it; Settings links the build to its source commit so you can verify it.
 
-- The app cannot recover encrypted content without the current vault PIN or recovery code; there is no backdoor.
-- If both the vault PIN and recovery code are lost, encrypted space data cannot be decrypted.
-- Backups are encrypted, but a short vault PIN can be guessed offline if a backup file leaks; a longer PIN or passphrase makes backups much harder to open. Store them carefully.
-- Client-side encryption is only as safe as the code your browser runs: a tampered build or malicious dependency could bypass it. Self-hosting, HTTPS, and reviewed dependencies reduce this, and Settings shows the exact build commit (linked to GitHub) so you can verify the running code.
-
-**Privacy & legal.** Accepting the Terms of Service and Privacy Policy is required at sign-up and recorded server-side. The policies are served at `/privacy` and `/terms`. To report a vulnerability, see [SECURITY.md](SECURITY.md) (and `/.well-known/security.txt`).
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## Setup
 
@@ -179,7 +169,7 @@ Key areas:
 - `src/pages/` contains the public home page, login, password reset, dashboard, space view, archive, recycle bin, and settings pages.
 - `src/components/` contains reusable UI (shared buttons, menus, type badges, dialogs), item editors, layout shell, vault unlock gate, and space components.
 - `src/context/` contains auth, encryption, vault PIN prompt, appearance/theme, toast, shortcuts, command palette, and page action providers.
-- `src/hooks/` contains data hooks for spaces, items, starred, archive, recycle bin, global search, offline sync, online status, drag reordering, and session timeout.
+- `src/hooks/` contains data hooks for spaces, items, starred, reminders, archive, recycle bin, global search, offline sync, online status, drag reordering, and session timeout.
 - `src/lib/richText/` contains the Tiptap editor setup (extensions, find and replace, line spacing), conversion of older notes, and `webview/`, the source of the offline editor bundled into the mobile app (`npm run build:mobile-editor`).
 - `src/lib/whiteboard/` contains the Whiteboard's Excalidraw setup, its saved format (with a PNG preview for cards and PDFs), conversion of older drawings, and `webview/`, the source of the mobile app's offline whiteboard (built by the same command).
 - `src/lib/crypto/` contains AES-GCM encryption, Argon2id key derivation, vault setup and unlock, non-extractable session key storage, PIN recovery code, and WebAuthn PRF passkey wrapping/unlock with a local (IndexedDB) passkey store.
