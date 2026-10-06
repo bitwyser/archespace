@@ -282,14 +282,16 @@ CREATE TRIGGER trg_space_items_read_only
   BEFORE INSERT OR UPDATE ON space_items
   FOR EACH ROW EXECUTE FUNCTION guard_read_only_items();
 
--- Purge soft-deleted rows older than 30 days. Wire to pg_cron / scheduled edge function.
-CREATE OR REPLACE FUNCTION purge_old_deleted_records()
-RETURNS void AS $$
+-- The recycle bin is never emptied automatically: only a permanent delete by
+-- the user removes anything. Drop the old 30-day purge, and its pg_cron job
+-- if one was set up.
+DO $$
 BEGIN
-  DELETE FROM space_items WHERE deleted_at < now() - interval '30 days';
-  DELETE FROM spaces      WHERE deleted_at < now() - interval '30 days';
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
+    PERFORM cron.unschedule(jobid) FROM cron.job WHERE command ILIKE '%purge_old_deleted_records%';
+  END IF;
+END $$;
+DROP FUNCTION IF EXISTS purge_old_deleted_records();
 
 -- 4. ROW LEVEL SECURITY (RLS)
 

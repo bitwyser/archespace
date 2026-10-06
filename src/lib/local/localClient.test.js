@@ -70,14 +70,14 @@ describe('local client', () => {
     expect((await db.rpc('delete_current_user')).error).toBeTruthy()
   })
 
-  it('empties recycle bin entries older than 30 days when it opens', async () => {
+  it('keeps recycle bin entries however old they are', async () => {
     const store = openMemoryStore()
-    const old = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString()
+    const old = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString()
     store.tables.space_items.set('old', { id: 'old', deleted_at: old })
-    store.tables.space_items.set('new', { id: 'new', deleted_at: new Date().toISOString() })
+    store.tables.spaces.set('gone', { id: 'gone', deleted_at: old })
     const db = createLocalClient(async () => store)
-    const { data } = await db.from('space_items').select('id')
-    expect(data).toEqual([{ id: 'new' }])
+    expect((await db.from('space_items').select('id')).data).toEqual([{ id: 'old' }])
+    expect((await db.from('spaces').select('id')).data).toEqual([{ id: 'gone' }])
   })
 
   it('is always signed in as the local user', async () => {

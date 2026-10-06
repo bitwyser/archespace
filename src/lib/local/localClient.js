@@ -6,14 +6,12 @@
  *
  * It mirrors what the database does for these tables (see schema.sql):
  * column defaults, `updated_at`, cascading deletes, the read-only space
- * guards, the vault PIN lockout and the 30-day recycle bin purge. Rows hold the
- * same encrypted values the server would.
+ * guards and the vault PIN lockout. Like the server, it never empties the
+ * recycle bin by itself. Rows hold the same encrypted values the server would.
  */
 import { LOCAL_USER, leaveLocalMode } from '../localMode'
 import { TABLES } from './localStore'
 
-const DAY_MS = 24 * 60 * 60 * 1000
-const BIN_DAYS = 30
 const PIN_MAX_ATTEMPTS = 5
 const PIN_LOCK_MS = 5 * 60 * 1000
 
@@ -117,9 +115,8 @@ class LocalQuery {
 /** The local database: tables in memory, written through to the store. */
 class LocalEngine {
   constructor(openStore) {
-    this.ready = openStore().then(async (store) => {
+    this.ready = openStore().then((store) => {
       this.store = store
-      await this.purgeBin()
       return store
     })
   }
@@ -260,14 +257,6 @@ class LocalEngine {
         throw READ_ONLY
       }
     }
-  }
-
-  /** The recycle bin keeps things for 30 days (purge_old_deleted_records). */
-  async purgeBin() {
-    const cutoff = Date.now() - BIN_DAYS * DAY_MS
-    const expired = (row) => row.deleted_at && Date.parse(row.deleted_at) < cutoff
-    await this.erase('space_items', [...this.tables.space_items.values()].filter(expired))
-    await this.erase('spaces', [...this.tables.spaces.values()].filter(expired))
   }
 
   // Database functions the app calls
