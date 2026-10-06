@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
 import { encryptItem, decryptItem, decryptItems, encryptTags, encryptReminder } from '../lib/dataProtection'
 import { normalizeReminder } from '../lib/reminder'
+import { defaultKanban } from '../lib/kanban'
 import { parseTags } from '../lib/spaceColors'
 import { assertOnline } from '../lib/offlineQueue'
 import { saveRows, loadRows } from '../lib/offlineCache'
@@ -41,6 +42,8 @@ const defaultContent = {
   whiteboard: { elements: [] },
   table: { columns: ['', ''], rows: [['', ''], ['', '']] },
 }
+// Fresh ids for every new Kanban's columns.
+const newContent = (type) => (type === 'kanban' ? defaultKanban() : defaultContent[type])
 
 // Query/cache key for the dashboard's items (those with no space).
 const DASHBOARD_ITEMS_KEY = 'dashboard'
@@ -149,7 +152,7 @@ export function useSpaceItems(spaceId) {
       const plain = {
         type,
         title: title || '',
-        content: content ?? defaultContent[type] ?? {},
+        content: content ?? newContent(type) ?? {},
       }
       const encrypted = await encryptItem(plain, cryptoKey)
 

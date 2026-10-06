@@ -12,6 +12,7 @@ import { supabase } from './supabase'
 import { logAudit } from './auditLog'
 import { encryptSpace, encryptItem, encryptReminder, decryptItems } from './dataProtection'
 import { isRichDoc } from './richText/doc'
+import { isKanbanContent } from './kanban'
 import { parseTags } from './spaceColors'
 import { isEncryptedBackup, openBackupWithKey, openBackupWithPin, sealBackup } from './backupCrypto'
 import { getVaultBackupMeta } from './crypto/vault'
@@ -121,6 +122,8 @@ function validateItemContent(type, content) {
         content.columns.length <= 100 &&
         content.rows.length <= 1000
       )
+    case 'kanban':
+      return isKanbanContent(content)
     case 'whiteboard':
       // An Excalidraw board, or an old drawing (converted when it opens).
       return Array.isArray(content.elements)

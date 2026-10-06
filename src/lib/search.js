@@ -4,6 +4,7 @@
 
 import { richContentToPlainText } from './richText/doc'
 import { isContentHidden, isSpaceHidden } from './itemLock'
+import { kanbanSearchText } from './kanban'
 
 /** How many item matches the search dropdown renders (shared with keyboard nav). */
 export const SEARCH_ITEM_DISPLAY_LIMIT = 30
@@ -35,6 +36,7 @@ function itemSearchText(item) {
     if (Array.isArray(c.columns)) parts.push(...c.columns)
     if (Array.isArray(c.rows)) for (const row of c.rows) if (Array.isArray(row)) parts.push(...row)
   }
+  if (item.type === 'kanban') parts.push(...kanbanSearchText(c))
   return norm(parts.filter(Boolean).join(' '))
 }
 

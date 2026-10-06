@@ -4,6 +4,7 @@
  */
 
 import { richContentToPlainText } from './richText/doc'
+import { kanbanToText } from './kanban'
 
 const BULLET = '• '
 
@@ -55,6 +56,8 @@ export function itemToClipboardText({ type, content } = {}) {
       return cardsToText(c.items)
     case 'table':
       return tableToText(c)
+    case 'kanban':
+      return kanbanToText(c)
     default:
       return ''
   }

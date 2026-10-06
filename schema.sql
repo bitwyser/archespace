@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS space_items (
   id          uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
   space_id    uuid        REFERENCES spaces(id) ON DELETE CASCADE,
   user_id     uuid        REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'code', 'whiteboard', 'table')),
+  type        text        NOT NULL CHECK (type IN ('textbox', 'checkbox_list', 'menu_list', 'numbered_list', 'card_list', 'richtext', 'code', 'whiteboard', 'table', 'kanban')),
   title       text        NOT NULL DEFAULT '',
   content     jsonb       NOT NULL DEFAULT '{}'::jsonb,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,   -- encrypted client-side
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS user_consent (
 DO $$
 DECLARE
   allowed text[] := ARRAY['textbox', 'checkbox_list', 'menu_list', 'numbered_list',
-                          'card_list', 'richtext', 'code', 'whiteboard', 'table'];
+                          'card_list', 'richtext', 'code', 'whiteboard', 'table', 'kanban'];
   old text;
   left_count int;
 BEGIN

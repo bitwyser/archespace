@@ -10,6 +10,7 @@ import { TYPE_LABELS } from './itemTypes'
 import { isRichDoc } from './richText/doc'
 import { isContentHidden } from './itemLock'
 import { hasBoardContent } from './whiteboard/scene'
+import { kanbanColumns } from './kanban'
 
 const SITE_URL = 'https://archespace.app/'
 const CHROME_COLOR = '#8a8a8a'
@@ -296,6 +297,29 @@ function itemBodyNodes({ type, content }) {
         layout: tableLayout,
         fontSize: 10,
       }]
+    }
+    case 'kanban': {
+      // Each column as a heading with its count, then its cards.
+      const columns = kanbanColumns(c)
+      if (!columns.some(col => col.cards.length || col.title.trim())) return [emptyNode()]
+      return columns.flatMap(col => [
+        { text: `${col.title || 'Untitled'}  (${col.cards.length})`, bold: true, margin: [0, 4, 0, 4] },
+        ...(col.cards.length
+          ? col.cards.map(card => ({
+              table: {
+                widths: ['*'],
+                body: [[{
+                  stack: [
+                    { text: card.title || 'Untitled', bold: true },
+                    ...(card.description ? [{ text: card.description, color: '#444444', margin: [0, 2, 0, 0] }] : []),
+                  ],
+                }]],
+              },
+              layout: cardLayout,
+              margin: [0, 0, 0, 6],
+            }))
+          : [{ ...emptyNode(), margin: [0, 0, 0, 6] }]),
+      ])
     }
     case 'whiteboard': {
       if (!hasBoardContent(c)) return [emptyNode()]

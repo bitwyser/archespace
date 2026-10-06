@@ -27,6 +27,7 @@ const RichTextToolbar = lazy(() =>
 const WhiteboardEditor = lazy(() => import('./editors/WhiteboardEditor'))
 import { WhiteboardPreview } from './editors/WhiteboardPreview'
 import { TableEditor } from './editors/TableEditor'
+import { KanbanEditor } from './editors/KanbanEditor'
 import { CodeEditor } from './editors/CodeEditor'
 import { ItemTags } from './ItemTags'
 import { ReminderChip } from './ReminderChip'
@@ -761,9 +762,10 @@ function SpaceItem({
         className={`${
           isFullscreen
             // Same padding for every type, its sides lined up with the header
-            // and tags; a Whiteboard's canvas fills the space inside it and
-            // scrolls (pans) itself.
-            ? `flex-1 px-4 py-5 ${item.type === 'whiteboard' ? 'min-h-0' : 'overflow-y-auto'}`
+            // and tags; a Whiteboard's canvas, or a Kanban's columns, fill the
+            // space inside it and scroll themselves.
+            // A Kanban's own Add column row sits close under the tags.
+            ? `flex-1 px-4 ${item.type === 'kanban' ? 'pt-1 pb-4' : 'py-5'} ${item.type === 'whiteboard' || item.type === 'kanban' ? 'min-h-0' : 'overflow-y-auto'}`
             : denseView
               ? `px-2.5 ${showTags && !showRichToolbar ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`
               : `px-4 ${showRichToolbar ? 'pt-3' : showTags ? 'pt-0' : 'pt-4'} pb-4`
@@ -809,6 +811,7 @@ function SpaceItem({
           <WhiteboardPreview content={localContent} onOpen={handleFullscreenClick} onUpgrade={handleContentChange} readOnly={readOnly} />
         ))}
         {item.type === 'table'         && <TableEditor      key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} />}
+        {item.type === 'kanban'        && <KanbanEditor     key={`${item.id}:${editorVersion}`} content={localContent} onChange={handleContentChange} readOnly={readOnly} fill={isFullscreen} />}
         </div>
         {/* A soft fade at the bottom cues "more below" without a label; tapping
             the preview expands it in full. */}

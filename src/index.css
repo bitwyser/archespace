@@ -184,11 +184,12 @@ body {
 /* Firefox */
 * { scrollbar-width: thin; scrollbar-color: var(--bg-border) transparent; }
 
-/* A slimmer scrollbar with no arrows (the sidebar's space list). Chromium
-   only uses the WebKit styles when the standard properties are unset. */
+/* A slimmer scrollbar with no arrows (the sidebar's space list, a Kanban's
+   columns), vertical or horizontal. Chromium only uses the WebKit styles when
+   the standard properties are unset. */
 @supports selector(::-webkit-scrollbar) {
   .scrollbar-slim { scrollbar-width: auto; scrollbar-color: auto; }
-  .scrollbar-slim::-webkit-scrollbar { width: 4px; }
+  .scrollbar-slim::-webkit-scrollbar { width: 4px; height: 4px; }
   .scrollbar-slim::-webkit-scrollbar-thumb { border: 0; border-radius: 2px; }
 }
 
