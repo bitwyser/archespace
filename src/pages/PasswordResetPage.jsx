@@ -91,7 +91,7 @@ export default function PasswordResetPage() {
           <p className="text-text-muted text-sm">Choose a new login password.</p>
         </div>
 
-        <div className="bg-bg-surface border border-bg-border rounded-2xl p-6 shadow-xl shadow-black/10">
+        <div className="bg-bg-card rounded-2xl p-6 shadow-sm">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Spinner size={20} />

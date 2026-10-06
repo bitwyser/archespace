@@ -281,7 +281,8 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-bg-surface border border-bg-border rounded-2xl p-6 shadow-xl shadow-black/10">
+        {/* Borderless on a soft shadow, like the space and item cards. */}
+        <div className="bg-bg-card rounded-2xl p-6 shadow-sm">
           {isForgot && resetSent ? (
             <div className="space-y-4 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-success/20 bg-success/10">

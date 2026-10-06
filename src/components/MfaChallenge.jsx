@@ -68,7 +68,7 @@ export default function MfaChallenge({ onVerified }) {
           </p>
         </div>
 
-        <form onSubmit={submit} className="bg-bg-surface border border-bg-border rounded-2xl p-5 space-y-4">
+        <form onSubmit={submit} className="bg-bg-card rounded-2xl shadow-sm p-5 space-y-4">
           <input
             autoFocus
             value={code}

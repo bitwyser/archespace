@@ -304,7 +304,7 @@ export default function VaultUnlockGate({ children }) {
     return (
       <div className="min-h-[100svh] bg-bg-base flex items-start sm:items-center justify-center px-4 pt-16 pb-6 sm:p-4 overflow-y-auto">
         <div className="w-full max-w-sm">
-          <div className="bg-bg-surface border border-bg-border rounded-2xl p-6 space-y-4">
+          <div className="bg-bg-card rounded-2xl shadow-sm p-6 space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto">
               <Fingerprint size={24} className="text-accent" />
             </div>
@@ -362,7 +362,7 @@ export default function VaultUnlockGate({ children }) {
 
           <form
             onSubmit={handleReset}
-            className="bg-bg-surface border border-bg-border rounded-2xl p-6 space-y-3"
+            className="bg-bg-card rounded-2xl shadow-sm p-6 space-y-3"
           >
             <div className="flex items-start gap-2 rounded-lg bg-danger/10 border border-danger/20 px-3 py-2.5 text-xs leading-relaxed text-danger">
               <AlertTriangle size={15} className="mt-0.5 shrink-0" />
@@ -497,7 +497,7 @@ export default function VaultUnlockGate({ children }) {
 
         <form
           onSubmit={needsSetup ? handleSetup : forgotPin ? handleRecover : handleUnlock}
-          className="bg-bg-surface border border-bg-border rounded-2xl p-6 space-y-3"
+          className="bg-bg-card rounded-2xl shadow-sm p-6 space-y-3"
         >
           {showPasskeyUnlock && (
             <>
