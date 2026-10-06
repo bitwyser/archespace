@@ -35,6 +35,7 @@ import { useSpaceStats } from '../hooks/useSpaceStats'
 import { useGlobalSearchData } from '../hooks/useGlobalSearch'
 import { filterGlobalSearch, searchOptionId, SEARCH_ITEM_DISPLAY_LIMIT } from '../lib/search'
 import { Modal, ConfirmDialog } from '../components/ui/UI'
+import { SIGN_OUT_TEXT } from '../lib/localMode'
 import { SortMenu } from '../components/ui/SortMenu'
 import { ActionMenu } from '../components/ui/ActionMenu'
 import { Button, IconButton } from '../components/ui/Button'
@@ -576,7 +577,7 @@ export default function DashboardPage() {
               Keyboard shortcuts
             </button>
 
-            {/* Sign out sits apart, so it isn't tapped by mistake. */}
+            {/* Sign out (Leave local mode) sits apart, so it isn't tapped by mistake. */}
             <div className="border-t border-bg-border mt-1 pt-2">
               <button
                 type="button"
@@ -584,7 +585,7 @@ export default function DashboardPage() {
                 className="w-full flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-danger-muted text-text-secondary hover:text-danger transition-colors text-sm font-medium"
               >
                 <LogOut size={16} />
-                Sign out
+                {SIGN_OUT_TEXT.label}
               </button>
             </div>
           </div>
@@ -593,11 +594,11 @@ export default function DashboardPage() {
 
       {confirmSignOut && (
         <ConfirmDialog
-          title="Sign out?"
-          message="You'll need your login password and vault PIN to sign back in."
-          confirmLabel="Sign out"
+          title={SIGN_OUT_TEXT.title}
+          message={SIGN_OUT_TEXT.message}
+          confirmLabel={SIGN_OUT_TEXT.label}
           destructive
-          onConfirm={() => { setConfirmSignOut(false); signOut(); toast.info('Signed out') }}
+          onConfirm={() => { setConfirmSignOut(false); signOut(); toast.info(SIGN_OUT_TEXT.done) }}
           onClose={() => setConfirmSignOut(false)}
         />
       )}
