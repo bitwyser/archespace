@@ -5,13 +5,13 @@
  * top bars remain the navigation on phones. The space list folds under its
  * heading; Lock vault sits at the bottom, above a Settings menu (Commands,
  * Shortcuts, Settings, Sign out). `active` marks the current section
- * ('spaces' | 'space' | 'starred' | 'archive' | 'bin' | 'settings');
- * `activeSpaceId` the open top-level space.
+ * ('spaces' | 'space' | 'upcoming' | 'starred' | 'archive' | 'bin' |
+ * 'settings'); `activeSpaceId` the open top-level space.
  */
 import { useEffect, useRef, useState } from 'react'
 import {
   LayoutGrid, Folder, Star, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
-  ChevronsLeft, ChevronsRight, ChevronRight,
+  ChevronsLeft, ChevronsRight, ChevronRight, Bell,
 } from 'lucide-react'
 import { softColorValue } from '../../lib/spaceColors'
 import { SIGN_OUT_TEXT } from '../../lib/localMode'
@@ -30,15 +30,15 @@ function SectionLabel({ children, collapsed }) {
   )
 }
 
-function NavItem({ icon: Icon, iconColor, label, active, count, trailing, collapsed, onClick }) {
+function NavItem({ icon: Icon, iconColor, label, active, count, badge, trailing, collapsed, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       title={collapsed ? label : undefined}
-      aria-label={label}
+      aria-label={badge ? `${label}, ${badge} for today or past` : label}
       aria-current={active ? 'page' : undefined}
-      className={`w-full flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+      className={`relative w-full flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-colors ${
         collapsed ? 'justify-center py-2' : ''
       } ${
         active
@@ -51,7 +51,16 @@ function NavItem({ icon: Icon, iconColor, label, active, count, trailing, collap
         className={`shrink-0 ${active ? 'text-accent' : ''}`}
         style={active ? undefined : { color: iconColor }}
       />
+      {/* What needs attention now: a pill, or a dot on the icon when collapsed. */}
+      {badge > 0 && collapsed && (
+        <span className="absolute top-1.5 right-4 h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
+      )}
       {!collapsed && <span className="flex-1 text-left truncate">{label}</span>}
+      {!collapsed && badge > 0 && (
+        <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-accent text-accent-fg text-[10px] font-bold px-1 tabular-nums">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
       {!collapsed && trailing}
       {!collapsed && count != null && (
         <span className="text-xs tabular-nums text-text-muted">{count}</span>
@@ -136,7 +145,7 @@ function SettingsMenu({ collapsed, settingsActive, onSettings, onShortcuts, onCo
 
 export default function AppSidebar({
   collapsed, onToggleCollapsed, active, activeSpaceId,
-  isUnlocked, spaces, starredTotal, archiveTotal, binTotal,
+  isUnlocked, spaces, remindersNowTotal, starredTotal, archiveTotal, binTotal,
   onLock, onSignOut, onCommands, onShortcuts, navigate,
 }) {
   const [spacesOpen, setSpacesOpen] = useState(() => {
@@ -192,6 +201,7 @@ export default function AppSidebar({
         )}
 
         <SectionLabel collapsed={collapsed}>Library</SectionLabel>
+        <NavItem icon={Bell} label="Upcoming" active={active === 'upcoming'} badge={remindersNowTotal} collapsed={collapsed} onClick={() => navigate('/upcoming')} />
         <NavItem icon={Star} label="Starred" active={active === 'starred'} count={starredTotal} collapsed={collapsed} onClick={() => navigate('/starred')} />
         <NavItem icon={Archive} label="Archive" active={active === 'archive'} count={archiveTotal} collapsed={collapsed} onClick={() => navigate('/archive')} />
         <NavItem icon={Trash2} label="Bin" active={active === 'bin'} count={binTotal} collapsed={collapsed} onClick={() => navigate('/recycle-bin')} />

@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, Folder, FolderPlus,
   Trash2, Archive, Command, CheckSquare, ListChecks, Settings, Lock, Menu, Keyboard, LogOut,
-  Palette, Star,
+  Palette, Star, Bell,
 } from 'lucide-react'
 import SpaceItem from '../components/SpaceItem'
 import ItemBoardModals from '../components/ItemBoardModals'
@@ -30,6 +30,7 @@ import { useSpaces } from '../hooks/useSpaces'
 import { useRecycleBin } from '../hooks/useRecycleBin'
 import { useArchive } from '../hooks/useArchive'
 import { useStarredItemCount } from '../hooks/useStarredItemCount'
+import { useReminders, useRemindersNowCount } from '../hooks/useReminders'
 import { useSpaceStats } from '../hooks/useSpaceStats'
 import { useGlobalSearchData } from '../hooks/useGlobalSearch'
 import { filterGlobalSearch, searchOptionId, SEARCH_ITEM_DISPLAY_LIMIT } from '../lib/search'
@@ -45,6 +46,8 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { sortEntities } from '../lib/sortEntities'
 import { buttonClass } from '../components/ui/buttonStyles'
 import { MENU_PANEL } from '../components/ui/menuStyles'
+
+const NO_REMINDERS = []
 
 export default function DashboardPage() {
   const { signOut } = useAuth()
@@ -62,6 +65,8 @@ export default function DashboardPage() {
   const { total: binTotal } = useRecycleBin()
   const { total: archiveTotal } = useArchive()
   const { data: starredItemCount = 0 } = useStarredItemCount()
+  const { data: reminders = NO_REMINDERS } = useReminders()
+  const remindersNowTotal = useRemindersNowCount(reminders)
   const { data: stats = {} } = useSpaceStats()
   const { data: globalSearchData } = useGlobalSearchData()
   const navigate = useNavigate()
@@ -495,6 +500,19 @@ export default function DashboardPage() {
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-bg-border bg-bg-surface px-3 py-2 flex flex-col gap-0.5">
             {/* Navigation first, then tools, then sign out. */}
+            <button
+              type="button"
+              onClick={() => { navigate('/upcoming'); setMobileMenuOpen(false) }}
+              className="relative flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
+            >
+              <Bell size={16} />
+              Upcoming
+              {remindersNowTotal > 0 && (
+                <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-accent text-accent-fg text-[10px] font-bold px-1">
+                  {remindersNowTotal > 99 ? '99+' : remindersNowTotal}
+                </span>
+              )}
+            </button>
             <button
               type="button"
               onClick={() => { navigate('/starred'); setMobileMenuOpen(false) }}

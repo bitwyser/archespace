@@ -10,7 +10,7 @@
 
 import { supabase } from './supabase'
 import { logAudit } from './auditLog'
-import { encryptSpace, encryptItem, decryptItems } from './dataProtection'
+import { encryptSpace, encryptItem, encryptReminder, decryptItems } from './dataProtection'
 import { isRichDoc } from './richText/doc'
 import { parseTags } from './spaceColors'
 import { isEncryptedBackup, openBackupWithKey, openBackupWithPin, sealBackup } from './backupCrypto'
@@ -42,7 +42,7 @@ export async function exportSpaces(spaces, cryptoKey) {
   const loadItems = async (spaceId) => {
     let q = supabase
       .from('space_items')
-      .select('type, title, content, position, pinned, locked')
+      .select('type, title, content, reminder, position, pinned, locked')
     q = spaceId ? q.eq('space_id', spaceId) : q.is('space_id', null)
     const { data, error } = await q
       .is('deleted_at', null)
@@ -56,6 +56,7 @@ export async function exportSpaces(spaces, cryptoKey) {
       content: it.content ?? {},
       pinned: !!it.pinned,
       ...(it.locked ? { locked: true } : {}),
+      ...(it.reminder ? { reminder: it.reminder } : {}),
     }))
   }
 
@@ -165,6 +166,7 @@ async function insertImportedItems(items, spaceId, userId, cryptoKey) {
       position: rows.length,
       pinned: !!item.pinned,
       locked: item.locked === true,
+      reminder: await encryptReminder(item.reminder, cryptoKey),
     })
   }
 

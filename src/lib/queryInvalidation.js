@@ -11,6 +11,7 @@ export function invalidateSpaceCollections(qc) {
   invalidateKeys(qc, [
     queryKeys.starredItems(),
     queryKeys.starredCount(),
+    queryKeys.reminders(),
     queryKeys.spaces(),
     queryKeys.bin(),
     queryKeys.archive(),
@@ -30,9 +31,12 @@ export function invalidateSpaceList(qc) {
 export function invalidateSpaceItems(qc, spaceId) {
   invalidateKeys(qc, [
     queryKeys.items(spaceId),
-    // An item edited anywhere may be starred; keep the Starred view in step.
+    // An item edited anywhere may be starred or have a reminder; keep the
+    // Starred and Upcoming views in step.
     queryKeys.starredItems(),
     queryKeys.starredCount(),
+    queryKeys.upcomingItems(),
+    queryKeys.reminders(),
     queryKeys.bin(),
     queryKeys.archive(),
     queryKeys.spaceStats(),
@@ -45,6 +49,7 @@ export function invalidateArchive(qc) {
     queryKeys.archive(),
     queryKeys.starredItems(),
     queryKeys.starredCount(),
+    queryKeys.reminders(),
     queryKeys.spaces(),
     queryKeys.items(),
     queryKeys.spaceStats(),
@@ -57,6 +62,7 @@ export function invalidateRecycleBin(qc) {
     queryKeys.bin(),
     queryKeys.starredItems(),
     queryKeys.starredCount(),
+    queryKeys.reminders(),
     queryKeys.spaces(),
     queryKeys.items(),
     queryKeys.spaceStats(),

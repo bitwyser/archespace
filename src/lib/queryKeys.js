@@ -16,4 +16,8 @@ export const queryKeys = {
   // Starred items across all spaces (the Starred view), and the sidebar count.
   starredItems: () => ['items', 'starred'],
   starredCount: () => ['starred-count'],
+  // Items with a reminder (the Upcoming view), and just their reminders (the
+  // sidebar badge, and setting them off).
+  upcomingItems: () => ['items', 'upcoming'],
+  reminders: () => ['reminders'],
 }

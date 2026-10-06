@@ -54,10 +54,11 @@ export function ToastProvider({ children }) {
    * Show a toast notification.
    * @param {'success'|'error'|'info'} type
    * @param {string} message
+   * @param {{ duration?: number }} [options] - How long it stays (ms)
    */
-  const show = useCallback((type, message) => {
+  const show = useCallback((type, message, options) => {
     const id = crypto.randomUUID()
-    const duration = type === 'error' ? TOAST_ERROR_DISMISS_MS : TOAST_DISMISS_MS
+    const duration = options?.duration ?? (type === 'error' ? TOAST_ERROR_DISMISS_MS : TOAST_DISMISS_MS)
 
     setToasts(prev => {
       const trimmed = prev.length >= MAX_TOASTS ? prev.slice(1) : prev
@@ -85,9 +86,9 @@ export function ToastProvider({ children }) {
   }, [dismiss])
 
   const toast = {
-    success: (msg) => show('success', msg),
-    error:   (msg) => show('error', msg),
-    info:    (msg) => show('info', msg),
+    success: (msg, options) => show('success', msg, options),
+    error:   (msg, options) => show('error', msg, options),
+    info:    (msg, options) => show('info', msg, options),
   }
 
   return (

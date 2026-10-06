@@ -5,7 +5,7 @@
  * only appears once signed in AND the vault is unlocked; while locked (or signed
  * out) it renders just the route (the unlock gate / redirect) full-width.
  */
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContextCore'
@@ -16,14 +16,21 @@ import { useSpaces } from '../../hooks/useSpaces'
 import { useArchive } from '../../hooks/useArchive'
 import { useRecycleBin } from '../../hooks/useRecycleBin'
 import { useStarredItemCount } from '../../hooks/useStarredItemCount'
+import { useReminders, useRemindersNowCount } from '../../hooks/useReminders'
 import { ConfirmDialog } from '../ui/UI'
+import { scheduleReminders } from '../../lib/reminderNotifications'
 import { convertSecretsToNotes } from '../../lib/secretMigration'
 import { convertLegacyRichText } from '../../lib/richText/richTextMigration'
 import { queryKeys } from '../../lib/queryKeys'
 import { SIGN_OUT_TEXT } from '../../lib/localMode'
 import AppSidebar from './AppSidebar'
 
+const NO_REMINDERS = []
+// A reminder stays up longer than other toasts, so it isn't missed.
+const REMINDER_TOAST_MS = 15000
+
 function activeFromPath(pathname) {
+  if (pathname.startsWith('/upcoming')) return 'upcoming'
   if (pathname.startsWith('/starred')) return 'starred'
   if (pathname.startsWith('/archive')) return 'archive'
   if (pathname.startsWith('/recycle-bin')) return 'bin'
@@ -65,6 +72,22 @@ export default function AppShell() {
   const { data: starredItemCount = 0 } = useStarredItemCount()
   const starredTotal = spaces.filter(s => s.starred).length + starredItemCount
   const topLevelSpaces = useMemo(() => spaces.filter(s => !s.parent_id), [spaces])
+  const { data: reminders = NO_REMINDERS } = useReminders()
+  const remindersNowTotal = useRemindersNowCount(reminders)
+
+  // Reminders go off while this tab is open (see reminderNotifications.js).
+  const toastRef = useRef(toast)
+  useEffect(() => { toastRef.current = toast })
+  useEffect(() => scheduleReminders(reminders, {
+    onRemind: (reminder, { notified }) => {
+      if (notified) return
+      toastRef.current.info(
+        reminder.name ? `Reminder: ${reminder.name}` : 'You have a reminder. See Upcoming.',
+        { duration: REMINDER_TOAST_MS }
+      )
+    },
+    onOpen: () => navigate('/upcoming'),
+  }), [reminders, navigate])
 
   // The open space's top-level space (a sub-space highlights its parent).
   const active = activeFromPath(location.pathname)
@@ -95,6 +118,7 @@ export default function AppShell() {
         activeSpaceId={activeSpaceId}
         isUnlocked={isUnlocked}
         spaces={topLevelSpaces}
+        remindersNowTotal={remindersNowTotal}
         starredTotal={starredTotal}
         archiveTotal={archiveTotal}
         binTotal={binTotal}

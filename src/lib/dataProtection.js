@@ -6,12 +6,26 @@
  */
 import { encryptString, decryptString, encryptJson, decryptJson } from './crypto/cipher'
 import { parseTags } from './spaceColors'
+import { normalizeReminder } from './reminder'
 
 const LOCKED_MESSAGE = 'Vault is locked - enter your PIN to view this data.'
 
 // Tags left at the column default (an empty array) were never encrypted.
 async function decryptTags(tags, key) {
   return parseTags(typeof tags === 'string' ? await decryptJson(tags, key) : tags)
+}
+
+/** Encrypt an item's reminder (see reminder.js); null clears it. */
+export async function encryptReminder(reminder, key) {
+  const value = normalizeReminder(reminder)
+  if (!value) return null
+  return key ? encryptJson(value, key) : value
+}
+
+/** An item's reminder, or null when it has none. */
+export async function decryptReminder(reminder, key) {
+  if (reminder == null) return null
+  return normalizeReminder(typeof reminder === 'string' ? await decryptJson(reminder, key) : reminder)
 }
 
 // Spaces
@@ -82,6 +96,7 @@ export async function decryptItem(row, key) {
     title: await decryptString(row.title, key),
     content: content ?? {},
     tags: await decryptTags(row.tags, key),
+    reminder: await decryptReminder(row.reminder, key),
   }
 }
 

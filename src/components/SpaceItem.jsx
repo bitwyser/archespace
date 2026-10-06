@@ -14,6 +14,7 @@ import {
   Pin, PinOff, Save, AlertTriangle, Copy, Archive,
   Maximize2, Minimize2, MoveRight, MoreVertical,
   ClipboardCopy, ClipboardCheck, FileDown, PencilOff, Shield, ShieldCheck, ShieldOff, EyeOff, Loader2,
+  Bell,
 } from 'lucide-react'
 import { TextboxEditor, MarkdownEditor, ChecklistEditor, ListItemsEditor, CardListEditor } from './editors/ItemEditors'
 // The Rich text editor (Tiptap) loads only when a Rich text item is shown.
@@ -28,6 +29,8 @@ import { WhiteboardPreview } from './editors/WhiteboardPreview'
 import { TableEditor } from './editors/TableEditor'
 import { CodeEditor } from './editors/CodeEditor'
 import { ItemTags } from './ItemTags'
+import { ReminderChip } from './ReminderChip'
+import { ReminderDialog } from './ReminderDialog'
 import { ActionMenu } from './ui/ActionMenu'
 import { buttonClass } from './ui/buttonStyles'
 import { getChecklistProgress } from '../lib/checklistProgress'
@@ -55,6 +58,7 @@ function SpaceItem({
   item,
   onUpdate,
   onSetTags,
+  onSetReminder,
   onSetListNumbered,
   onTogglePin,
   onToggleStar,
@@ -77,7 +81,8 @@ function SpaceItem({
   // Where the item lives, shown beside the title outside its space (Starred).
   contextLabel,
   // In a read-only space: content stays readable and copyable, but every edit
-  // (content, title, tags, pin, order, move, archive, delete) is off.
+  // (content, title, tags, pin, order, move, archive, delete) is off. A
+  // reminder, like a star, can still be set.
   readOnly = false,
 }) {
   const { cryptoKey } = useEncryption()
@@ -107,6 +112,7 @@ function SpaceItem({
   const [copied, setCopied] = useState(false)
   // The Rich text editor instance, for its toolbar on the tags row.
   const [richEditor, setRichEditor] = useState(null)
+  const [reminderOpen, setReminderOpen] = useState(false)
   const online = useOnlineStatus()
 
   const latestState = useRef({ title: item.title, content: item.content })
@@ -364,9 +370,10 @@ function SpaceItem({
   const clamped = canClamp && !headerCollapsed && overflowing && !isDirty && !expanded
   // The collapse/expand chevron is always available outside fullscreen.
   const showCollapseToggle = !isFullscreen
-  // Whether the tags row is shown (drives content top padding so the two don't
-  // stack into a large gap).
-  const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || (online && !readOnly))
+  // Whether the tags row (with the reminder) is shown (drives content top
+  // padding so the two don't stack into a large gap).
+  const showTags = !selectMode && ((item.tags?.length ?? 0) > 0 || !!item.reminder || (online && !readOnly))
+  const canSetReminder = !!onSetReminder && online
   // The Rich text toolbar: a bar across the top of the note, always shown
   // (it scrolls sideways when narrow) - except read-only, collapsed or select
   // mode. On a clamped preview it expands the note first; on a dense grid card
@@ -588,6 +595,13 @@ function SpaceItem({
                         disabled: !online,
                         onClick: () => onToggleStar(item.id, item.starred),
                       },
+                      onSetReminder && {
+                        id: 'reminder',
+                        label: item.reminder ? 'Change reminder' : 'Add reminder',
+                        icon: Bell,
+                        disabled: !online,
+                        onClick: () => setReminderOpen(true),
+                      },
                       canCopy && {
                         id: 'copy',
                         label: copied ? 'Copied' : 'Copy',
@@ -641,13 +655,27 @@ function SpaceItem({
 
       {/* Tags */}
       {showTags && (
-        <div className={denseView ? 'px-2.5 py-2' : 'px-4 py-2.5'}>
+        <div className={`flex flex-wrap items-center gap-1.5 ${denseView ? 'px-2.5 py-2' : 'px-4 py-2.5'}`}>
+          {item.reminder && (
+            <ReminderChip
+              reminder={item.reminder}
+              onClick={canSetReminder ? () => setReminderOpen(true) : undefined}
+            />
+          )}
           <ItemTags
             tags={item.tags || []}
             onChange={(tags) => onSetTags?.(item.id, tags)}
             disabled={!online || readOnly}
           />
         </div>
+      )}
+      {reminderOpen && (
+        <ReminderDialog
+          initial={item.reminder}
+          onSave={(reminder) => onSetReminder(item.id, reminder)}
+          onRemove={() => onSetReminder(item.id, null)}
+          onClose={() => setReminderOpen(false)}
+        />
       )}
 
       {/* Rich text toolbar: a bar across the top of the note with a rule

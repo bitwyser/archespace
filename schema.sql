@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS space_items (
   title       text        NOT NULL DEFAULT '',
   content     jsonb       NOT NULL DEFAULT '{}'::jsonb,
   tags        jsonb       NOT NULL DEFAULT '[]'::jsonb,   -- encrypted client-side
+  reminder    jsonb       DEFAULT NULL,  -- encrypted client-side; NULL = none
   position    integer     NOT NULL DEFAULT 0,
   pinned      boolean     NOT NULL DEFAULT false,
   starred     boolean     NOT NULL DEFAULT false,
@@ -143,6 +144,9 @@ ALTER TABLE user_settings ADD CONSTRAINT user_settings_accent_color_check
 -- The vault format marker is no longer used (every vault is PIN-wrapped).
 ALTER TABLE user_encryption DROP COLUMN IF EXISTS vault_format;
 
+-- Item reminders (encrypted; the server only sees that one is set).
+ALTER TABLE space_items ADD COLUMN IF NOT EXISTS reminder jsonb DEFAULT NULL;
+
 -- 2. INDEXES
 
 -- Spaces
@@ -162,6 +166,8 @@ CREATE INDEX IF NOT EXISTS items_top_level_idx    ON space_items(user_id, positi
 -- Starred view: the user's starred spaces and items.
 CREATE INDEX IF NOT EXISTS spaces_starred_idx     ON spaces(user_id)      WHERE starred = true;
 CREATE INDEX IF NOT EXISTS items_starred_idx      ON space_items(user_id) WHERE starred = true;
+-- Upcoming view: the user's items with a reminder.
+CREATE INDEX IF NOT EXISTS items_reminder_idx     ON space_items(user_id) WHERE reminder IS NOT NULL;
 CREATE INDEX IF NOT EXISTS space_items_pinned_idx ON space_items(pinned)      WHERE pinned = true;
 CREATE INDEX IF NOT EXISTS items_deleted_at_idx   ON space_items(deleted_at)  WHERE deleted_at IS NOT NULL;
 CREATE INDEX IF NOT EXISTS items_archived_at_idx  ON space_items(archived_at) WHERE archived_at IS NOT NULL;

@@ -1,7 +1,8 @@
 /**
  * useSpaceItems.js - Hook for items within a single space; with
- * `spaceId === null`, the dashboard's items, which belong to no space; or with
- * `STARRED_ITEMS`, the starred items from every space (the Starred view).
+ * `spaceId === null`, the dashboard's items, which belong to no space; with
+ * `STARRED_ITEMS`, the starred items from every space (the Starred view); or
+ * with `UPCOMING_ITEMS`, the items with a reminder (the Upcoming view).
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -9,7 +10,8 @@ import { supabase } from '../lib/supabase'
 import { EMPTY_RICH_DOC } from '../lib/richText/doc'
 import { useAuth } from '../context/AuthContextCore'
 import { useEncryption } from '../context/EncryptionCore'
-import { encryptItem, decryptItem, decryptItems, encryptTags } from '../lib/dataProtection'
+import { encryptItem, decryptItem, decryptItems, encryptTags, encryptReminder } from '../lib/dataProtection'
+import { normalizeReminder } from '../lib/reminder'
 import { parseTags } from '../lib/spaceColors'
 import { assertOnline } from '../lib/offlineQueue'
 import { saveRows, loadRows } from '../lib/offlineCache'
@@ -44,13 +46,20 @@ const defaultContent = {
 const DASHBOARD_ITEMS_KEY = 'dashboard'
 // Pass as the `spaceId` for the starred items of every space. Also its key.
 export const STARRED_ITEMS = 'starred'
+// Pass as the `spaceId` for the items with a reminder. Also its key.
+export const UPCOMING_ITEMS = 'upcoming'
+
+/** Starred and Upcoming gather items from every space. */
+const isCrossSpace = (spaceId) => spaceId === STARRED_ITEMS || spaceId === UPCOMING_ITEMS
 
 /**
- * Restrict an items query to one space, to the dashboard for `null`, or to the
- * starred items for `STARRED_ITEMS`.
+ * Restrict an items query to one space, to the dashboard for `null`, to the
+ * starred items for `STARRED_ITEMS`, or to those with a reminder for
+ * `UPCOMING_ITEMS`.
  */
 function whereSpace(q, spaceId) {
   if (spaceId === STARRED_ITEMS) return q.eq('starred', true)
+  if (spaceId === UPCOMING_ITEMS) return q.not('reminder', 'is', null)
   return spaceId ? q.eq('space_id', spaceId) : q.is('space_id', null)
 }
 
@@ -100,9 +109,9 @@ export function useSpaceItems(spaceId) {
   useEffect(() => {
     if (spaceId === undefined) return
     // Realtime filters can't express "space_id is null" (or span spaces), so
-    // the dashboard and Starred view listen to all of the user's item changes
-    // (debounced below) instead.
-    const inOneSpace = spaceId && spaceId !== STARRED_ITEMS
+    // the dashboard, Starred and Upcoming listen to all of the user's item
+    // changes (debounced below) instead.
+    const inOneSpace = spaceId && !isCrossSpace(spaceId)
     const filter = inOneSpace ? `space_id=eq.${spaceId}` : userId ? `user_id=eq.${userId}` : null
     if (!filter) return
     // Coalesce bursts of row changes (e.g. a reorder updating many rows, or the
@@ -132,8 +141,8 @@ export function useSpaceItems(spaceId) {
 
   const create = useMutation({
     mutationFn: async ({ type, title, content }) => {
-      // The Starred view spans spaces, so it has no space to add into.
-      if (spaceId === STARRED_ITEMS) throw new Error('Add items from a space or the dashboard.')
+      // Starred and Upcoming span spaces, so they have no space to add into.
+      if (isCrossSpace(spaceId)) throw new Error('Add items from a space or the dashboard.')
       assertOnline()
       const items = query.data || []
       const position = items.length
@@ -231,6 +240,32 @@ export function useSpaceItems(spaceId) {
     onSettled: () => invalidateSpaceItems(qc, itemsKey),
   })
 
+  // Reminder (encrypted like the tags), or `reminder: null` to remove it. Not
+  // content, so a read-only space allows it too, like a star. Optimistic so
+  // the chip updates at once.
+  const setReminder = useMutation({
+    mutationFn: async ({ id, reminder }) => {
+      assertOnline()
+      const { error } = await supabase
+        .from('space_items')
+        .update({ reminder: await encryptReminder(reminder, cryptoKey) })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onMutate: async ({ id, reminder }) => {
+      await qc.cancelQueries({ queryKey: queryKeys.items(itemsKey) })
+      const previous = qc.getQueryData(queryKeys.items(itemsKey))
+      qc.setQueryData(queryKeys.items(itemsKey), (old) =>
+        old?.map(it => (it.id === id ? { ...it, reminder: normalizeReminder(reminder) } : it))
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) qc.setQueryData(queryKeys.items(itemsKey), context.previous)
+    },
+    onSettled: () => invalidateSpaceItems(qc, itemsKey),
+  })
+
   // A List's numbering: bullets and numbers hold the same content, so turning
   // numbers on or off only switches the item's type (plain metadata, nothing
   // to re-encrypt). Optimistic so the list re-numbers at once.
@@ -289,7 +324,7 @@ export function useSpaceItems(spaceId) {
       const { data, error } = await supabase
         .from('space_items')
         .insert({
-          space_id: spaceId === STARRED_ITEMS ? item.space_id : spaceId,
+          space_id: isCrossSpace(spaceId) ? item.space_id : spaceId,
           user_id: userId,
           type: plain.type,
           title: encrypted.title,
@@ -389,7 +424,7 @@ export function useSpaceItems(spaceId) {
           }
           const encrypted = await encryptItem(plain, cryptoKey)
           return {
-            space_id: spaceId === STARRED_ITEMS ? item.space_id : spaceId,
+            space_id: isCrossSpace(spaceId) ? item.space_id : spaceId,
             user_id: userId,
             type: item.type,
             title: encrypted.title,
@@ -414,6 +449,7 @@ export function useSpaceItems(spaceId) {
     toggleStar,
     toggleLock,
     setTags,
+    setReminder,
     setListNumbered,
     remove,
     reorder,

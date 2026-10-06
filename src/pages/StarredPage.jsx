@@ -6,12 +6,13 @@
  * and items as full item cards (editable here, like inside a space), each
  * labelled with where it lives.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Star } from 'lucide-react'
 import { useSpaces } from '../hooks/useSpaces'
 import { useSpaceStats } from '../hooks/useSpaceStats'
 import { useItemBoard } from '../hooks/useItemBoard'
+import { useColumnCount } from '../hooks/useColumnCount'
 import { STARRED_ITEMS } from '../hooks/useSpaceItems'
 import { useToast } from '../context/ToastCore'
 import { useRegisterPageActions } from '../context/PageActionsCore'
@@ -21,28 +22,6 @@ import ItemBoardModals from '../components/ItemBoardModals'
 import { SpaceCard } from '../components/space/SpaceCard'
 import { SpaceModal } from '../components/space/SpaceModal'
 import { ConfirmDialog, Spinner } from '../components/ui/UI'
-
-/** Columns for the masonry layout: 1 on phones, 2 on tablets, 3 on desktop. */
-function useColumnCount() {
-  const query = () => {
-    if (typeof window === 'undefined') return 2
-    if (window.matchMedia('(max-width: 639px)').matches) return 1
-    return window.matchMedia('(min-width: 1024px)').matches ? 3 : 2
-  }
-  const [cols, setCols] = useState(query)
-  useEffect(() => {
-    const small = window.matchMedia('(max-width: 639px)')
-    const large = window.matchMedia('(min-width: 1024px)')
-    const onChange = () => setCols(query())
-    small.addEventListener('change', onChange)
-    large.addEventListener('change', onChange)
-    return () => {
-      small.removeEventListener('change', onChange)
-      large.removeEventListener('change', onChange)
-    }
-  }, [])
-  return cols
-}
 
 export default function StarredPage() {
   const navigate = useNavigate()

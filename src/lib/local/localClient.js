@@ -32,7 +32,7 @@ const DEFAULTS = {
     starred: false, locked: false, read_only: false, deleted_at: null, archived_at: null,
   }),
   space_items: () => ({
-    space_id: null, title: '', content: {}, tags: [], position: 0, pinned: false,
+    space_id: null, title: '', content: {}, tags: [], reminder: null, position: 0, pinned: false,
     starred: false, locked: false, deleted_at: null, archived_at: null,
   }),
   user_encryption: () => ({

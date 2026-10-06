@@ -24,7 +24,7 @@ export function useItemBoard(spaceId) {
   const { toast } = useToast()
   const itemsApi = useSpaceItems(spaceId)
   const { data: items = [], isLoading } = itemsApi
-  const { update, togglePin, toggleStar, toggleLock, setTags, setListNumbered, duplicate, archive, create, move } = itemsApi
+  const { update, togglePin, toggleStar, toggleLock, setTags, setReminder, setListNumbered, duplicate, archive, create, move } = itemsApi
   const askVaultPin = useVaultPinPrompt()
 
   // Dialog + card state
@@ -100,6 +100,14 @@ export function useItemBoard(spaceId) {
     throw err
   }), [updateAsync])
   const handleSetTags = useCallback((itemId, tags) => setTags.mutate({ id: itemId, tags }), [setTags])
+  const setReminderMutate = setReminder.mutate
+  const handleSetReminder = useCallback(
+    (itemId, reminder) => setReminderMutate({ id: itemId, reminder }, {
+      onSuccess: () => toastRef.current.success(reminder ? 'Reminder saved' : 'Reminder removed'),
+      onError: () => toastRef.current.error("Couldn't save the reminder."),
+    }),
+    [setReminderMutate]
+  )
   const setListNumberedMutate = setListNumbered.mutate
   const handleSetListNumbered = useCallback(
     (itemId, numbered) => setListNumberedMutate({ id: itemId, numbered }, {
@@ -170,6 +178,7 @@ export function useItemBoard(spaceId) {
     onCollapsedChange: setItemCollapsed,
     onUpdate: handleItemUpdate,
     onSetTags: handleSetTags,
+    onSetReminder: handleSetReminder,
     onSetListNumbered: handleSetListNumbered,
     onTogglePin: handleTogglePin,
     onToggleStar: handleToggleStar,
@@ -180,7 +189,7 @@ export function useItemBoard(spaceId) {
     onArchive: handleArchiveItem,
     onDirtyChange: handleDirtyChange,
   }), [
-    setItemCollapsed, handleItemUpdate, handleSetTags, handleSetListNumbered, handleTogglePin, handleToggleStar,
+    setItemCollapsed, handleItemUpdate, handleSetTags, handleSetReminder, handleSetListNumbered, handleTogglePin, handleToggleStar,
     handleToggleLock, handleDuplicateItem, handleMoveOne, handleArchiveItem, handleDirtyChange,
   ])
 
