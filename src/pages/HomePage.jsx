@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 import {
   ArchiveRestore,
   ArrowRight,
+  BellRing,
   CheckCircle2,
   FileDown,
   Fingerprint,
@@ -69,17 +70,17 @@ const navSections = [
 // Every feature worth knowing about, each in a line.
 const features = [
   { icon: FolderTree, title: 'Spaces', desc: 'Group everything into spaces and sub-spaces, with colours, tags and pins.' },
-  { icon: Layers, title: 'Item types', desc: 'Notes, rich text, lists, checklists, cards, tables, code and whiteboards.' },
+  { icon: Layers, title: 'Item types', desc: 'Notes, rich text, lists, checklists, cards, tables, Kanban boards, code and whiteboards; star, copy, duplicate or move any of them.' },
   { icon: Search, title: 'Search', desc: 'Find anything across all your spaces, and filter by tag.' },
-  { icon: LockKeyhole, title: 'Zero-knowledge encryption', desc: 'Encrypted on your device before it syncs; the server cannot read it.' },
+  { icon: BellRing, title: 'Reminders', desc: 'Once, repeating, or until you turn them off, with notifications and an Upcoming view.' },
   { icon: HardDrive, title: 'No account needed', desc: 'Use it without signing up; everything stays encrypted on your device, with no server at all.' },
-  { icon: ShieldCheck, title: 'Protected items', desc: 'Keep sensitive items and spaces hidden until your vault PIN opens them.' },
+  { icon: ShieldCheck, title: 'Protected and read-only', desc: 'Hide sensitive items and spaces until your vault PIN opens them, and freeze a space against edits.' },
   { icon: Fingerprint, title: 'Biometrics and two-factor', desc: 'Unlock with a fingerprint, face or passkey, and add authenticator codes at sign-in.' },
   { icon: RefreshCw, title: 'Sync and offline', desc: 'Syncs across your devices, and keeps working without a connection.' },
-  { icon: FileDown, title: 'Backups and PDF', desc: 'Encrypted backup files, and PDF export of a space or an item.' },
-  { icon: ArchiveRestore, title: 'Read-only, archive and bin', desc: 'Freeze a space against edits, archive what is done, restore what you deleted.' },
+  { icon: FileDown, title: 'Backups and export', desc: 'Encrypted backup files, and PDF export of a space or an item.' },
+  { icon: ArchiveRestore, title: 'Starred, archive and bin', desc: 'Star what matters, archive what is done, and restore what you deleted.' },
   { icon: Palette, title: 'Themes and shortcuts', desc: 'Dark and light themes with accents, a command palette and keyboard shortcuts.' },
-  { icon: Server, title: 'Open source', desc: 'MIT licensed, and you can host it yourself on your own Supabase project.' },
+  { icon: Server, title: 'Open source and self-hostable', desc: 'MIT licensed; host it yourself on your own Supabase project.' },
 ]
 
 const steps = [
@@ -290,14 +291,14 @@ export default function HomePage() {
           {/* Size carries the emphasis: a quiet lead-in, then the key words
               large and bright (no second colour to compete with the buttons). */}
           <h1 className="tracking-[-0.025em]">
-            <span className="block text-[clamp(1.625rem,min(7.2vw,7.5vh),3rem)] font-medium leading-tight text-white/65">
+            <span className="block text-[clamp(1.5rem,min(6.6vw,6.8vh),2.625rem)] font-medium leading-tight text-white/65">
               Everything in One{' '}
             </span>
-            <span className="mt-1 block text-[clamp(2.25rem,min(10.5vw,13vh),5.25rem)] font-bold leading-[1.02] text-white">
+            <span className="mt-1 block text-[clamp(2rem,min(9.4vw,11.6vh),4.5rem)] font-bold leading-[1.02] text-white">
               Encrypted Space
             </span>
           </h1>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-white/65 sm:text-lg sm:leading-8">
+          <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-white/65 sm:text-[17px] sm:leading-[30px]">
             An open-source, zero-knowledge encrypted space to capture and organise your notes,
             projects, secrets, code, checklists and ideas, synced across all your devices.
           </p>
