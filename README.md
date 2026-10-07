@@ -1,15 +1,15 @@
 # ArcheSpace
 
-[![CI](https://github.com/bitwyser/archespace/actions/workflows/ci.yml/badge.svg)](https://github.com/bitwyser/archespace/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/github/v/release/bitwyser/archespace)](https://github.com/bitwyser/archespace/releases)
+[![CI](https://github.com/wyserian/archespace/actions/workflows/ci.yml/badge.svg)](https://github.com/wyserian/archespace/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/release/wyserian/archespace)](https://github.com/wyserian/archespace/releases)
 [![Live](https://img.shields.io/badge/live-archespace.app-32d3aa)](https://archespace.app)
-[![License](https://img.shields.io/github/license/bitwyser/archespace)](LICENSE)
+[![License](https://img.shields.io/github/license/wyserian/archespace)](LICENSE)
 
 ArcheSpace is an open-source, encrypted space for capturing and organising your information, notes, projects, secrets, code, checklists and ideas. Group them into spaces, and fill each space with the content type that fits: plain notes, rich text documents, lists and checklists, tables, Kanban boards, code snippets and whiteboards. Anything sensitive can be protected so it only opens with your vault PIN. Everything is taggable, searchable and kept in one place, synced across your devices.
 
 Privacy is built in, not bolted on. ArcheSpace is a self-hostable web app with Supabase sync and a client-side encrypted vault, so your content stays private even from the app's owner and developers. It follows a zero-knowledge architecture: everything is encrypted in your browser and the backend only ever stores ciphertext, so the server, its operators, and the developers never see your data in readable form.
 
-A companion Mobile/Flutter app lives in a [separate repository](https://github.com/bitwyser/archespace-mobile).
+A companion Mobile/Flutter app lives in a [separate repository](https://github.com/wyserian/archespace-mobile).
 
 ## Table of contents
 
@@ -36,7 +36,7 @@ A companion Mobile/Flutter app lives in a [separate repository](https://github.c
 - **Reminders** that repeat or stay until turned off, with an **Upcoming** view
 - **Search** across spaces, tags and content
 - **Starred**, **archive** and **recycle bin**
-- **Realtime sync** with the [mobile app](https://github.com/bitwyser/archespace-mobile), and **offline mode**
+- **Realtime sync** with the [mobile app](https://github.com/wyserian/archespace-mobile), and **offline mode**
 - **Encrypted backups** and **PDF export**
 - **Local mode**: no account, nothing leaves the browser
 - **Two-factor sign-in**
@@ -79,7 +79,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Setup
 
 ```bash
-git clone https://github.com/bitwyser/archespace
+git clone https://github.com/wyserian/archespace
 cd archespace
 npm install
 ```
@@ -197,7 +197,7 @@ cosign verify-blob \
   --certificate checksums.txt.pem \
   --signature checksums.txt.sig \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/bitwyser/archespace/.github/workflows/release.yml@' \
+  --certificate-identity-regexp '^https://github.com/wyserian/archespace/.github/workflows/release.yml@' \
   checksums.txt
 ```
 
@@ -240,7 +240,7 @@ Need help with setup, self-hosting, or account/vault recovery? Email **[support@
 - Hosted and deployed on Cloudflare.
 - Email delivery powered by Resend.
 - Source hosted on GitHub.
-- Crafted and maintained by BitWyser.
+- Crafted and maintained by Wyserian.
 
 ## License
 
