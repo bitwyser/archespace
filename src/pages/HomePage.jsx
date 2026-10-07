@@ -237,7 +237,16 @@ export default function HomePage() {
             : 'border-b border-transparent bg-transparent'
         }`}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-end px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+          {/* The name as in the emails: caps, ARCHE in the mint accent. */}
+          <a
+            href="#top"
+            aria-label="ArcheSpace"
+            className="shrink-0 rounded-lg text-2xl font-bold leading-tight tracking-[0.03em] text-[#32d3aa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+          >
+            ARCHE<span className="text-white">SPACE</span>
+          </a>
+
           <nav className="hidden items-center gap-1 lg:flex">
             {navSections.map(section => (
               <a
@@ -493,8 +502,8 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-3 text-xs text-white/65 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} · Created and maintained by{' '}
-            <a href="https://github.com/bitwyser" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
-              BitWyser
+            <a href="https://github.com/wyserian" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+              Wyserian
             </a>
           </p>
           <div className="flex items-center gap-4">
