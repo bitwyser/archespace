@@ -761,10 +761,9 @@ function SpaceItem({
         style={clamped ? { maxHeight: COLLAPSED_MAX_PX } : undefined}
         className={`${
           isFullscreen
-            // Same padding for every type, its sides lined up with the header
-            // and tags; a Whiteboard's canvas, or a Kanban's columns, fill the
-            // space inside it and scroll themselves.
-            // A Kanban's own Add column row sits close under the tags.
+            // Sides lined up with the header and tags. A Whiteboard's canvas
+            // or a Kanban's columns fill the space and scroll themselves; a
+            // Kanban sits closer under the tags.
             ? `flex-1 px-4 ${item.type === 'kanban' ? 'pt-1 pb-4' : 'py-5'} ${item.type === 'whiteboard' || item.type === 'kanban' ? 'min-h-0' : 'overflow-y-auto'}`
             : denseView
               ? `px-2.5 ${showTags && !showRichToolbar ? 'pt-0' : 'pt-3'} pb-3 cursor-pointer`

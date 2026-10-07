@@ -3,17 +3,12 @@
  * and next time, with a repeat mark when it repeats. Red once it's over,
  * accent when it goes off today. Opens the reminder dialog when clickable.
  */
-import { useEffect, useState } from 'react'
 import { Bell, Repeat } from 'lucide-react'
+import { useNow } from '../hooks/useReminders'
 import { currentOccurrence, dayString, describeRepeat, formatReminder, isPast } from '../lib/reminder'
 
 export function ReminderChip({ reminder, onClick }) {
-  // Kept current as time passes ("Tomorrow" becomes "Today", then past).
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60 * 1000)
-    return () => clearInterval(timer)
-  }, [])
+  const now = useNow()
   const past = isPast(reminder, now)
   const today = !past && dayString(currentOccurrence(reminder, now)) === dayString(now)
   const when = formatReminder(reminder, now)

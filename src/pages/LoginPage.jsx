@@ -281,7 +281,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Borderless on a soft shadow, like the space and item cards. */}
         <div className="bg-bg-card rounded-2xl p-6 shadow-sm">
           {isForgot && resetSent ? (
             <div className="space-y-4 text-center">

@@ -269,8 +269,8 @@ export function KanbanEditor({ content, onChange, readOnly = false, fill = false
       <section
         key={col.id}
         aria-label={col.title || 'Untitled column'}
-        // Borderless: a faint tint sets the column apart. A colour shows as
-        // a strip along its top and a light tint of that colour.
+        // A faint tint sets the column apart; a colour adds a strip along the
+        // top and tints it.
         style={color ? { backgroundColor: `${color}14`, boxShadow: `inset 0 3px 0 ${color}` } : undefined}
         className={`flex flex-col rounded-xl px-2 pb-2 ${color ? 'pt-3' : 'bg-text-primary/[0.04] pt-2'} ${
           fill ? 'h-full min-h-0 min-w-[220px] flex-1 basis-0' : 'w-60 shrink-0'

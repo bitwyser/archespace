@@ -18,7 +18,7 @@ const KEEP_SHOWN_MS = 2 * 24 * 60 * 60 * 1000
 const MAX_DELAY_MS = 2 ** 31 - 1
 
 /** What a notification says: the reminder's name, or a generic line. */
-export const reminderText = (reminder) => reminder.name || 'You have a reminder in ArcheSpace'
+const reminderText =(reminder) => reminder.name || 'You have a reminder in ArcheSpace'
 
 function loadShown() {
   try {
@@ -40,7 +40,7 @@ function claim(key) {
 }
 
 /** Whether this browser can show notifications at all. */
-export const notificationsSupported = () => typeof window !== 'undefined' && 'Notification' in window
+const notificationsSupported =() => typeof window !== 'undefined' && 'Notification' in window
 
 /** 'granted' | 'denied' | 'default', or 'unsupported'. */
 export function notificationPermission() {

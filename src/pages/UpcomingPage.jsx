@@ -6,12 +6,13 @@
  * Items show as full item cards (editable here, like inside a space), each
  * labelled with where it lives. Removing an item's reminder takes it off.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Bell } from 'lucide-react'
 import { useSpaces } from '../hooks/useSpaces'
 import { useItemBoard } from '../hooks/useItemBoard'
 import { useColumnCount } from '../hooks/useColumnCount'
+import { useNow } from '../hooks/useReminders'
 import { UPCOMING_ITEMS } from '../hooks/useSpaceItems'
 import { useRegisterPageActions } from '../context/PageActionsCore'
 import SpaceItem from '../components/SpaceItem'
@@ -36,15 +37,8 @@ export default function UpcomingPage() {
     [spaces]
   )
 
-  // Regroup as time passes: a reminder moves on to its next time, or to Past
-  // once it has gone off for the last time.
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60 * 1000)
-    return () => clearInterval(timer)
-  }, [])
-
-  // A removed reminder leaves at once (before the list reloads).
+  // Regrouped each minute; a removed reminder leaves at once.
+  const now = useNow()
   const groups = useMemo(() => {
     const withReminder = items
       .filter(it => it.reminder)
@@ -79,8 +73,7 @@ export default function UpcomingPage() {
         index={index}
         forcedCollapsed={board.collapsedIds.has(item.id)}
         {...board.cardProps}
-        // Items come from many spaces, in reminder order, so there's none to
-        // drag.
+        // In reminder order, so not draggable.
         dragDisabled
         readOnly={readOnlySpaceIds.has(item.space_id)}
         contextLabel={item.space_id ? spaceNames[item.space_id] || 'Space' : 'Dashboard'}

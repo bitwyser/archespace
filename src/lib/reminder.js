@@ -14,7 +14,7 @@
  */
 
 /** A new reminder's time, unless that's already past today. */
-export const DEFAULT_REMINDER_TIME = '09:00'
+const DEFAULT_REMINDER_TIME = '09:00'
 export const MAX_REMINDER_NAME = 100
 
 export const REMINDER_MODES = [

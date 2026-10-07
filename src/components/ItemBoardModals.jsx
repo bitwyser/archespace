@@ -36,9 +36,8 @@ export default function ItemBoardModals({ board, spaces }) {
       {addModal && (
         <Modal title="Add item" onClose={() => setAddModal(false)} size="lg">
           <p className="text-text-muted text-xs mb-3">Choose the type of content to add</p>
-          {/* Equal tiles (every row the same height): icon and name on one
-              line, a short hint below. Three across, so the nine types make
-              an even 3 x 3 grid. */}
+          {/* Equal tiles, three across: icon and name on one line, a short
+              hint below. */}
           <div className="grid grid-cols-3 auto-rows-fr gap-2">
             {ITEM_TYPE_OPTIONS.map(({ type, label, desc, icon: Icon, color, bg }) => (
               <button
