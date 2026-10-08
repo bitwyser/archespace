@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  addDays, compareReminders, currentOccurrence, defaultReminder, describeRepeat, formatReminder, isPast,
+  addDays, compareReminders, currentOccurrence, defaultReminder, describeRepeat, formatDate, formatReminder, isPast,
   isReminderNow, nextOccurrence, normalizeReminder, reminderGroup,
 } from './reminder'
 
@@ -109,7 +109,9 @@ describe('labels', () => {
 
   it('describes how it repeats', () => {
     expect(describeRepeat(once('2026-10-07'), NOW)).toBe('Once')
-    expect(describeRepeat(repeat('2026-10-07', 'day', '2026-11-12'), NOW)).toMatch(/^Daily until 12/)
+    // The date follows the locale ("12 Nov" or "Nov 12").
+    expect(describeRepeat(repeat('2026-10-07', 'day', '2026-11-12'), NOW))
+      .toBe(`Daily until ${formatDate('2026-11-12', NOW)}`)
     expect(describeRepeat(permanent('2026-10-07', 'week'), NOW)).toBe('Weekly, until turned off')
   })
 
