@@ -722,7 +722,6 @@ export default function DashboardPage() {
                 label={online ? 'New' : 'Unavailable offline'}
                 triggerLabel="New"
                 icon={Plus}
-                openOnHover={false}
                 disabled={!online}
                 actions={[
                   { id: 'item', label: 'New item', icon: Plus, onClick: openAddItem },

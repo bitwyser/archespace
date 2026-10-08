@@ -37,6 +37,9 @@ export function ActionMenu({
   // Set when the menu is opened via click/keyboard (not hover) so we move
   // focus into it - hover-open must not steal focus from the pointer.
   const shouldFocusFirst = useRef(false)
+  // Set while a hover has it open, so the click that follows (or a touch's
+  // tap, which hovers first) keeps it open instead of toggling it shut.
+  const openedByHover = useRef(false)
   const visibleActions = actions.filter(Boolean)
 
   const menuItems = () =>
@@ -129,6 +132,18 @@ export function ActionMenu({
     openMenu()
   }
 
+  const openOnPointer = () => {
+    if (disabled) return
+    if (!open) openedByHover.current = true
+    openMenu()
+  }
+
+  const handleTriggerClick = () => {
+    if (open && !openedByHover.current) closeMenu()
+    else openMenuFocused()
+    openedByHover.current = false
+  }
+
   const handleTriggerKeyDown = (event) => {
     if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
       event.preventDefault()
@@ -169,7 +184,7 @@ export function ActionMenu({
     <div
       ref={rootRef}
       className="relative shrink-0"
-      onMouseEnter={openOnHover ? openMenu : undefined}
+      onMouseEnter={openOnHover ? openOnPointer : undefined}
       onMouseLeave={openOnHover ? scheduleClose : undefined}
       onBlur={handleBlur}
       onClick={(event) => event.stopPropagation()}
@@ -178,7 +193,7 @@ export function ActionMenu({
         ref={buttonRef}
         type="button"
         disabled={disabled}
-        onClick={() => open ? closeMenu() : openMenuFocused()}
+        onClick={handleTriggerClick}
         onKeyDown={handleTriggerKeyDown}
         className={triggerLabel
           ? buttonClass({ variant: 'primary', size: 'sm' })
