@@ -54,6 +54,8 @@ Allow: /
 Disallow: /app
 Disallow: /space
 Disallow: /settings
+Disallow: /starred
+Disallow: /reminders
 Disallow: /archive
 Disallow: /recycle-bin
 Disallow: /login
@@ -152,6 +154,20 @@ function excalidrawEnglishOnlyPlugin() {
   }
 }
 
+// Built files of the Whiteboard and PDF export, left out of the service
+// worker's precache (see VitePWA below).
+const LAZY_FEATURE_GLOBS = [
+  '**/pdfmake-*.js',
+  '**/pdfVfs-*.js',
+  '**/preview-*.js',
+  '**/chunk-*.js',
+  '**/subset-*.js',
+  '**/WhiteboardEditor-*.css',
+  'excalidraw/**',
+]
+const LAZY_FEATURE_URL =
+  /\/(?:assets\/(?:pdfmake-|pdfVfs-|preview-|chunk-|subset-|WhiteboardEditor-)|excalidraw\/fonts\/)/
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
@@ -197,7 +213,19 @@ export default defineConfig({
     manifest: false,
     workbox: {
       globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+      // The Whiteboard (Excalidraw, its fonts) and PDF export are several MB
+      // that most visits never use, so they aren't downloaded up front: each
+      // is cached the first time it loads (below), and works offline after.
+      globIgnores: LAZY_FEATURE_GLOBS,
       runtimeCaching: [
+        {
+          urlPattern: LAZY_FEATURE_URL,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'lazy-features',
+            expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 365, purgeOnQuotaError: true },
+          },
+        },
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
           handler: 'CacheFirst',
