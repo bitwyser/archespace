@@ -1,8 +1,9 @@
 /**
  * AppSidebar.jsx - Persistent desktop left navigation (app-wide).
  *
- * Collapsible (icon-only or icon+label). Shown on sm+ screens only; the mobile
- * top bars remain the navigation on phones. The space list folds under its
+ * Collapsible (icon-only or icon+label), with the name and the collapse toggle
+ * at the top. Shown on sm+ screens only; the mobile top bars remain the
+ * navigation on phones. The space list folds under its
  * heading; Lock vault sits at the bottom, above a Settings menu (Commands,
  * Shortcuts, Settings, Sign out). `active` marks the current section
  * ('spaces' | 'space' | 'upcoming' | 'starred' | 'archive' | 'bin' |
@@ -107,7 +108,7 @@ function SettingsMenu({ collapsed, settingsActive, onSettings, onShortcuts, onCo
   const run = (fn) => () => { setOpen(false); fn?.() }
 
   return (
-    <div ref={rootRef} className={`relative ${collapsed ? 'w-full' : 'flex-1 min-w-0'}`}>
+    <div ref={rootRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
@@ -165,15 +166,27 @@ export default function AppSidebar({
         collapsed ? 'w-16' : 'w-44'
       }`}
     >
-      {/* The name, as in the emails; too wide for the collapsed rail. */}
-      {!collapsed && (
-        <div className="shrink-0 h-14 flex items-center px-5 text-lg font-bold leading-none tracking-[0.03em] text-text-primary select-none" aria-hidden="true">
-          <span className="text-accent">ARCHE</span>SPACE
-        </div>
-      )}
+      {/* The name, as in the emails, and the collapse toggle. The name is too
+          wide for the collapsed rail, which keeps only the toggle. */}
+      <div className={`shrink-0 h-14 flex items-center px-2 ${collapsed ? '' : 'justify-between pl-5'}`}>
+        {!collapsed && (
+          <span className="text-base font-bold leading-none tracking-[0.03em] text-text-primary select-none" aria-hidden="true">
+            <span className="text-accent">ARCHE</span>SPACE
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={`shrink-0 flex justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated/60 transition-colors ${collapsed ? 'w-full py-2' : 'h-8 w-8 items-center'}`}
+        >
+          {collapsed ? <ChevronsRight size={17} /> : <ChevronsLeft size={17} />}
+        </button>
+      </div>
 
       {/* Nav */}
-      <nav className={`flex-1 min-h-0 flex flex-col gap-0.5 px-2 ${collapsed ? 'pt-4' : 'pt-1'}`}>
+      <nav className="flex-1 min-h-0 flex flex-col gap-0.5 px-2 pt-1">
         <NavItem icon={LayoutGrid} label="All spaces" active={active === 'spaces'} count={spaces.length} collapsed={collapsed} onClick={() => navigate('/app')} />
 
         {/* The space list folds under its heading and is the only part that
@@ -214,30 +227,19 @@ export default function AppSidebar({
         <NavItem icon={Trash2} label="Bin" active={active === 'bin'} count={binTotal} collapsed={collapsed} onClick={() => navigate('/recycle-bin')} />
       </nav>
 
-      {/* Footer: Lock vault, then the Settings menu and the collapse toggle */}
+      {/* Footer: Lock vault, then the Settings menu */}
       <div className="shrink-0 px-2 pt-4 pb-3 space-y-0.5">
         {isUnlocked && (
           <NavItem icon={Lock} label="Lock vault" collapsed={collapsed} onClick={onLock} />
         )}
-        <div className={`flex gap-0.5 ${collapsed ? 'flex-col items-stretch' : 'items-center'}`}>
-          <SettingsMenu
-            collapsed={collapsed}
-            settingsActive={active === 'settings'}
-            onSettings={() => navigate('/settings')}
-            onShortcuts={onShortcuts}
-            onCommands={onCommands}
-            onSignOut={onSignOut}
-          />
-          <button
-            type="button"
-            onClick={onToggleCollapsed}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={`shrink-0 flex justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-elevated/60 transition-colors ${collapsed ? 'py-2' : 'h-8 w-8 items-center'}`}
-          >
-            {collapsed ? <ChevronsRight size={17} /> : <ChevronsLeft size={17} />}
-          </button>
-        </div>
+        <SettingsMenu
+          collapsed={collapsed}
+          settingsActive={active === 'settings'}
+          onSettings={() => navigate('/settings')}
+          onShortcuts={onShortcuts}
+          onCommands={onCommands}
+          onSignOut={onSignOut}
+        />
       </div>
     </aside>
   )
