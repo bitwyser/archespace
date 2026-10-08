@@ -165,8 +165,15 @@ export default function AppSidebar({
         collapsed ? 'w-16' : 'w-44'
       }`}
     >
+      {/* The name, as in the emails; too wide for the collapsed rail. */}
+      {!collapsed && (
+        <div className="shrink-0 h-14 flex items-center px-5 text-lg font-bold leading-none tracking-[0.03em] text-text-primary select-none" aria-hidden="true">
+          <span className="text-accent">ARCHE</span>SPACE
+        </div>
+      )}
+
       {/* Nav */}
-      <nav className="flex-1 min-h-0 flex flex-col gap-0.5 px-2 pt-4">
+      <nav className={`flex-1 min-h-0 flex flex-col gap-0.5 px-2 ${collapsed ? 'pt-4' : 'pt-1'}`}>
         <NavItem icon={LayoutGrid} label="All spaces" active={active === 'spaces'} count={spaces.length} collapsed={collapsed} onClick={() => navigate('/app')} />
 
         {/* The space list folds under its heading and is the only part that
