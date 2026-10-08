@@ -30,7 +30,7 @@ const NO_REMINDERS = []
 const REMINDER_TOAST_MS = 15000
 
 function activeFromPath(pathname) {
-  if (pathname.startsWith('/upcoming')) return 'upcoming'
+  if (pathname.startsWith('/reminders')) return 'reminders'
   if (pathname.startsWith('/starred')) return 'starred'
   if (pathname.startsWith('/archive')) return 'archive'
   if (pathname.startsWith('/recycle-bin')) return 'bin'
@@ -82,11 +82,11 @@ export default function AppShell() {
     onRemind: (reminder, { notified }) => {
       if (notified) return
       toastRef.current.info(
-        reminder.name ? `Reminder: ${reminder.name}` : 'You have a reminder. See Upcoming.',
+        reminder.name ? `Reminder: ${reminder.name}` : 'You have a reminder. See Reminders.',
         { duration: REMINDER_TOAST_MS }
       )
     },
-    onOpen: () => navigate('/upcoming'),
+    onOpen: () => navigate('/reminders'),
   }), [reminders, navigate])
 
   // The open space's top-level space (a sub-space highlights its parent).

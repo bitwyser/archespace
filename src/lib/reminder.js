@@ -162,7 +162,7 @@ export function compareReminders(a, b, now = new Date()) {
   return currentOccurrence(a, now) - currentOccurrence(b, now)
 }
 
-/** Upcoming's groups, in order. */
+/** The Reminders view's groups, in order. */
 export const REMINDER_GROUPS = [
   { id: 'past', label: 'Past' },
   { id: 'today', label: 'Today' },
@@ -171,7 +171,7 @@ export const REMINDER_GROUPS = [
   { id: 'later', label: 'Later' },
 ]
 
-/** Which Upcoming group a reminder falls in (by its next time). */
+/** Which group a reminder falls in (by its next time). */
 export function reminderGroup(reminder, now = new Date()) {
   const next = nextOccurrence(reminder, now)
   if (!next) return 'past'
@@ -183,7 +183,7 @@ export function reminderGroup(reminder, now = new Date()) {
   return 'later'
 }
 
-/** Needs attention now: over, or going off today (the Upcoming badge). */
+/** Needs attention now: over, or going off today (the Reminders badge). */
 export function isReminderNow(reminder, now = new Date()) {
   return !!reminder && dayString(currentOccurrence(reminder, now)) <= dayString(now)
 }

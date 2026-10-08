@@ -1,5 +1,5 @@
 /**
- * useReminders.js - Every active item's reminder, for the Upcoming badge and
+ * useReminders.js - Every active item's reminder, for the Reminders badge and
  * for setting them off. Only the ids and reminders are fetched and decrypted.
  */
 import { useEffect, useMemo, useState } from 'react'

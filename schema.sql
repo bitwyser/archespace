@@ -166,7 +166,7 @@ CREATE INDEX IF NOT EXISTS items_top_level_idx    ON space_items(user_id, positi
 -- Starred view: the user's starred spaces and items.
 CREATE INDEX IF NOT EXISTS spaces_starred_idx     ON spaces(user_id)      WHERE starred = true;
 CREATE INDEX IF NOT EXISTS items_starred_idx      ON space_items(user_id) WHERE starred = true;
--- Upcoming view: the user's items with a reminder.
+-- Reminders view: the user's items with a reminder.
 CREATE INDEX IF NOT EXISTS items_reminder_idx     ON space_items(user_id) WHERE reminder IS NOT NULL;
 CREATE INDEX IF NOT EXISTS space_items_pinned_idx ON space_items(pinned)      WHERE pinned = true;
 CREATE INDEX IF NOT EXISTS items_deleted_at_idx   ON space_items(deleted_at)  WHERE deleted_at IS NOT NULL;

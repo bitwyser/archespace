@@ -503,11 +503,11 @@ export default function DashboardPage() {
             {/* Navigation first, then tools, then sign out. */}
             <button
               type="button"
-              onClick={() => { navigate('/upcoming'); setMobileMenuOpen(false) }}
+              onClick={() => { navigate('/reminders'); setMobileMenuOpen(false) }}
               className="relative flex items-center gap-2.5 px-3 h-10 rounded-lg hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-colors text-sm font-medium"
             >
               <Bell size={16} />
-              Upcoming
+              Reminders
               {remindersNowTotal > 0 && (
                 <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-accent text-accent-fg text-[10px] font-bold px-1">
                   {remindersNowTotal > 99 ? '99+' : remindersNowTotal}

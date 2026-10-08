@@ -2,7 +2,7 @@
  * useSpaceItems.js - Hook for items within a single space; with
  * `spaceId === null`, the dashboard's items, which belong to no space; with
  * `STARRED_ITEMS`, the starred items from every space (the Starred view); or
- * with `UPCOMING_ITEMS`, the items with a reminder (the Upcoming view).
+ * with `REMINDER_ITEMS`, the items with a reminder (the Reminders view).
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -50,19 +50,19 @@ const DASHBOARD_ITEMS_KEY = 'dashboard'
 // Pass as the `spaceId` for the starred items of every space. Also its key.
 export const STARRED_ITEMS = 'starred'
 // Pass as the `spaceId` for the items with a reminder. Also its key.
-export const UPCOMING_ITEMS = 'upcoming'
+export const REMINDER_ITEMS = 'reminders'
 
-/** Starred and Upcoming gather items from every space. */
-const isCrossSpace = (spaceId) => spaceId === STARRED_ITEMS || spaceId === UPCOMING_ITEMS
+/** Starred and Reminders gather items from every space. */
+const isCrossSpace = (spaceId) => spaceId === STARRED_ITEMS || spaceId === REMINDER_ITEMS
 
 /**
  * Restrict an items query to one space, to the dashboard for `null`, to the
  * starred items for `STARRED_ITEMS`, or to those with a reminder for
- * `UPCOMING_ITEMS`.
+ * `REMINDER_ITEMS`.
  */
 function whereSpace(q, spaceId) {
   if (spaceId === STARRED_ITEMS) return q.eq('starred', true)
-  if (spaceId === UPCOMING_ITEMS) return q.not('reminder', 'is', null)
+  if (spaceId === REMINDER_ITEMS) return q.not('reminder', 'is', null)
   return spaceId ? q.eq('space_id', spaceId) : q.is('space_id', null)
 }
 
@@ -112,7 +112,7 @@ export function useSpaceItems(spaceId) {
   useEffect(() => {
     if (spaceId === undefined) return
     // Realtime filters can't express "space_id is null" (or span spaces), so
-    // the dashboard, Starred and Upcoming listen to all of the user's item
+    // the dashboard, Starred and Reminders listen to all of the user's item
     // changes (debounced below) instead.
     const inOneSpace = spaceId && !isCrossSpace(spaceId)
     const filter = inOneSpace ? `space_id=eq.${spaceId}` : userId ? `user_id=eq.${userId}` : null
@@ -144,7 +144,7 @@ export function useSpaceItems(spaceId) {
 
   const create = useMutation({
     mutationFn: async ({ type, title, content }) => {
-      // Starred and Upcoming span spaces, so they have no space to add into.
+      // Starred and Reminders span spaces, so they have no space to add into.
       if (isCrossSpace(spaceId)) throw new Error('Add items from a space or the dashboard.')
       assertOnline()
       const items = query.data || []

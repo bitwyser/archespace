@@ -32,10 +32,10 @@ export function invalidateSpaceItems(qc, spaceId) {
   invalidateKeys(qc, [
     queryKeys.items(spaceId),
     // An item edited anywhere may be starred or have a reminder; keep the
-    // Starred and Upcoming views in step.
+    // Starred and Reminders views in step.
     queryKeys.starredItems(),
     queryKeys.starredCount(),
-    queryKeys.upcomingItems(),
+    queryKeys.reminderItems(),
     queryKeys.reminders(),
     queryKeys.bin(),
     queryKeys.archive(),

@@ -1,5 +1,5 @@
 /**
- * UpcomingPage.jsx - Every item with a reminder, from anywhere, grouped by
+ * RemindersPage.jsx - Every item with a reminder, from anywhere, grouped by
  * when it next goes off (Today, Tomorrow, Next 7 days, Later), earliest
  * first, and Past for those that have gone off for the last time.
  *
@@ -13,7 +13,7 @@ import { useSpaces } from '../hooks/useSpaces'
 import { useItemBoard } from '../hooks/useItemBoard'
 import { useColumnCount } from '../hooks/useColumnCount'
 import { useNow } from '../hooks/useReminders'
-import { UPCOMING_ITEMS } from '../hooks/useSpaceItems'
+import { REMINDER_ITEMS } from '../hooks/useSpaceItems'
 import { useRegisterPageActions } from '../context/PageActionsCore'
 import SpaceItem from '../components/SpaceItem'
 import { IconButton } from '../components/ui/Button'
@@ -21,10 +21,10 @@ import ItemBoardModals from '../components/ItemBoardModals'
 import { Spinner } from '../components/ui/UI'
 import { REMINDER_GROUPS, compareReminders, reminderGroup } from '../lib/reminder'
 
-export default function UpcomingPage() {
+export default function RemindersPage() {
   const navigate = useNavigate()
   const { data: spaces = [], isLoading: spacesLoading } = useSpaces()
-  const board = useItemBoard(UPCOMING_ITEMS)
+  const board = useItemBoard(REMINDER_ITEMS)
   const { items, isLoading: itemsLoading } = board
   const cols = useColumnCount()
 
@@ -99,7 +99,7 @@ export default function UpcomingPage() {
         <div className="w-full px-4 sm:px-6 h-14 flex items-center gap-3">
           <IconButton icon={ArrowLeft} label="Back" size="md" className="-ml-1.5" onClick={() => navigate('/app')} />
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold text-text-primary">Upcoming</h1>
+            <h1 className="text-sm font-semibold text-text-primary">Reminders</h1>
             <p className="text-xs text-text-muted mt-0.5">
               {total} {total === 1 ? 'reminder' : 'reminders'}{past > 0 ? ` - ${past} past` : ''}
             </p>

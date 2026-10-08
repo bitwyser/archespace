@@ -33,7 +33,7 @@ A companion Mobile/Flutter app lives in a [separate repository](https://github.c
 - **Protected** items and spaces, and **read-only** spaces
 - **Spaces** with sub-spaces, tags and colours
 - **Item types**: notes, rich text, lists, checklists, cards, tables, Kanban boards, whiteboards and code ([Item types](#item-types))
-- **Reminders** that repeat or stay until turned off, with an **Upcoming** view
+- **Reminders** that repeat or stay until turned off, all listed in one view
 - **Search** across spaces, tags and content
 - **Starred**, **archive** and **recycle bin**
 - **Realtime sync** with the [mobile app](https://github.com/wyserian/archespace-mobile), and **offline mode**

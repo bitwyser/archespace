@@ -6,7 +6,7 @@
  * navigation on phones. The space list folds under its
  * heading; Lock vault sits at the bottom, above a Settings menu (Commands,
  * Shortcuts, Settings, Sign out). `active` marks the current section
- * ('spaces' | 'space' | 'upcoming' | 'starred' | 'archive' | 'bin' |
+ * ('spaces' | 'space' | 'reminders' | 'starred' | 'archive' | 'bin' |
  * 'settings'); `activeSpaceId` the open top-level space.
  */
 import { useEffect, useRef, useState } from 'react'
@@ -236,7 +236,7 @@ export default function AppSidebar({
         )}
 
         <SectionLabel collapsed={collapsed}>Library</SectionLabel>
-        <NavItem icon={Bell} label="Upcoming" active={active === 'upcoming'} badge={remindersNowTotal} collapsed={collapsed} onClick={() => navigate('/upcoming')} />
+        <NavItem icon={Bell} label="Reminders" active={active === 'reminders'} badge={remindersNowTotal} collapsed={collapsed} onClick={() => navigate('/reminders')} />
         <NavItem icon={Star} label="Starred" active={active === 'starred'} count={starredTotal} collapsed={collapsed} onClick={() => navigate('/starred')} />
         <NavItem icon={Archive} label="Archive" active={active === 'archive'} count={archiveTotal} collapsed={collapsed} onClick={() => navigate('/archive')} />
         <NavItem icon={Trash2} label="Bin" active={active === 'bin'} count={binTotal} collapsed={collapsed} onClick={() => navigate('/recycle-bin')} />
