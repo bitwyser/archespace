@@ -11,10 +11,9 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import {
-  LayoutGrid, Folder, Star, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
+  LayoutGrid, Star, Archive, Trash2, Keyboard, Command, Lock, Settings, LogOut,
   ChevronsLeft, ChevronsRight, ChevronRight, Bell,
 } from 'lucide-react'
-import { softColorValue } from '../../lib/spaceColors'
 import { SIGN_OUT_TEXT } from '../../lib/localMode'
 import { MENU_PANEL, MENU_DIVIDER, MENU_HINT, menuItemClass } from '../ui/menuStyles'
 
@@ -31,7 +30,27 @@ function SectionLabel({ children, collapsed }) {
   )
 }
 
-function NavItem({ icon: Icon, iconColor, label, active, count, badge, trailing, collapsed, onClick }) {
+/** A space under the Spaces heading: no icon, smaller, and indented a step
+ *  past the heading. */
+function SpaceRow({ label, active, trailing, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      className={`w-full flex items-center gap-2 rounded-lg pl-6 pr-3 py-1.5 text-xs transition-colors ${
+        active
+          ? 'bg-bg-elevated text-text-primary font-medium'
+          : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated/60'
+      }`}
+    >
+      <span className="flex-1 text-left truncate">{label}</span>
+      {trailing}
+    </button>
+  )
+}
+
+function NavItem({ icon: Icon, label, active, count, badge, collapsed, onClick }) {
   return (
     <button
       type="button"
@@ -50,7 +69,6 @@ function NavItem({ icon: Icon, iconColor, label, active, count, badge, trailing,
       <Icon
         size={17}
         className={`shrink-0 ${active ? 'text-accent' : ''}`}
-        style={active ? undefined : { color: iconColor }}
       />
       {/* What needs attention now: a pill, or a dot on the icon when collapsed. */}
       {badge > 0 && collapsed && (
@@ -62,7 +80,6 @@ function NavItem({ icon: Icon, iconColor, label, active, count, badge, trailing,
           {badge > 99 ? '99+' : badge}
         </span>
       )}
-      {!collapsed && trailing}
       {!collapsed && count != null && (
         <span className="text-xs tabular-nums text-text-muted">{count}</span>
       )}
@@ -205,10 +222,8 @@ export default function AppSidebar({
             {spacesOpen && (
               <div className="min-h-0 overflow-y-auto scrollbar-slim flex flex-col gap-0.5">
                 {spaces.map(space => (
-                  <NavItem
+                  <SpaceRow
                     key={space.id}
-                    icon={Folder}
-                    iconColor={softColorValue(space.color, 'cc')}
                     label={space.name || 'Untitled'}
                     active={active === 'space' && activeSpaceId === space.id}
                     trailing={space.locked && <Lock size={12} className="shrink-0 text-text-muted" aria-label="Protected" />}
